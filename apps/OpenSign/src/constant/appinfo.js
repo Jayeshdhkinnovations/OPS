@@ -12,13 +12,15 @@ export function serverUrl_fn() {
   const host = window.location.hostname;
   const parts = host.split('.');
   
+  const excludedSubdomains = ['www', 'sign', 'opensign'];
+  
   // E.g., companyb.sign.toowix.com or companyb.localhost
-  if (parts.length >= 3 && parts[0] !== 'www') {
+  if (parts.length >= 3 && !excludedSubdomains.includes(parts[0])) {
     const slug = parts[0];
     if (!baseUrl.endsWith(`/${slug}`)) {
       baseUrl = `${baseUrl.replace(/\/$/, '')}/${slug}`;
     }
-  } else if (parts.length === 2 && parts[1] === 'localhost' && parts[0] !== 'www') {
+  } else if (parts.length === 2 && parts[1] === 'localhost' && !excludedSubdomains.includes(parts[0])) {
     const slug = parts[0];
     if (!baseUrl.endsWith(`/${slug}`)) {
       baseUrl = `${baseUrl.replace(/\/$/, '')}/${slug}`;
