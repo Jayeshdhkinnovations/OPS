@@ -4,6 +4,17 @@ import { appName } from '../../Utils.js';
 export default async function GetLogoByDomain(request) {
   const domain = request.params.domain;
   try {
+    const originalPath = request.headers ? request.headers['x-original-path'] : '';
+    const isRootInstance = !originalPath || originalPath.startsWith('/app/functions') || originalPath.startsWith('/app/login') || originalPath === '/app' || originalPath === '/app/';
+
+    if (isRootInstance) {
+      return {
+        logo: '',
+        appname: appName,
+        user: 'exist',
+      };
+    }
+
     const tenantCreditsQuery = new Parse.Query('partners_Tenant');
     tenantCreditsQuery.equalTo('Domain', domain);
     const res = await tenantCreditsQuery.first({ useMasterKey: true });
