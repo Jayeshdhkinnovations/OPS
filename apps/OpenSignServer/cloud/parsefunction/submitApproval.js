@@ -1,5 +1,19 @@
 import { MongoClient } from 'mongodb';
 
+// Parse's own IDs are short 10-char alphanumeric strings, not MongoDB's
+// native 24-char hex ObjectIds. This record gets written here via the raw
+// Mongo driver (no company mount exists yet at registration time) but
+// later read/updated through Parse Server (approveRequest.js, in
+// SuperAdminServer) - so it needs a Parse-shaped _id from the start, or
+// Parse.Query(...).get(id) can never find it again (looks like "Object
+// not found" even though the record is right there).
+function generateParseObjectId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let id = '';
+  for (let i = 0; i < 10; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+
 // Called from the registration form on the root instance (bare sign.toowix.com,
 // before any company exists yet) - stores a pending request in the control
 // plane's own database instead of creating anything real. A Super Admin
@@ -35,6 +49,7 @@ export default async function submitApproval(request) {
     // not a general pattern - real passwords are never stored anywhere
     // else in the system.
     await db.collection('ApprovalRequest').insertOne({
+      _id: generateParseObjectId(),
       name,
       email,
       phone: phone || '',
