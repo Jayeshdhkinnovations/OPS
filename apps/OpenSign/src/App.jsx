@@ -34,6 +34,9 @@ const UpdateExistUserAdmin = lazyWithRetry(
 );
 const Preferences = lazyWithRetry(() => import("./pages/Preferences"));
 const Login = lazyWithRetry(() => import("./pages/Login"));
+const Landing = lazyWithRetry(() => import("./pages/Landing"));
+const Register = lazyWithRetry(() => import("./pages/Register"));
+const WaitingApproval = lazyWithRetry(() => import("./pages/WaitingApproval"));
 const VerifyDocument = lazyWithRetry(() => import("./pages/VerifyDocument"));
 const EmailBuilder = lazyWithRetry(() => import("./pages/EmailBuilder"));
 
@@ -66,7 +69,10 @@ function App() {
           <Title />
           <Routes>
             <Route element={<ValidateRoute />}>
-              <Route exact path="/" element={<Lazy Page={Login} />} />
+              <Route exact path="/" element={<Lazy Page={Landing} />} />
+                  <Route path="/login" element={<Lazy Page={Login} />} />
+                  <Route path="/register" element={<Lazy Page={Register} />} />
+                  <Route path="/waiting-approval" element={<Lazy Page={WaitingApproval} />} />
                   <Route path="/addadmin" element={<Lazy Page={AddAdmin} />} />
                   <Route
                     path="/upgrade-2.1"
