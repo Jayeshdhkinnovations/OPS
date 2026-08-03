@@ -109,6 +109,7 @@ function Login() {
       return;
     }
     localStorage.removeItem("accesstoken");
+    await Parse.User.logOut().catch(() => {});
     try {
       setState({ ...state, loading: true });
       localStorage.setItem("appLogo", appInfo.applogo);
@@ -282,6 +283,8 @@ function Login() {
     } catch (error) {
       showToast("danger", t("something-went-wrong-mssg"));
       console.log("err", error);
+      Parse.User.logOut().catch(() => {});
+      localStorage.removeItem("accesstoken");
     }
   };
 

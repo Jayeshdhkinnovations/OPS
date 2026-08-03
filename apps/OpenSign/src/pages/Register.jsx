@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Parse from "parse";
 import { useNavigate } from "react-router";
 import { appInfo } from "../constant/appinfo";
@@ -21,6 +21,11 @@ function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    // Clear any stale session token from localStorage
+    Parse.User.logOut().catch(() => {});
+  }, []);
 
   function handleChange(e) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
