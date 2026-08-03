@@ -16,7 +16,7 @@ import { ParseServer } from 'parse-server';
 import { appName, smtpenable, smtpsecure, useLocal, internalAdminSecret, serverAppId, publicOrigin } from './Utils.js';
 import { SSOAuth } from './auth/authadapter.js';
 import { validateSignedLocalUrl } from './cloud/parsefunction/getSignedUrl.js';
-import { mountCompany, unmountCompany, loadAllCompaniesAndMount, listMountedSlugs } from './cloud/multiTenant.js';
+import { mountCompany, unmountCompany, loadAllCompaniesAndMount, listMountedSlugs, guardRootMount } from './cloud/multiTenant.js';
 let fsAdapter;
 
 if (useLocal !== 'true') {
@@ -207,7 +207,12 @@ const defaultServerConfig = {
 };
 const defaultServer = new ParseServer(defaultServerConfig);
 await defaultServer.start();
-app.use(mountPath, defaultServer.app);
+// Guarded, not a plain app.use(mountPath, defaultServer.app) - this root
+// instance is registered here at startup, before most (or any) company
+// mounts exist, so without the guard it would swallow every request to
+// /app/<slug>/... with its own 404 before a company mount (registered
+// later, including hot-mounted ones) ever gets a chance to handle it.
+app.use(mountPath, guardRootMount(defaultServer.app));
 
 
 // Internal-only endpoint: SuperAdminServer calls this the moment a new

@@ -100,6 +100,24 @@ export async function mountCompany({ slug, databaseName }, app, sharedParts) {
   return { alreadyMounted: false, slug };
 }
 
+// Wraps a root-instance Parse Server app (mounted at bare /app in
+// index.js) so it never swallows requests meant for a company mount.
+// Necessary because Express checks middleware in registration order, and
+// the root instance is registered once at startup - long before most
+// companies exist, including any added later via hot-mount. Without this
+// guard, a request to /app/<slug>/... would hit the root mount first
+// (its prefix /app matches), and since the root Parse Server doesn't
+// recognize "/<slug>/..." as one of its own routes, it would 404 the
+// request directly instead of letting Express fall through to the real
+// company mount registered elsewhere in the stack.
+export function guardRootMount(rootApp) {
+  return (req, res, next) => {
+    const firstSegment = req.path.split('/').filter(Boolean)[0];
+    if (firstSegment && isMounted(firstSegment)) return next();
+    return rootApp(req, res, next);
+  };
+}
+
 // Reads every company from the control plane's Company collection
 // directly (read-only) and mounts each active one. Called once at
 // startup so a restart never loses an existing company.
