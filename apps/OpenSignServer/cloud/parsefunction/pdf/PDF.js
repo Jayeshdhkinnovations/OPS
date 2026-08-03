@@ -454,7 +454,7 @@ async function PDF(req) {
       //  `P12Buffer` used to create buffer from p12 certificate
       let pfxFile = process.env.PFX_BASE64;
       let passphrase = process.env.PASS_PHRASE;
-      if (_resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64) {
+      if (_resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64 && _resDoc.ExtUserPtr.TenantId.PfxFile.base64.length > 500) {
         pfxFile = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64;
         passphrase = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.password;
       }
