@@ -28,7 +28,7 @@
     "@usewaypoint/email-builder": "^0.0.9",
     "axios": "^1.16.0",
     "date-fns-tz": "^3.2.0",
-    "dompurify": "^3.4.1",
+    "dompurify": "^3.4.12",
     "file-saver": "^2.0.5",
     "highlight.js": "^11.11.1",
     "i18next": "^26.0.8",
