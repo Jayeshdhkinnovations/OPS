@@ -451,21 +451,37 @@ async function PDF(req) {
     if (req.params.pdfFile) {
       //  `PdfBuffer` used to create buffer from pdf file
       let PdfBuffer = Buffer.from(req.params.pdfFile, 'base64');
-      //  `P12Buffer` used to create buffer from p12 certificate
+      let P12Buffer;
+      let passphrase = process.env.PASS_PHRASE || 'opensign';
       let pfxFile = process.env.PFX_BASE64;
-      let passphrase = process.env.PASS_PHRASE;
       if (_resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64 && _resDoc.ExtUserPtr.TenantId.PfxFile.base64.length > 500) {
         pfxFile = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64;
         passphrase = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.password;
       }
-      if (!pfxFile) {
-        throw new Parse.Error(
-          Parse.Error.VALIDATION_ERROR,
-          'Digital signing certificate (PFX_BASE64) is not configured in the server environment variables.'
-        );
+
+      if (pfxFile) {
+        try {
+          P12Buffer = Buffer.from(pfxFile, 'base64');
+          new P12Signer(P12Buffer, { passphrase: passphrase || null });
+        } catch (err) {
+          console.log('Provided PFX_BASE64 is invalid or corrupted. Falling back to default keystore_681.pfx:', err.message);
+          P12Buffer = null;
+        }
       }
+
+      if (!P12Buffer) {
+        try {
+          P12Buffer = fs.readFileSync('./keystore_681.pfx');
+          passphrase = 'opensign';
+        } catch (err) {
+          throw new Parse.Error(
+            Parse.Error.VALIDATION_ERROR,
+            'Digital signing certificate is not configured and default keystore_681.pfx could not be read.'
+          );
+        }
+      }
+
       const pfx = { name: pfxname, passphrase: passphrase };
-      const P12Buffer = Buffer.from(pfxFile, 'base64');
       fs.writeFileSync(pfxname, P12Buffer);
       const UserPtr = { __type: 'Pointer', className: className, objectId: signUser.objectId };
       const obj = { UserPtr: UserPtr, SignedUrl: '', Activity: auditActivity, ipAddress: userIP };
