@@ -46,6 +46,12 @@ export default async function generateCertificatebydocId(req) {
   }
   //  `P12Buffer` used to create buffer from p12 certificate
   const pfxFile = process.env.PFX_BASE64;
+  if (!pfxFile) {
+    throw new Parse.Error(
+      Parse.Error.VALIDATION_ERROR,
+      'Digital signing certificate (PFX_BASE64) is not configured in the server environment variables.'
+    );
+  }
   // const P12Buffer = fs.readFileSync();
   const P12Buffer = Buffer.from(pfxFile, 'base64');
   const certificatePath = `./exports/certificate_${docId}.pdf`;

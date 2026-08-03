@@ -458,6 +458,12 @@ async function PDF(req) {
         pfxFile = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64;
         passphrase = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.password;
       }
+      if (!pfxFile) {
+        throw new Parse.Error(
+          Parse.Error.VALIDATION_ERROR,
+          'Digital signing certificate (PFX_BASE64) is not configured in the server environment variables.'
+        );
+      }
       const pfx = { name: pfxname, passphrase: passphrase };
       const P12Buffer = Buffer.from(pfxFile, 'base64');
       fs.writeFileSync(pfxname, P12Buffer);
