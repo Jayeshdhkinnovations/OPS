@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useRef,
 } from "react";
 import { Navigate, useNavigate } from "react-router";
 import Parse from "parse";
@@ -50,6 +51,7 @@ function UserProfile() {
   const [otpLoader, setOtpLoader] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isdeleteModal, setIsdeleteModal] = useState(false);
+  const dpInputRef = useRef(null);
   const [deleteUserRes, setDeleteUserRes] = useState("");
   const [isDelLoader, setIsDelLoader] = useState(false);
   useEffect(() => {
@@ -305,21 +307,33 @@ function UserProfile() {
         <div className="flex justify-center items-center w-full relative">
           <div className="bg-base-100 text-base-content flex flex-col justify-center shadow-md rounded-box w-[450px]">
             <div className="flex flex-col justify-center items-center my-4">
-              <div className="w-[200px] h-[200px] overflow-hidden rounded-full">
-                <img
-                  className="object-contain w-full h-full"
-                  src={Image === "" ? dp : Image}
-                  alt="dp"
-                />
-              </div>
-              {editmode && (
+              <div className="relative w-[200px] h-[200px]">
+                <div className="w-[200px] h-[200px] overflow-hidden rounded-full">
+                  <img
+                    className="object-contain w-full h-full"
+                    src={Image === "" || !Image ? dp : Image}
+                    alt="dp"
+                  />
+                </div>
+                <button
+                  type="button"
+                  title={t("edit") || "Change photo"}
+                  onClick={() => {
+                    if (!editmode) setEditMode(true);
+                    dpInputRef.current?.click();
+                  }}
+                  className="op-btn op-btn-circle op-btn-primary op-btn-sm absolute bottom-1 right-1 shadow-md"
+                >
+                  <i className="fa-light fa-camera" />
+                </button>
                 <input
+                  ref={dpInputRef}
                   type="file"
-                  className="op-file-input op-file-input-bordered op-file-input-sm max-w-[270px] mt-4 text-sm"
+                  className="hidden"
                   accept="image/png, image/gif, image/jpeg"
                   onChange={fileUpload}
                 />
-              )}
+              </div>
               {percentage !== 0 && (
                 <div className="flex items-center gap-x-2">
                   <div className="h-2 rounded-full w-[200px] md:w-[400px] bg-gray-200">

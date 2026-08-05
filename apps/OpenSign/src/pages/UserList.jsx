@@ -16,10 +16,19 @@ import PasswordResetModal from "../primitives/PasswordResetModal";
 import { usersActions } from "../json/ReportJson";
 import { withSessionValidation } from "../utils";
 
+// Formats a byte count as a human-readable size (e.g. 1536 -> "1.5 KB").
+function formatBytes(bytes) {
+  if (!bytes) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
 const heading = ["Sr.No", "Name", "Email", "Phone", "Role", "Team", "Active"];
 const UserList = () => {
   const { t } = useTranslation();
   const [userList, setUserList] = useState([]);
+  const [usage, setUsage] = useState({ maxUsers: null, currentUserCount: 0, usedStorage: 0 });
   const [isLoader, setIsLoader] = useState(false);
   const [isModal, setIsModal] = useState({
     form: false,
@@ -100,8 +109,17 @@ const UserList = () => {
   const currentList = userList?.slice(indexOfFirstDoc, indexOfLastDoc);
   useEffect(() => {
     fetchUserList();
+    fetchTenantUsage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  async function fetchTenantUsage() {
+    try {
+      const res = await Parse.Cloud.run("gettenantusage");
+      setUsage(res);
+    } catch (err) {
+      console.log("Err in fetch tenant usage", err);
+    }
+  }
   async function fetchUserList() {
     try {
       setIsLoader(true);
@@ -151,6 +169,7 @@ const UserList = () => {
   const handleUserData = (userData) => {
     if (userData) {
       setUserList((prev) => [userData, ...prev]);
+      setUsage((prev) => ({ ...prev, currentUserCount: prev.currentUserCount + 1 }));
     }
   };
   // `formatRow` is used to show data in poper manner like
@@ -307,7 +326,16 @@ const UserList = () => {
                         <Tooltip message={t("users-from-teams")} />
                       </span>
                     </div>
-                    <div className="flex flex-row gap-2 items-center">
+                    <div className="flex flex-row gap-3 items-center">
+                      <div className="flex flex-row gap-3 items-center text-xs md:text-sm font-medium text-base-content/70">
+                        <span className="op-badge op-badge-ghost">
+                          Users {usage.currentUserCount}
+                          {usage.maxUsers != null ? ` / ${usage.maxUsers}` : ""}
+                        </span>
+                        <span className="op-badge op-badge-ghost">
+                          Storage {formatBytes(usage.usedStorage)}
+                        </span>
+                      </div>
                       <div
                         className="cursor-pointer"
                         onClick={() => handleModal("form")}

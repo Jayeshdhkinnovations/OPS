@@ -11,6 +11,7 @@ import {
 } from "../constant/const";
 import { useTranslation } from "react-i18next";
 import Loader from "../primitives/Loader";
+import SelectLanguage from "../components/pdf/SelectLanguage";
 
 function ForgotPassword() {
   const { t } = useTranslation();
@@ -47,7 +48,7 @@ function ForgotPassword() {
       if (state.email) {
         const username = state.email;
         try {
-            await Parse.User.requestPasswordReset(username);
+          await Parse.User.requestPasswordReset(username);
           setToast({ type: "success", message: t("reset-password-alert-1") });
         } catch (err) {
           console.log("err ", err.code);
@@ -77,10 +78,10 @@ function ForgotPassword() {
     } catch (err) {
       console.log("err while logging out ", err);
     }
-      setImage(appInfo?.applogo || undefined);
+    setImage(appInfo?.applogo || undefined);
   };
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-base-200 p-4 sm:p-8">
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8">
       {isLoading && (
         <div className="fixed w-full h-full flex justify-center items-center bg-black bg-opacity-30 z-50">
           <Loader />
@@ -88,73 +89,87 @@ function ForgotPassword() {
       )}
       {toast?.message && <Alert type={toast.type}>{toast.message}</Alert>}
 
-      <div className="flex w-full max-w-5xl overflow-hidden rounded-[2rem] bg-base-100 shadow-xl">
+      <div className="relative flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
+        {/* Left hero panel */}
         {!state.hideNav && (
-          <div className="relative hidden w-1/2 shrink-0 overflow-hidden bg-gradient-to-br from-primary to-primary/70 md:flex md:flex-col md:justify-between md:p-10 lg:p-14">
-            <div className="flex items-center gap-3">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-base-100 shadow-lg">
-                <i className="fa-light fa-signature text-2xl text-primary" />
+          <div
+            className="relative hidden w-[44%] shrink-0 flex-col overflow-hidden rounded-l-[26px] bg-gradient-to-br from-[#0B3D73] to-[#002864] px-8 py-[34px] md:flex"
+          >
+            <div className="relative z-20">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-md">
+                  <i className="fa-light fa-signature text-lg text-[#5B5EF7]" />
+                </div>
+                <div>
+                  <span className="text-lg font-bold tracking-tight text-white block leading-none">
+                    Sign Toowix
+                  </span>
+                  <span className="text-[10px] text-white/80 font-medium mt-1 block">
+                    Secure Digital Document Platform
+                  </span>
+                </div>
               </div>
-              <span className="text-2xl font-bold tracking-tight text-primary-content">
-                Sign Toowix
-              </span>
             </div>
 
-            <div className="relative z-10 my-10">
-              <h2 className="text-3xl font-semibold leading-tight text-primary-content lg:text-4xl">
-                Forgot your password?
+            <div className="relative z-20 mt-10 -ml-4">
+              <h2 className="text-xl font-bold leading-snug text-white lg:text-2xl">
+                Forgot Password
               </h2>
-              <p className="mt-3 max-w-sm text-sm text-primary-content/80">
-                No problem - enter your email and we&apos;ll send you a link to
-                reset it.
+              <p className="mt-3 text-sm text-white/90">
+                Enter your email to receive a password reset link.
               </p>
             </div>
 
-            <div className="relative mx-auto mt-4 w-full max-w-[420px]">
-              <span className="op-animate-blob absolute -left-6 top-6 h-20 w-20 rounded-full bg-primary-content/20 blur-xl" />
-              <span className="op-animate-blob absolute -right-4 bottom-4 h-24 w-24 rounded-full bg-primary-content/10 blur-2xl" />
-              <span className="op-animate-float-slow absolute -left-2 top-2 grid h-11 w-11 place-items-center rounded-2xl bg-base-100 shadow-lg">
-                <i className="fa-light fa-key text-lg text-primary" />
-              </span>
-              <span className="op-animate-float-medium absolute right-2 top-14 grid h-11 w-11 place-items-center rounded-2xl bg-base-100 shadow-lg">
-                <i className="fa-light fa-envelope text-lg text-success" />
-              </span>
+            <div className="relative z-20 mx-auto mt-auto w-full max-w-[280px]">
+              <span className="op-animate-blob absolute -left-6 top-6 h-20 w-20 rounded-full bg-white/20 blur-xl" />
+              <span className="op-animate-blob absolute -right-4 bottom-4 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
               <img
                 src={login_img}
-                alt="Illustration of a person at a desk"
-                className="relative z-[1] w-full drop-shadow-2xl"
+                alt="Illustration"
+                className="relative z-[1] w-full drop-shadow-xl"
               />
             </div>
           </div>
         )}
 
-        <div className="flex w-full flex-col justify-center px-6 py-10 sm:px-12 md:w-1/2 lg:px-20">
-          <div className="mx-auto w-full max-w-sm">
+        {/* Right form panel - overlaps the hero panel's right edge with a
+            negative margin + large left corner radius, so the seam reads as
+            one continuous curve instead of a straight line. */}
+        <div className="relative z-20 flex w-full flex-col bg-white px-6 py-10 sm:px-10 md:w-[56%] md:-ml-[30px] md:rounded-[34px_16px_16px_34px] md:px-[46px] md:py-[38px] lg:px-[46px]">
+          {!state.hideNav && (
+            <div className="absolute right-[34px] top-[26px]">
+              <SelectLanguage isProfile isLoginStyle />
+            </div>
+          )}
+          <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-4">
             {state.hideNav && (
               <div className="mb-8 flex items-center gap-2.5">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary shadow-md">
-                  <i className="fa-light fa-signature text-lg text-primary-content" />
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#5B5EF7] shadow-md">
+                  <i className="fa-light fa-signature text-lg text-white" />
                 </div>
-                <span className="text-lg font-bold tracking-tight text-base-content">
-                  Sign Toowix
-                </span>
+                <div>
+                  <span className="text-lg font-bold tracking-tight text-gray-800">
+                    Sign Toowix
+                  </span>
+                </div>
               </div>
             )}
 
             <form onSubmit={handleSubmit}>
-              <h1 className="text-[28px] font-semibold text-base-content">{t("welcome")}</h1>
-              <p className="mt-1 text-xs text-base-content/60">
+              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">{t("welcome")}</h1>
+              <p className="mt-1 text-xs text-gray-400 font-medium">
                 {t("reset-password-alert-3")}
               </p>
 
-              <div className="mt-6">
-                <label className="block text-xs font-medium text-base-content/70">
+              <div className="mt-8">
+                <label className="sr-only">
                   {t("email")}
                 </label>
                 <input
                   type="email"
                   name="email"
-                  className="op-input op-input-bordered mt-1 w-full text-sm focus:outline-none hover:border-base-content"
+                  placeholder={t("email")}
+                  className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-3 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#5B5EF7] focus:outline-none focus:ring-0 transition-colors"
                   value={state.email}
                   onChange={handleChange}
                   onInvalid={(e) =>
@@ -165,13 +180,17 @@ function ForgotPassword() {
                 />
               </div>
 
-              <button type="submit" className="op-btn op-btn-primary mt-6 w-full">
+              <button
+                type="submit"
+                className="mt-8 w-full rounded-full bg-gradient-to-r from-[#7C84FF] to-[#5B5EF7] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#5B5EF7] focus:ring-offset-2"
+              >
                 {t("submit")}
               </button>
+
               <button
                 type="button"
                 onClick={() => navigate("/", { replace: true })}
-                className="op-btn op-btn-ghost mt-2 w-full"
+                className="w-full text-[#5B5EF7] hover:underline text-sm font-semibold transition-colors duration-200 mt-4"
               >
                 {t("login")}
               </button>

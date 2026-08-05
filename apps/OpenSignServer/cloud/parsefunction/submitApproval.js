@@ -20,10 +20,14 @@ function generateParseObjectId() {
 // has to approve it (see approveRequest.js in SuperAdminServer) before a
 // company/database/login actually gets created.
 export default async function submitApproval(request) {
-  const { name, email, phone, companyName, jobTitle, password } = request.params;
+  const { name, email, phone, companyName, jobTitle, password, maxUsers } = request.params;
   if (!name || !email || !companyName || !password) {
     throw new Parse.Error(Parse.Error.VALIDATION_ERROR, 'name, email, companyName and password are all required.');
   }
+  // The registrant picks their own seat count now (the Super Admin only
+  // approves/rejects) - clamp to a sane range so a bad/missing value can't
+  // produce a company provisioned with 0 or an absurd number of seats.
+  const requestedMaxUsers = Math.min(Math.max(parseInt(maxUsers, 10) || 5, 1), 1000);
   if (!process.env.SUPERADMIN_MONGODB_URI) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, 'SUPERADMIN_MONGODB_URI is not configured.');
   }
@@ -56,6 +60,7 @@ export default async function submitApproval(request) {
       companyName,
       jobTitle: jobTitle || '',
       password,
+      maxUsers: requestedMaxUsers,
       status: 'pending',
       createdAt: new Date(),
       updatedAt: new Date(),
