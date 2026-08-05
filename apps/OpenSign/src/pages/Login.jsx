@@ -452,7 +452,7 @@ function Login() {
                     <i className="fa-light fa-signature text-2xl text-primary" />
                   </div>
                   <span className="text-2xl font-bold tracking-tight text-primary-content">
-                    sign.toowix.com
+                    Sign Toowix
                   </span>
                 </div>
 
@@ -496,7 +496,7 @@ function Login() {
                       <i className="fa-light fa-signature text-lg text-primary-content" />
                     </div>
                     <span className="text-lg font-bold tracking-tight text-base-content">
-                      sign.toowix.com
+                      Sign Toowix
                     </span>
                   </div>
                 )}

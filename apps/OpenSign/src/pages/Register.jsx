@@ -73,13 +73,13 @@ function Register() {
               <i className="fa-light fa-signature text-2xl text-primary" />
             </div>
             <span className="text-2xl font-bold tracking-tight text-primary-content">
-              sign.toowix.com
+              Sign Toowix
             </span>
           </div>
 
           <div className="relative z-10 my-10">
             <h2 className="text-3xl font-semibold leading-tight text-primary-content lg:text-4xl">
-              Bring your whole team onto OpenSign.
+              Bring your whole team onto Sign Toowix.
             </h2>
             <p className="mt-3 max-w-sm text-sm text-primary-content/80">
               Register your company - a Super Admin reviews and approves new
@@ -117,7 +117,7 @@ function Register() {
                 <i className="fa-light fa-signature text-lg text-primary-content" />
               </div>
               <span className="text-lg font-bold tracking-tight text-base-content">
-                sign.toowix.com
+                Sign Toowix
               </span>
             </div>
           )}
