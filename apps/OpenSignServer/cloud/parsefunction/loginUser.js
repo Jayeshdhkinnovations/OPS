@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { MongoClient } from 'mongodb';
+import { createAndSendOtp } from '../twoFactorAuth.js';
 
 export default async function loginUser(request) {
   const username = request.params.email;
@@ -11,6 +12,19 @@ export default async function loginUser(request) {
       const user = await Parse.User.logIn(username, password);
       if (user) {
         const _user = user?.toJSON();
+
+        // If this account has 2FA turned on, the password alone isn't
+        // enough - withhold the real session token (never send it to the
+        // client), email a one-time code, and require verifyLoginOtp to
+        // hand back the session before the frontend can proceed.
+        const extUserQuery = new Parse.Query('contracts_Users');
+        extUserQuery.equalTo('UserId', { __type: 'Pointer', className: '_User', objectId: user.id });
+        const extUser = await extUserQuery.first({ useMasterKey: true });
+        if (extUser?.get('TwoFactorEnabled')) {
+          await createAndSendOtp(extUser, 'login', { PendingUserJson: JSON.stringify(_user) });
+          return { requires2fa: true, userId: extUser.id };
+        }
+
         return {
           ..._user,
         };

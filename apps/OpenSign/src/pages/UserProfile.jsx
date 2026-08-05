@@ -54,6 +54,13 @@ function UserProfile() {
   const dpInputRef = useRef(null);
   const [deleteUserRes, setDeleteUserRes] = useState("");
   const [isDelLoader, setIsDelLoader] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(
+    !!extendUser?.[0]?.TwoFactorEnabled
+  );
+  const [is2faOtpModal, setIs2faOtpModal] = useState(false);
+  const [twoFactorOtp, setTwoFactorOtp] = useState("");
+  const [twoFactorLoader, setTwoFactorLoader] = useState(false);
+  const [twoFactorError, setTwoFactorError] = useState("");
   useEffect(() => {
     getUserDetail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -297,6 +304,69 @@ function UserProfile() {
     setDeleteUserRes("");
   };
 
+  // Updates the cached extended-user profile so TwoFactorEnabled stays in
+  // sync without a full page reload (same localStorage shape used elsewhere).
+  const updateCachedTwoFactorFlag = (enabled) => {
+    try {
+      const extData = JSON.parse(localStorage.getItem("Extand_Class"));
+      if (extData?.[0]) {
+        extData[0].TwoFactorEnabled = enabled;
+        localStorage.setItem("Extand_Class", JSON.stringify(extData));
+      }
+    } catch (err) {
+      console.log("err updating cached 2FA flag", err);
+    }
+  };
+
+  const handleToggleTwoFactor = async () => {
+    setTwoFactorError("");
+    if (twoFactorEnabled) {
+      setTwoFactorLoader(true);
+      try {
+        await Parse.Cloud.run("disabletwofactor");
+        setTwoFactorEnabled(false);
+        updateCachedTwoFactorFlag(false);
+      } catch (err) {
+        alert(err.message || t("something-went-wrong-mssg"));
+      } finally {
+        setTwoFactorLoader(false);
+      }
+    } else {
+      setTwoFactorLoader(true);
+      try {
+        await Parse.Cloud.run("sendtwofactorsetupotp");
+        setIs2faOtpModal(true);
+      } catch (err) {
+        alert(err.message || t("something-went-wrong-mssg"));
+      } finally {
+        setTwoFactorLoader(false);
+      }
+    }
+  };
+
+  const handleVerifyTwoFactorOtp = async (e) => {
+    e.preventDefault();
+    setTwoFactorLoader(true);
+    setTwoFactorError("");
+    try {
+      await Parse.Cloud.run("verifytwofactorsetupotp", { otp: twoFactorOtp });
+      setTwoFactorEnabled(true);
+      updateCachedTwoFactorFlag(true);
+      setIs2faOtpModal(false);
+      setTwoFactorOtp("");
+    } catch (err) {
+      setTwoFactorError(err.message || t("something-went-wrong-mssg"));
+    } finally {
+      setTwoFactorLoader(false);
+    }
+  };
+
+  const handleCloseTwoFactorModal = () => {
+    setIs2faOtpModal(false);
+    setTwoFactorOtp("");
+    setTwoFactorError("");
+  };
+
   return (
     <React.Fragment>
       {isLoader ? (
@@ -454,6 +524,18 @@ function UserProfile() {
                   )}
                 </span>
               </li>
+              <li className="flex justify-between items-center border-b-[1px] border-gray-300 py-2 break-all">
+                <span className="font-semibold">
+                  Two-Factor Authentication:
+                </span>{" "}
+                <input
+                  type="checkbox"
+                  className="op-toggle checked:[--tglbg:#3368ff] transition-all checked:text-white"
+                  checked={twoFactorEnabled}
+                  disabled={twoFactorLoader}
+                  onChange={handleToggleTwoFactor}
+                />
+              </li>
               <li
                 className={`flex justify-between items-center border-b-[1px] border-gray-300 break-all ${
                   editmode ? "py-1.5" : "py-2"
@@ -533,6 +615,53 @@ function UserProfile() {
                     </form>
                   )}
                 </>
+              )}
+            </ModalUi>
+          )}
+          {is2faOtpModal && (
+            <ModalUi
+              isOpen
+              title="Enable Two-Factor Authentication"
+              handleClose={handleCloseTwoFactorModal}
+            >
+              {twoFactorLoader ? (
+                <div className="h-[150px] flex justify-center items-center">
+                  <Loader />
+                </div>
+              ) : (
+                <form onSubmit={handleVerifyTwoFactorOtp}>
+                  <div className="px-6 py-3 text-base-content">
+                    <label className="mb-2">
+                      Enter the code sent to your email
+                    </label>
+                    <input
+                      required
+                      type="tel"
+                      pattern="[0-9]{6}"
+                      className="w-full op-input op-input-bordered op-input-sm focus:outline-none hover:border-base-content text-xs"
+                      placeholder="6-digit code"
+                      value={twoFactorOtp}
+                      onChange={(e) => setTwoFactorOtp(e.target.value)}
+                    />
+                    {twoFactorError && (
+                      <p className="text-red-600 text-xs mt-2">
+                        {twoFactorError}
+                      </p>
+                    )}
+                  </div>
+                  <div className="px-6 mb-3">
+                    <button type="submit" className="op-btn op-btn-primary">
+                      {t("verify")}
+                    </button>
+                    <button
+                      type="button"
+                      className="op-btn op-btn-secondary ml-2"
+                      onClick={handleCloseTwoFactorModal}
+                    >
+                      {t("cancel")}
+                    </button>
+                  </div>
+                </form>
               )}
             </ModalUi>
           )}

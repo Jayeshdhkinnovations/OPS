@@ -47,6 +47,10 @@ function Login() {
   const [isModal, setIsModal] = useState(false);
   const [image, setImage] = useState();
   const [errMsg, setErrMsg] = useState();
+  const [otpStep, setOtpStep] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState(null);
+  const [otpValue, setOtpValue] = useState("");
+  const [otpError, setOtpError] = useState("");
   useEffect(() => {
     handleUserExist();
     // eslint-disable-next-line
@@ -130,15 +134,16 @@ function Login() {
         setState({ ...state, loading: false });
         return;
       }
-      // Get extended user data (including 2FA status) using cloud function
-      try {
-        await Parse.User.become(_user.sessionToken);
-        setLocalVar(_user);
-        await continueLoginFlow();
-      } catch (error) {
-        console.error("Error checking 2FA status:", error);
-        showToast("danger", t("something-went-wrong-mssg"));
+      // Password verified, but this account has 2FA on - the server withheld
+      // the real session token and emailed a code instead. Switch to the OTP
+      // step; the session only gets handed over once verifyloginotp confirms it.
+      if (_user.requires2fa) {
+        setPendingUserId(_user.userId);
+        setOtpStep(true);
+        setState({ ...state, loading: false });
+        return;
       }
+      await completeLogin(_user);
     } catch (error) {
       console.error("Error while logging in user", error);
       if (error?.code === 1001) {
@@ -148,6 +153,21 @@ function Login() {
       }
     }
   };
+
+  // Shared by the direct-login success path and the post-OTP path - both end
+  // up with the same `_user` shape (including a real sessionToken) and finish
+  // the same way.
+  const completeLogin = async (_user) => {
+    try {
+      await Parse.User.become(_user.sessionToken);
+      setLocalVar(_user);
+      await continueLoginFlow();
+    } catch (error) {
+      console.error("Error completing login:", error);
+      showToast("danger", t("something-went-wrong-mssg"));
+    }
+  };
+
   const handleLoginBtn = async (event) => {
     event.preventDefault();
     if (!emailRegex.test(state.email)) {
@@ -155,6 +175,32 @@ function Login() {
       return;
     }
     await handleLogin();
+  };
+
+  const handleVerifyOtpBtn = async (event) => {
+    event.preventDefault();
+    setOtpError("");
+    setState({ ...state, loading: true });
+    try {
+      const _user = await Parse.Cloud.run("verifyloginotp", {
+        userId: pendingUserId,
+        otp: otpValue,
+      });
+      setOtpStep(false);
+      setOtpValue("");
+      setPendingUserId(null);
+      await completeLogin(_user);
+    } catch (error) {
+      setState({ ...state, loading: false });
+      setOtpError(error.message || t("invalid-username-password-region"));
+    }
+  };
+
+  const handleCancelOtp = () => {
+    setOtpStep(false);
+    setPendingUserId(null);
+    setOtpValue("");
+    setOtpError("");
   };
 
   const setThirdpartyLoader = (value) => {
@@ -519,6 +565,48 @@ function Login() {
                   </div>
                 )}
 
+                {otpStep ? (
+                <form onSubmit={handleVerifyOtpBtn} aria-label="Two-factor verification form">
+                  <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Enter verification code</h1>
+                  <p className="mt-1 text-xs text-gray-400 font-medium">
+                    We sent a 6-digit code to your email. It expires in 5 minutes.
+                  </p>
+
+                  <div className="mt-8">
+                    <label className="sr-only" htmlFor="otp">One-time code</label>
+                    <input
+                      id="otp"
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]{6}"
+                      placeholder="6-digit code"
+                      className="w-full border-0 border-b border-gray-200 bg-transparent py-3 pl-0.5 pr-8 text-[15px] tracking-[4px] text-gray-800 placeholder:text-gray-400 placeholder:tracking-normal focus:border-[#5B5EF7] focus:outline-none focus:ring-0 transition-colors"
+                      value={otpValue}
+                      onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
+                      required
+                      autoFocus
+                    />
+                    {otpError && (
+                      <p className="mt-2 text-xs text-red-600">{otpError}</p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="mt-6 w-full rounded-full bg-gradient-to-r from-[#7C84FF] to-[#5B5EF7] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#5B5EF7] focus:ring-offset-2"
+                    disabled={state.loading}
+                  >
+                    {state.loading ? t("loading") : t("verify")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelOtp}
+                    className="mt-3 w-full text-center text-xs text-gray-500 hover:underline font-semibold"
+                  >
+                    {t("cancel")}
+                  </button>
+                </form>
+                ) : (
                 <form onSubmit={handleLoginBtn} aria-label="Login Form">
                   <h1 className="text-2xl font-bold text-gray-800 tracking-tight">{t("welcome")}</h1>
                   <p className="mt-1 text-xs text-gray-400 font-medium">{t("Login-to-your-account")}</p>
@@ -605,13 +693,16 @@ function Login() {
                     {state.loading ? t("loading") : "Sign In"}
                   </button>
                 </form>
+                )}
 
+                {!otpStep && (
                 <p className="mt-8 text-center text-xs text-gray-500 font-medium">
                   Don&apos;t have an account?{" "}
                   <NavLink to="/register" className="text-[#5B5EF7] font-bold hover:underline">
                     Create Account
                   </NavLink>
                 </p>
+                )}
               </div>
             </div>
 
