@@ -34,7 +34,6 @@ const UpdateExistUserAdmin = lazyWithRetry(
 );
 const Preferences = lazyWithRetry(() => import("./pages/Preferences"));
 const Login = lazyWithRetry(() => import("./pages/Login"));
-const Landing = lazyWithRetry(() => import("./pages/Landing"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
 const WaitingApproval = lazyWithRetry(() => import("./pages/WaitingApproval"));
 const VerifyDocument = lazyWithRetry(() => import("./pages/VerifyDocument"));
@@ -69,7 +68,7 @@ function App() {
           <Title />
           <Routes>
             <Route element={<ValidateRoute />}>
-              <Route exact path="/" element={<Lazy Page={Landing} />} />
+              <Route exact path="/" element={<Lazy Page={Login} />} />
                   <Route path="/login" element={<Lazy Page={Login} />} />
                   <Route path="/register" element={<Lazy Page={Register} />} />
                   <Route path="/waiting-approval" element={<Lazy Page={WaitingApproval} />} />

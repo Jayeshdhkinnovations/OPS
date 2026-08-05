@@ -227,3 +227,25 @@ body {
     background-color: #4b5563 !important;
   }
 }
+
+/* Login/Register hero-panel floating animation */
+@keyframes op-float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(3deg); }
+}
+@keyframes op-float-medium {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(-4deg); }
+}
+@keyframes op-float-fast {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes op-blob-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.08); opacity: 0.75; }
+}
+.op-animate-float-slow { animation: op-float-slow 5s ease-in-out infinite; }
+.op-animate-float-medium { animation: op-float-medium 4s ease-in-out infinite; }
+.op-animate-float-fast { animation: op-float-fast 3s ease-in-out infinite; }
+.op-animate-blob { animation: op-blob-pulse 6s ease-in-out infinite; }

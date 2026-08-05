@@ -440,113 +440,145 @@ function Login() {
           <div
             aria-labelledby="loginHeading"
             role="region"
-            className="pb-1 md:pb-4 pt-10 md:px-10 lg:px-16 h-full"
+            className="flex min-h-screen w-full bg-base-100"
           >
-            <div className="md:p-4 lg:p-10 p-4 bg-base-100 text-base-content op-card">
-              <div className="w-[250px] h-[66px] inline-block overflow-hidden">
-                {image && (
+            {/* Left hero panel - hidden on small screens, matches the
+                registration page's panel so the two feel like one flow. */}
+            {width >= 768 && (
+              <div className="relative hidden w-1/2 shrink-0 overflow-hidden bg-gradient-to-br from-primary to-primary/70 md:flex md:flex-col md:justify-between md:p-10 lg:p-14">
+                <div className="w-[170px]">
+                  {image && (
+                    <img src={image} className="h-auto w-full object-contain brightness-0 invert" alt="applogo" />
+                  )}
+                </div>
+
+                <div className="relative z-10 my-10">
+                  <h2 className="text-3xl font-semibold leading-tight text-primary-content lg:text-4xl">
+                    Sign documents with confidence, anywhere.
+                  </h2>
+                  <p className="mt-3 max-w-sm text-sm text-primary-content/80">
+                    Secure, legally binding e-signatures - request, sign, and track
+                    documents in minutes.
+                  </p>
+                </div>
+
+                <div className="relative mx-auto mt-4 w-full max-w-[420px]">
+                  <span className="op-animate-blob absolute -left-6 top-6 h-20 w-20 rounded-full bg-primary-content/20 blur-xl" />
+                  <span className="op-animate-blob absolute -right-4 bottom-4 h-24 w-24 rounded-full bg-primary-content/10 blur-2xl" />
+                  <span className="op-animate-float-slow absolute -left-2 top-2 grid h-11 w-11 place-items-center rounded-2xl bg-base-100 shadow-lg">
+                    <i className="fa-light fa-file-signature text-lg text-primary" />
+                  </span>
+                  <span className="op-animate-float-medium absolute right-2 top-14 grid h-11 w-11 place-items-center rounded-2xl bg-base-100 shadow-lg">
+                    <i className="fa-light fa-circle-check text-lg text-success" />
+                  </span>
+                  <span className="op-animate-float-fast absolute -right-4 bottom-10 grid h-11 w-11 place-items-center rounded-2xl bg-base-100 shadow-lg">
+                    <i className="fa-light fa-shield-check text-lg text-primary" />
+                  </span>
                   <img
-                    src={image}
-                    className="object-contain h-full"
-                    alt="applogo"
+                    src={login_img}
+                    alt="Illustration of a person signing documents at a multi-monitor desk"
+                    className="relative z-[1] w-full drop-shadow-2xl"
                   />
-                )}
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2">
-                <div>
-                  <form onSubmit={handleLoginBtn} aria-label="Login Form">
-                    <h1 className="text-[30px] mt-6">{t("welcome")}</h1>
-                    <fieldset>
-                      <legend className="text-[12px] text-[#878787]">
-                        {t("Login-to-your-account")}
-                      </legend>
-                      <div className="w-full px-6 py-3 my-1 op-card bg-base-100 shadow-md outline outline-1 outline-slate-300/50">
-                        <label className="block text-xs" htmlFor="email">
-                          {t("email")}
-                        </label>
+            )}
+
+            {/* Right form panel */}
+            <div className="flex w-full flex-col justify-center px-6 py-10 sm:px-12 md:w-1/2 lg:px-20">
+              <div className="mx-auto w-full max-w-sm">
+                {width < 768 && (
+                  <div className="mb-8 w-[170px]">
+                    {image && <img src={image} className="h-auto w-full object-contain" alt="applogo" />}
+                  </div>
+                )}
+
+                <form onSubmit={handleLoginBtn} aria-label="Login Form">
+                  <h1 className="text-[28px] font-semibold text-base-content">{t("welcome")}</h1>
+                  <p className="mt-1 text-xs text-base-content/60">{t("Login-to-your-account")}</p>
+
+                  <div className="mt-6 flex flex-col gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-base-content/70" htmlFor="email">
+                        {t("email")}
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        className="op-input op-input-bordered mt-1 w-full text-sm focus:outline-none hover:border-base-content"
+                        name="email"
+                        autoComplete="username"
+                        value={state.email}
+                        onChange={handleChange}
+                        required
+                        onInvalid={(e) =>
+                          e.target.setCustomValidity(t("input-required"))
+                        }
+                        onInput={(e) => e.target.setCustomValidity("")}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-base-content/70" htmlFor="password">
+                        {t("password")}
+                      </label>
+                      <div className="relative mt-1">
                         <input
-                          id="email"
-                          type="email"
-                          className="op-input op-input-bordered op-input-sm focus:outline-none hover:border-base-content w-full text-xs"
-                          name="email"
-                          autoComplete="username"
-                          value={state.email}
+                          id="password"
+                          type={state.passwordVisible ? "text" : "password"}
+                          className="op-input op-input-bordered w-full text-sm focus:outline-none hover:border-base-content"
+                          name="password"
+                          value={state.password}
+                          autoComplete="current-password"
                           onChange={handleChange}
-                          required
                           onInvalid={(e) =>
                             e.target.setCustomValidity(t("input-required"))
                           }
                           onInput={(e) => e.target.setCustomValidity("")}
+                          required
                         />
-                        <hr className="my-1 border-none" />
-                            <label className="block text-xs" htmlFor="password">
-                              {t("password")}
-                            </label>
-                            <div className="relative">
-                              <input
-                                id="password"
-                                type={
-                                  state.passwordVisible ? "text" : "password"
-                                }
-                                className="op-input op-input-bordered op-input-sm focus:outline-none hover:border-base-content w-full text-xs"
-                                name="password"
-                                value={state.password}
-                                autoComplete="current-password"
-                                onChange={handleChange}
-                                onInvalid={(e) =>
-                                  e.target.setCustomValidity(
-                                    t("input-required")
-                                  )
-                                }
-                                onInput={(e) => e.target.setCustomValidity("")}
-                                required
-                              />
-                              <span
-                                className="absolute cursor-pointer top-[50%] right-[10px] -translate-y-[50%] text-base-content"
-                                onClick={togglePasswordVisibility}
-                              >
-                                {state.passwordVisible ? (
-                                  <i className="fa-light fa-eye-slash text-xs pb-1" /> // Close eye icon
-                                ) : (
-                                  <i className="fa-light fa-eye text-xs pb-1 " /> // Open eye icon
-                                )}
-                              </span>
-                            </div>
-                          <div className="relative mt-1">
-                            <NavLink
-                              to="/forgetpassword"
-                              className="text-[13px] op-link op-link-primary underline-offset-1 focus:outline-none ml-1"
-                            >
-                              {t("forgot-password")}?
-                            </NavLink>
-                          </div>
+                        <span
+                          className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-base-content/60"
+                          onClick={togglePasswordVisibility}
+                        >
+                          {state.passwordVisible ? (
+                            <i className="fa-light fa-eye-slash text-sm" />
+                          ) : (
+                            <i className="fa-light fa-eye text-sm" />
+                          )}
+                        </span>
                       </div>
-                    </fieldset>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-center text-xs font-bold mt-2">
-                      <button
-                        type="submit"
-                        className="op-btn op-btn-primary"
-                        disabled={state.loading}
-                      >
-                        {state.loading ? t("loading") : t("login")}
-                      </button>
                     </div>
-                  </form>
-                </div>
-                {width >= 768 && (
-                  <div className="place-self-center">
-                    <div className="mx-auto md:w-[300px] lg:w-[400px] xl:w-[500px]">
-                      <img
-                        src={login_img}
-                        alt="The image illustrates a person from behind, seated at a desk with a four-monitor computer setup, in an environment with a light blue and white color scheme, featuring a potted plant to the right."
-                        width="100%"
-                      />
-                    </div>
+
+                    <NavLink
+                      to="/forgetpassword"
+                      className="self-end text-xs op-link op-link-primary underline-offset-2 focus:outline-none"
+                    >
+                      {t("forgot-password")}?
+                    </NavLink>
                   </div>
-                )}
+
+                  <button
+                    type="submit"
+                    className="op-btn op-btn-primary mt-6 w-full"
+                    disabled={state.loading}
+                  >
+                    {state.loading ? t("loading") : t("login")}
+                  </button>
+                </form>
+
+                <p className="mt-6 text-center text-xs text-base-content/60">
+                  Don&apos;t have an account?{" "}
+                  <NavLink to="/register" className="op-link op-link-primary font-medium underline-offset-2">
+                    Register
+                  </NavLink>
+                </p>
+
+                <div className="mt-8">
+                  <SelectLanguage />
+                </div>
               </div>
             </div>
-            <SelectLanguage />
+
             {state.alertMsg && (
               <Alert type={state.alertType}>{state.alertMsg}</Alert>
             )}
