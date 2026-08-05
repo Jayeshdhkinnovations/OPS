@@ -80,69 +80,102 @@ function ForgotPassword() {
       setImage(appInfo?.applogo || undefined);
   };
   return (
-    <div>
+    <div className="flex min-h-screen w-full items-center justify-center bg-base-200 p-4 sm:p-8">
       {isLoading && (
         <div className="fixed w-full h-full flex justify-center items-center bg-black bg-opacity-30 z-50">
           <Loader />
         </div>
       )}
       {toast?.message && <Alert type={toast.type}>{toast.message}</Alert>}
-      <div className="md:p-10 lg:p-16">
-        <div className="md:p-4 lg:p-10 p-4 bg-base-100 text-base-content op-card">
-          <div className="w-[250px] h-[66px] inline-block overflow-hidden">
-            {image && (
-              <img
-                src={image}
-                className="object-contain h-full"
-                alt="applogo"
-              />
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-2">
-            <div>
-              <form onSubmit={handleSubmit}>
-                <h2 className="text-[30px] mt-6">{t("welcome")}</h2>
-                <span className="text-[12px] text-[#878787]">
-                  {t("reset-password-alert-3")}
-                </span>
-                <div className="w-full my-4 op-card bg-base-100 shadow-md outline outline-1 outline-slate-300/50">
-                  <div className="px-6 py-4">
-                    <label className="block text-xs">{t("email")}</label>
-                    <input
-                      type="email"
-                      name="email"
-                      className="op-input op-input-bordered op-input-sm w-full"
-                      value={state.email}
-                      onChange={handleChange}
-                      onInvalid={(e) =>
-                        e.target.setCustomValidity(t("input-required"))
-                      }
-                      onInput={(e) => e.target.setCustomValidity("")}
-                      required
-                    />
-                    <hr className="my-2 border-none" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-center text-xs font-bold">
-                  <button type="submit" className="op-btn op-btn-primary">
-                    {t("submit")}
-                  </button>
-                  <button
-                    onClick={() => navigate("/", { replace: true })}
-                    className="op-btn op-btn-secondary"
-                  >
-                    {t("login")}
-                  </button>
-                </div>
-              </form>
+
+      <div className="flex w-full max-w-5xl overflow-hidden rounded-[2rem] bg-base-100 shadow-xl">
+        {!state.hideNav && (
+          <div className="relative hidden w-1/2 shrink-0 overflow-hidden bg-gradient-to-br from-primary to-primary/70 md:flex md:flex-col md:justify-between md:p-10 lg:p-14">
+            <div className="flex items-center gap-3">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-base-100 shadow-lg">
+                <i className="fa-light fa-signature text-2xl text-primary" />
+              </div>
+              <span className="text-2xl font-bold tracking-tight text-primary-content">
+                sign.toowix.com
+              </span>
             </div>
-            {!state.hideNav && (
-              <div className="self-center">
-                <div className="mx-auto md:w-[300px] lg:w-[500px]">
-                  <img src={login_img} alt="bisec" width="100%" />
+
+            <div className="relative z-10 my-10">
+              <h2 className="text-3xl font-semibold leading-tight text-primary-content lg:text-4xl">
+                Forgot your password?
+              </h2>
+              <p className="mt-3 max-w-sm text-sm text-primary-content/80">
+                No problem - enter your email and we&apos;ll send you a link to
+                reset it.
+              </p>
+            </div>
+
+            <div className="relative mx-auto mt-4 w-full max-w-[420px]">
+              <span className="op-animate-blob absolute -left-6 top-6 h-20 w-20 rounded-full bg-primary-content/20 blur-xl" />
+              <span className="op-animate-blob absolute -right-4 bottom-4 h-24 w-24 rounded-full bg-primary-content/10 blur-2xl" />
+              <span className="op-animate-float-slow absolute -left-2 top-2 grid h-11 w-11 place-items-center rounded-2xl bg-base-100 shadow-lg">
+                <i className="fa-light fa-key text-lg text-primary" />
+              </span>
+              <span className="op-animate-float-medium absolute right-2 top-14 grid h-11 w-11 place-items-center rounded-2xl bg-base-100 shadow-lg">
+                <i className="fa-light fa-envelope text-lg text-success" />
+              </span>
+              <img
+                src={login_img}
+                alt="Illustration of a person at a desk"
+                className="relative z-[1] w-full drop-shadow-2xl"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex w-full flex-col justify-center px-6 py-10 sm:px-12 md:w-1/2 lg:px-20">
+          <div className="mx-auto w-full max-w-sm">
+            {state.hideNav && (
+              <div className="mb-8 flex items-center gap-2.5">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary shadow-md">
+                  <i className="fa-light fa-signature text-lg text-primary-content" />
                 </div>
+                <span className="text-lg font-bold tracking-tight text-base-content">
+                  sign.toowix.com
+                </span>
               </div>
             )}
+
+            <form onSubmit={handleSubmit}>
+              <h1 className="text-[28px] font-semibold text-base-content">{t("welcome")}</h1>
+              <p className="mt-1 text-xs text-base-content/60">
+                {t("reset-password-alert-3")}
+              </p>
+
+              <div className="mt-6">
+                <label className="block text-xs font-medium text-base-content/70">
+                  {t("email")}
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  className="op-input op-input-bordered mt-1 w-full text-sm focus:outline-none hover:border-base-content"
+                  value={state.email}
+                  onChange={handleChange}
+                  onInvalid={(e) =>
+                    e.target.setCustomValidity(t("input-required"))
+                  }
+                  onInput={(e) => e.target.setCustomValidity("")}
+                  required
+                />
+              </div>
+
+              <button type="submit" className="op-btn op-btn-primary mt-6 w-full">
+                {t("submit")}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/", { replace: true })}
+                className="op-btn op-btn-ghost mt-2 w-full"
+              >
+                {t("login")}
+              </button>
+            </form>
           </div>
         </div>
       </div>

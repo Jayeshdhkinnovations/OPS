@@ -57,18 +57,24 @@ function Register() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-base-100">
+    <div className="flex min-h-screen w-full items-center justify-center bg-base-200 p-4 sm:p-8">
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <Loader />
         </div>
       )}
 
+      <div className="flex w-full max-w-5xl overflow-hidden rounded-[2rem] bg-base-100 shadow-xl">
       {/* Left hero panel - same treatment as Login, so the flow feels continuous */}
       {width >= 768 && (
         <div className="relative hidden w-1/2 shrink-0 overflow-hidden bg-gradient-to-br from-primary to-primary/70 md:flex md:flex-col md:justify-between md:p-10 lg:p-14">
-          <div className="w-[170px]">
-            <img src={appInfo.applogo} className="h-auto w-full object-contain brightness-0 invert" alt="applogo" />
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-base-100 shadow-lg">
+              <i className="fa-light fa-signature text-2xl text-primary" />
+            </div>
+            <span className="text-2xl font-bold tracking-tight text-primary-content">
+              sign.toowix.com
+            </span>
           </div>
 
           <div className="relative z-10 my-10">
@@ -106,8 +112,13 @@ function Register() {
       <div className="flex w-full flex-col justify-center overflow-y-auto px-6 py-10 sm:px-12 md:w-1/2 lg:px-20">
         <div className="mx-auto w-full max-w-sm">
           {width < 768 && (
-            <div className="mb-8 w-[170px]">
-              <img src={appInfo.applogo} className="h-auto w-full object-contain" alt="applogo" />
+            <div className="mb-8 flex items-center gap-2.5">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary shadow-md">
+                <i className="fa-light fa-signature text-lg text-primary-content" />
+              </div>
+              <span className="text-lg font-bold tracking-tight text-base-content">
+                sign.toowix.com
+              </span>
             </div>
           )}
 
@@ -166,6 +177,7 @@ function Register() {
             </NavLink>
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

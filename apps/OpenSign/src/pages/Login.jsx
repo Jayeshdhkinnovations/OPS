@@ -440,16 +440,20 @@ function Login() {
           <div
             aria-labelledby="loginHeading"
             role="region"
-            className="flex min-h-screen w-full bg-base-100"
+            className="flex min-h-screen w-full items-center justify-center bg-base-200 p-4 sm:p-8"
           >
+          <div className="flex w-full max-w-5xl overflow-hidden rounded-[2rem] bg-base-100 shadow-xl">
             {/* Left hero panel - hidden on small screens, matches the
                 registration page's panel so the two feel like one flow. */}
             {width >= 768 && (
               <div className="relative hidden w-1/2 shrink-0 overflow-hidden bg-gradient-to-br from-primary to-primary/70 md:flex md:flex-col md:justify-between md:p-10 lg:p-14">
-                <div className="w-[170px]">
-                  {image && (
-                    <img src={image} className="h-auto w-full object-contain brightness-0 invert" alt="applogo" />
-                  )}
+                <div className="flex items-center gap-3">
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-base-100 shadow-lg">
+                    <i className="fa-light fa-signature text-2xl text-primary" />
+                  </div>
+                  <span className="text-2xl font-bold tracking-tight text-primary-content">
+                    sign.toowix.com
+                  </span>
                 </div>
 
                 <div className="relative z-10 my-10">
@@ -487,8 +491,13 @@ function Login() {
             <div className="flex w-full flex-col justify-center px-6 py-10 sm:px-12 md:w-1/2 lg:px-20">
               <div className="mx-auto w-full max-w-sm">
                 {width < 768 && (
-                  <div className="mb-8 w-[170px]">
-                    {image && <img src={image} className="h-auto w-full object-contain" alt="applogo" />}
+                  <div className="mb-8 flex items-center gap-2.5">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary shadow-md">
+                      <i className="fa-light fa-signature text-lg text-primary-content" />
+                    </div>
+                    <span className="text-lg font-bold tracking-tight text-base-content">
+                      sign.toowix.com
+                    </span>
                   </div>
                 )}
 
@@ -574,14 +583,15 @@ function Login() {
                 </p>
 
                 <div className="mt-8">
-                  <SelectLanguage />
+                  <SelectLanguage isProfile />
                 </div>
               </div>
             </div>
+          </div>
 
-            {state.alertMsg && (
-              <Alert type={state.alertType}>{state.alertMsg}</Alert>
-            )}
+          {state.alertMsg && (
+            <Alert type={state.alertType}>{state.alertMsg}</Alert>
+          )}
           </div>
           <ModalUi
             isOpen={isModal}
