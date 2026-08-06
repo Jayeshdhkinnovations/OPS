@@ -395,10 +395,22 @@ function Login() {
         logOutUser();
       }
     } catch (error) {
-      showToast("danger", t("something-went-wrong-mssg"));
       console.log("err", error);
+      // An expired/invalid stored session is an ordinary condition (token
+      // outlived its session, or the account no longer exists) - just clear
+      // it and let the user sign in again. Only surface the scary toast for
+      // genuinely unexpected failures, otherwise every returning visitor
+      // with a stale token gets an error on a page they only wanted to
+      // log in from.
+      const isStaleSession =
+        error?.code === Parse.Error.INVALID_SESSION_TOKEN ||
+        error?.code === Parse.Error.OBJECT_NOT_FOUND;
+      if (!isStaleSession) {
+        showToast("danger", t("something-went-wrong-mssg"));
+      }
       Parse.User.logOut().catch(() => { });
       localStorage.removeItem("accesstoken");
+      setState((s) => ({ ...s, loading: false }));
     }
   };
 
