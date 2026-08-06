@@ -220,16 +220,14 @@ function Register() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1" htmlFor="maxUsers">
-                    Max Users
-                  </label>
+                  <label className="sr-only" htmlFor="maxUsers">Max Users</label>
                   <input
                     id="maxUsers"
                     name="maxUsers"
                     type="number"
                     min="1"
                     max="1000"
-                    placeholder="5"
+                    placeholder="Max Users"
                     required
                     value={form.maxUsers}
                     onChange={handleChange}
