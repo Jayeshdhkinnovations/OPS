@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
-import login_img from "../assets/images/login_img.svg";
+import AuthIllustration from "../components/AuthIllustration";
 import Parse from "parse";
 import Alert from "../primitives/Alert";
 import { appInfo } from "../constant/appinfo";
@@ -12,11 +11,12 @@ import {
 import { useTranslation } from "react-i18next";
 import Loader from "../primitives/Loader";
 import SelectLanguage from "../components/pdf/SelectLanguage";
+import { useAuthNavigate } from "../hook/useAuthNavigate";
 
 function ForgotPassword() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const authNavigate = useAuthNavigate();
   const [state, setState] = useState({ email: "", password: "", hideNav: "" });
   const [toast, setToast] = useState({ type: "", message: "" });
   const [isLoading, setIsLoading] = useState(false);
@@ -89,7 +89,7 @@ function ForgotPassword() {
       )}
       {toast?.message && <Alert type={toast.type}>{toast.message}</Alert>}
 
-      <div className="relative flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
+      <div className="op-auth-card relative flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
         {/* Left hero panel */}
         {!state.hideNav && (
           <div
@@ -98,7 +98,7 @@ function ForgotPassword() {
             <div className="relative z-20">
               <div className="flex items-center gap-3">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-md">
-                  <i className="fa-light fa-signature text-lg text-[#5B5EF7]" />
+                  <i className="fa-light fa-signature text-lg text-[#0B3D73]" />
                 </div>
                 <div>
                   <span className="text-lg font-bold tracking-tight text-white block leading-none">
@@ -123,11 +123,7 @@ function ForgotPassword() {
             <div className="relative z-20 mx-auto mt-auto w-full max-w-[280px]">
               <span className="op-animate-blob absolute -left-6 top-6 h-20 w-20 rounded-full bg-white/20 blur-xl" />
               <span className="op-animate-blob absolute -right-4 bottom-4 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
-              <img
-                src={login_img}
-                alt="Illustration"
-                className="relative z-[1] w-full drop-shadow-xl"
-              />
+              <AuthIllustration className="relative z-[1] w-full drop-shadow-xl" />
             </div>
           </div>
         )}
@@ -144,7 +140,7 @@ function ForgotPassword() {
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-4">
             {state.hideNav && (
               <div className="mb-8 flex items-center gap-2.5">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#5B5EF7] shadow-md">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#0B3D73] shadow-md">
                   <i className="fa-light fa-signature text-lg text-white" />
                 </div>
                 <div>
@@ -156,12 +152,12 @@ function ForgotPassword() {
             )}
 
             <form onSubmit={handleSubmit}>
-              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">{t("welcome")}</h1>
-              <p className="mt-1 text-xs text-gray-400 font-medium">
+              <h1 className="op-stagger-item text-2xl font-bold text-gray-800 tracking-tight" style={{ animationDelay: "0ms" }}>{t("welcome")}</h1>
+              <p className="op-stagger-item mt-1 text-xs text-gray-400 font-medium" style={{ animationDelay: "40ms" }}>
                 {t("reset-password-alert-3")}
               </p>
 
-              <div className="mt-8">
+              <div className="op-stagger-item mt-8" style={{ animationDelay: "90ms" }}>
                 <label className="sr-only">
                   {t("email")}
                 </label>
@@ -169,7 +165,7 @@ function ForgotPassword() {
                   type="email"
                   name="email"
                   placeholder={t("email")}
-                  className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-3 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#5B5EF7] focus:outline-none focus:ring-0 transition-colors"
+                  className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-3 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
                   value={state.email}
                   onChange={handleChange}
                   onInvalid={(e) =>
@@ -182,15 +178,17 @@ function ForgotPassword() {
 
               <button
                 type="submit"
-                className="mt-8 w-full rounded-full bg-gradient-to-r from-[#7C84FF] to-[#5B5EF7] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#5B5EF7] focus:ring-offset-2"
+                className="op-stagger-item mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                style={{ animationDelay: "140ms" }}
               >
                 {t("submit")}
               </button>
 
               <button
                 type="button"
-                onClick={() => navigate("/", { replace: true })}
-                className="w-full text-[#5B5EF7] hover:underline text-sm font-semibold transition-colors duration-200 mt-4"
+                onClick={() => authNavigate("/", { replace: true })}
+                className="op-stagger-item w-full text-[#0B3D73] hover:underline text-sm font-semibold transition-colors duration-200 mt-4"
+                style={{ animationDelay: "180ms" }}
               >
                 {t("login")}
               </button>

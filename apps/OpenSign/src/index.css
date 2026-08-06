@@ -249,3 +249,64 @@ body {
 .op-animate-float-medium { animation: op-float-medium 4s ease-in-out infinite; }
 .op-animate-float-fast { animation: op-float-fast 3s ease-in-out infinite; }
 .op-animate-blob { animation: op-blob-pulse 6s ease-in-out infinite; }
+
+/* ---------------------------------------------------------------------
+   Auth flow (Login/Register/Forgot Password) page transitions.
+   Two layers:
+   1. Cross-page navigation crossfade+slide, via the native View Transitions
+      API (see useAuthNavigate.js) - browsers without support just navigate
+      instantly, no broken states.
+   2. Per-page entrance: the card fades/slides/scales in on mount, and its
+      form fields cascade in with a short stagger (op-stagger-item).
+   No layout/spacing/color is touched - animation-only, additive classes. */
+@keyframes op-auth-card-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes op-auth-item-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.op-auth-card {
+  animation: op-auth-card-in 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.op-stagger-item {
+  opacity: 0;
+  animation: op-auth-item-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .op-auth-card,
+  .op-stagger-item {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Page transition, tuned for calm/premium rather than showy: a flat
+   fade + very slight scale, no rotation/perspective (that's what reads as
+   "eyes panning" - any 3D tilt of the whole viewport is disorienting no
+   matter how small). This is the same family of transition Linear/Vercel/
+   Stripe use - short, GPU-only opacity+scale, nothing that fights your eyes
+   for depth. */
+html.op-auth-transition::view-transition-old(root),
+html.op-auth-transition::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  mix-blend-mode: normal;
+}
+html.op-auth-transition::view-transition-old(root) {
+  animation-name: op-auth-fade-out;
+}
+html.op-auth-transition::view-transition-new(root) {
+  animation-name: op-auth-fade-in;
+}
+@keyframes op-auth-fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.99); }
+}
+@keyframes op-auth-fade-in {
+  from { opacity: 0; transform: scale(1.01); }
+  to { opacity: 1; transform: scale(1); }
+}

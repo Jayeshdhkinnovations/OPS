@@ -3,7 +3,7 @@ import Parse from "parse";
 import { useDispatch } from "react-redux";
 import axios from "axios";
 import { NavLink, useNavigate, useLocation } from "react-router";
-import login_img from "../assets/images/login_img.svg";
+import AuthIllustration from "../components/AuthIllustration";
 import { useWindowSize } from "../hook/useWindowSize";
 import ModalUi from "../primitives/ModalUi";
 import {
@@ -21,12 +21,14 @@ import {
 import Loader from "../primitives/Loader";
 import { useTranslation } from "react-i18next";
 import SelectLanguage from "../components/pdf/SelectLanguage";
+import { useAuthNavigate } from "../hook/useAuthNavigate";
 
 function Login() {
   const appName =
     "OpenSign™";
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const authNavigate = useAuthNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const { width } = useWindowSize();
@@ -489,7 +491,7 @@ function Login() {
           role="region"
           className="flex min-h-screen w-full items-center justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8"
         >
-          <div className="relative flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
+          <div className="op-auth-card relative flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
             {/* Left hero panel */}
             {width >= 768 && (
               <div
@@ -501,7 +503,7 @@ function Login() {
                       {image ? (
                         <img src={image} alt="Logo" className="h-6 w-6 object-contain" />
                       ) : (
-                        <i className="fa-light fa-signature text-lg text-[#5B5EF7]" />
+                        <i className="fa-light fa-signature text-lg text-[#0B3D73]" />
                       )}
                     </div>
                     <div>
@@ -527,11 +529,7 @@ function Login() {
                 <div className="relative z-20 mx-auto mt-auto w-full max-w-[280px]">
                   <span className="op-animate-blob absolute -left-6 top-6 h-20 w-20 rounded-full bg-white/20 blur-xl" />
                   <span className="op-animate-blob absolute -right-4 bottom-4 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
-                  <img
-                    src={login_img}
-                    alt="Illustration"
-                    className="relative z-[1] w-full drop-shadow-xl"
-                  />
+                  <AuthIllustration className="relative z-[1] w-full drop-shadow-xl" />
                 </div>
               </div>
             )}
@@ -550,7 +548,7 @@ function Login() {
               <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-4">
                 {width < 768 && (
                   <div className="mb-8 flex items-center gap-2.5">
-                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#5B5EF7] shadow-md">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#0B3D73] shadow-md">
                       {image ? (
                         <img src={image} alt="Logo" className="h-6 w-6 object-contain filter invert" />
                       ) : (
@@ -567,12 +565,12 @@ function Login() {
 
                 {otpStep ? (
                 <form onSubmit={handleVerifyOtpBtn} aria-label="Two-factor verification form">
-                  <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Enter verification code</h1>
-                  <p className="mt-1 text-xs text-gray-400 font-medium">
+                  <h1 className="op-stagger-item text-2xl font-bold text-gray-800 tracking-tight" style={{ animationDelay: "0ms" }}>Enter verification code</h1>
+                  <p className="op-stagger-item mt-1 text-xs text-gray-400 font-medium" style={{ animationDelay: "40ms" }}>
                     We sent a 6-digit code to your email. It expires in 5 minutes.
                   </p>
 
-                  <div className="mt-8">
+                  <div className="op-stagger-item mt-8" style={{ animationDelay: "90ms" }}>
                     <label className="sr-only" htmlFor="otp">One-time code</label>
                     <input
                       id="otp"
@@ -580,7 +578,7 @@ function Login() {
                       inputMode="numeric"
                       pattern="[0-9]{6}"
                       placeholder="6-digit code"
-                      className="w-full border-0 border-b border-gray-200 bg-transparent py-3 pl-0.5 pr-8 text-[15px] tracking-[4px] text-gray-800 placeholder:text-gray-400 placeholder:tracking-normal focus:border-[#5B5EF7] focus:outline-none focus:ring-0 transition-colors"
+                      className="w-full border-0 border-b border-gray-200 bg-transparent py-3 pl-0.5 pr-8 text-[15px] tracking-[4px] text-gray-800 placeholder:text-gray-400 placeholder:tracking-normal focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
                       value={otpValue}
                       onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
                       required
@@ -593,7 +591,8 @@ function Login() {
 
                   <button
                     type="submit"
-                    className="mt-6 w-full rounded-full bg-gradient-to-r from-[#7C84FF] to-[#5B5EF7] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#5B5EF7] focus:ring-offset-2"
+                    className="op-stagger-item mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                    style={{ animationDelay: "140ms" }}
                     disabled={state.loading}
                   >
                     {state.loading ? t("loading") : t("verify")}
@@ -601,18 +600,19 @@ function Login() {
                   <button
                     type="button"
                     onClick={handleCancelOtp}
-                    className="mt-3 w-full text-center text-xs text-gray-500 hover:underline font-semibold"
+                    className="op-stagger-item mt-3 w-full text-center text-xs text-gray-500 hover:underline font-semibold"
+                    style={{ animationDelay: "180ms" }}
                   >
                     {t("cancel")}
                   </button>
                 </form>
                 ) : (
                 <form onSubmit={handleLoginBtn} aria-label="Login Form">
-                  <h1 className="text-2xl font-bold text-gray-800 tracking-tight">{t("welcome")}</h1>
-                  <p className="mt-1 text-xs text-gray-400 font-medium">{t("Login-to-your-account")}</p>
+                  <h1 className="op-stagger-item text-2xl font-bold text-gray-800 tracking-tight" style={{ animationDelay: "0ms" }}>{t("welcome")}</h1>
+                  <p className="op-stagger-item mt-1 text-xs text-gray-400 font-medium" style={{ animationDelay: "40ms" }}>{t("Login-to-your-account")}</p>
 
                   <div className="mt-8 flex flex-col gap-5">
-                    <div>
+                    <div className="op-stagger-item" style={{ animationDelay: "90ms" }}>
                       <label className="sr-only" htmlFor="email">
                         {t("email")}
                       </label>
@@ -620,7 +620,7 @@ function Login() {
                         id="email"
                         type="email"
                         placeholder="Email Address"
-                        className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-3 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#5B5EF7] focus:outline-none focus:ring-0 transition-colors"
+                        className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-3 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
                         name="email"
                         autoComplete="username"
                         value={state.email}
@@ -633,7 +633,7 @@ function Login() {
                       />
                     </div>
 
-                    <div>
+                    <div className="op-stagger-item" style={{ animationDelay: "140ms" }}>
                       <label className="sr-only" htmlFor="password">
                         {t("password")}
                       </label>
@@ -642,7 +642,7 @@ function Login() {
                           id="password"
                           type={state.passwordVisible ? "text" : "password"}
                           placeholder="Password"
-                          className="w-full border-0 border-b border-gray-200 bg-transparent py-3 pl-0.5 pr-8 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#5B5EF7] focus:outline-none focus:ring-0 transition-colors"
+                          className="w-full border-0 border-b border-gray-200 bg-transparent py-3 pl-0.5 pr-8 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
                           name="password"
                           value={state.password}
                           autoComplete="current-password"
@@ -666,11 +666,11 @@ function Login() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between mt-2">
+                    <div className="op-stagger-item flex items-center justify-between mt-2" style={{ animationDelay: "190ms" }}>
                       <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-500 font-semibold select-none">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 text-[#5B5EF7] border-gray-300 rounded focus:ring-[#5B5EF7] accent-[#5B5EF7]"
+                          className="w-4 h-4 text-[#0B3D73] border-gray-300 rounded focus:ring-[#0B3D73] accent-[#0B3D73]"
                           checked={state.rememberMe}
                           onChange={(e) => setState({ ...state, rememberMe: e.target.checked })}
                         />
@@ -678,7 +678,11 @@ function Login() {
                       </label>
                       <NavLink
                         to="/forgetpassword"
-                        className="text-xs text-[#5B5EF7] hover:underline font-semibold focus:outline-none"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          authNavigate("/forgetpassword");
+                        }}
+                        className="text-xs text-[#0B3D73] hover:underline font-semibold focus:outline-none"
                       >
                         {t("forgot-password")}?
                       </NavLink>
@@ -687,7 +691,8 @@ function Login() {
 
                   <button
                     type="submit"
-                    className="mt-6 w-full rounded-full bg-gradient-to-r from-[#7C84FF] to-[#5B5EF7] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#5B5EF7] focus:ring-offset-2"
+                    className="op-stagger-item mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                    style={{ animationDelay: "240ms" }}
                     disabled={state.loading}
                   >
                     {state.loading ? t("loading") : "Sign In"}
@@ -696,9 +701,16 @@ function Login() {
                 )}
 
                 {!otpStep && (
-                <p className="mt-8 text-center text-xs text-gray-500 font-medium">
+                <p className="op-stagger-item mt-8 text-center text-xs text-gray-500 font-medium" style={{ animationDelay: "280ms" }}>
                   Don&apos;t have an account?{" "}
-                  <NavLink to="/register" className="text-[#5B5EF7] font-bold hover:underline">
+                  <NavLink
+                    to="/register"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      authNavigate("/register");
+                    }}
+                    className="text-[#0B3D73] font-bold hover:underline"
+                  >
                     Create Account
                   </NavLink>
                 </p>
