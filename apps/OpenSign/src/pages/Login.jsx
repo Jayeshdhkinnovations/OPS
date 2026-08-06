@@ -120,13 +120,25 @@ function Login() {
     setState({ ...state, [name]: value });
   };
 
-  const handleLogin = async (
-  ) => {
+  // `isRetry` is set only by the tenant_redirect path below, which has
+  // already pointed Parse.serverURL at the right company mount - resetting
+  // to root there would loop forever.
+  const handleLogin = async (isRetry = false) => {
     const email = state?.email
     const password = state?.password
 
     if (!email || !password) {
       return;
+    }
+    if (!isRetry) {
+      // Always start a fresh attempt at the root /app mount. A previous
+      // session can leave a tenant-specific baseUrl (/app/<subdomain>/) in
+      // localStorage; starting from that skips the tenant lookup entirely,
+      // so signing in as a user from a *different* company always failed.
+      const baseUrl = localStorage.getItem("baseUrl");
+      if (baseUrl) {
+        Parse.serverURL = `${baseUrl.replace(/\/app(\/.*)?\/?$/, "")}/app/`;
+      }
     }
     localStorage.removeItem("accesstoken");
     await Parse.User.logOut().catch(() => { });
@@ -135,15 +147,18 @@ function Login() {
       localStorage.setItem("appLogo", appInfo.applogo);
       const _user = await Parse.Cloud.run("loginuser", { email, password });
       if (_user && _user.error === "tenant_redirect" && _user.subdomain) {
-        // Automatically route to the company-specific backend path
+        // Automatically route to the company-specific backend path.
+        // Strip any existing /app or /app/<tenant> suffix first - matching
+        // only a trailing /app meant a second redirect compounded into
+        // /app/x/app/x/, which 404s and sticks around in localStorage.
         const currentBaseUrl = localStorage.getItem("baseUrl") || "";
-        const cleanBaseUrl = currentBaseUrl.replace(/\/app\/?$/, "");
-        const newBaseUrl = `${cleanBaseUrl.replace(/\/$/, "")}/app/${_user.subdomain}/`;
+        const origin = currentBaseUrl.replace(/\/app(\/.*)?\/?$/, "");
+        const newBaseUrl = `${origin}/app/${_user.subdomain}/`;
         localStorage.setItem("baseUrl", newBaseUrl);
         Parse.serverURL = newBaseUrl;
 
         // Retry login against the dynamic tenant instance
-        return handleLogin();
+        return handleLogin(true);
       }
       if (!_user) {
         setState({ ...state, loading: false });
@@ -176,6 +191,10 @@ function Login() {
   // the same way.
   const completeLogin = async (_user) => {
     try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      if (baseUrl) {
+        Parse.serverURL = baseUrl;
+      }
       await Parse.User.become(_user.sessionToken);
       setLocalVar(_user);
       await continueLoginFlow();
@@ -198,6 +217,10 @@ function Login() {
     event.preventDefault();
     setOtpError("");
     setState({ ...state, loading: true });
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (baseUrl) {
+      Parse.serverURL = baseUrl;
+    }
     try {
       const _user = await Parse.Cloud.run("verifyloginotp", {
         userId: pendingUserId,
@@ -216,6 +239,10 @@ function Login() {
   const handleResendOtp = async () => {
     setOtpResending(true);
     setOtpError("");
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (baseUrl) {
+      Parse.serverURL = baseUrl;
+    }
     try {
       // loginuser re-runs the password check and (since 2FA is still on)
       // generates+emails a brand new code, overwriting the old one server-side.
@@ -453,6 +480,10 @@ function Login() {
 
   const continueLoginFlow = async () => {
     try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      if (baseUrl) {
+        Parse.serverURL = baseUrl;
+      }
       const userSettings = appInfo.settings;
       const extUser = await Parse.Cloud.run("getUserDetails");
       if (extUser) {

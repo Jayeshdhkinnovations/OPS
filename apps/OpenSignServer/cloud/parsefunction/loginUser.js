@@ -70,9 +70,15 @@ export default async function loginUser(request) {
               .collection('_User')
               .findOne({ $or: [{ username: username }, { email: username }] }, { projection: { _id: 1 } });
             if (match) {
+              console.log(`TENANT LOOKUP: matched "${username}" in ${company.databaseName}`);
               return { error: 'tenant_redirect', subdomain: company.subdomain };
             }
           }
+          console.log(
+            `TENANT LOOKUP: no company owns "${username}" (scanned ${companies.length}: ${companies
+              .map(c => c.databaseName)
+              .join(', ')})`
+          );
         } catch (superAdminErr) {
           console.error('Error querying SuperAdmin for tenant redirect:', superAdminErr);
         } finally {
