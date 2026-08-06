@@ -53,6 +53,19 @@ function Login() {
   const [pendingUserId, setPendingUserId] = useState(null);
   const [otpValue, setOtpValue] = useState("");
   const [otpError, setOtpError] = useState("");
+  const [otpSecondsLeft, setOtpSecondsLeft] = useState(0);
+  const [otpResending, setOtpResending] = useState(false);
+
+  // Countdown matches the backend's 5-minute OTP expiry (see
+  // twoFactorAuth.js OTP_TTL_MS) - purely a UI clock, the server is still
+  // the source of truth on whether a code is actually still valid.
+  useEffect(() => {
+    if (!otpStep || otpSecondsLeft <= 0) return;
+    const timer = setInterval(() => {
+      setOtpSecondsLeft((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpStep, otpSecondsLeft > 0]);
   useEffect(() => {
     handleUserExist();
     // eslint-disable-next-line
@@ -142,6 +155,8 @@ function Login() {
       if (_user.requires2fa) {
         setPendingUserId(_user.userId);
         setOtpStep(true);
+        setOtpSecondsLeft(300);
+        setOtpError("");
         setState({ ...state, loading: false });
         return;
       }
@@ -198,9 +213,32 @@ function Login() {
     }
   };
 
+  const handleResendOtp = async () => {
+    setOtpResending(true);
+    setOtpError("");
+    try {
+      // loginuser re-runs the password check and (since 2FA is still on)
+      // generates+emails a brand new code, overwriting the old one server-side.
+      const _user = await Parse.Cloud.run("loginuser", {
+        email: state.email,
+        password: state.password,
+      });
+      if (_user?.requires2fa) {
+        setPendingUserId(_user.userId);
+        setOtpValue("");
+        setOtpSecondsLeft(300);
+      }
+    } catch (error) {
+      setOtpError(error.message || t("something-went-wrong-mssg"));
+    } finally {
+      setOtpResending(false);
+    }
+  };
+
   const handleCancelOtp = () => {
     setOtpStep(false);
     setPendingUserId(null);
+    setOtpSecondsLeft(0);
     setOtpValue("");
     setOtpError("");
   };
@@ -587,13 +625,28 @@ function Login() {
                     {otpError && (
                       <p className="mt-2 text-xs text-red-600">{otpError}</p>
                     )}
+                    <div className="mt-3 flex items-center justify-between text-xs">
+                      <span className={otpSecondsLeft > 0 ? "text-gray-400" : "text-red-600 font-semibold"}>
+                        {otpSecondsLeft > 0
+                          ? `Code expires in ${String(Math.floor(otpSecondsLeft / 60)).padStart(1, "0")}:${String(otpSecondsLeft % 60).padStart(2, "0")}`
+                          : "Code expired"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={otpResending || otpSecondsLeft > 0}
+                        className="font-semibold text-[#0B3D73] hover:underline disabled:text-gray-300 disabled:no-underline disabled:cursor-not-allowed"
+                      >
+                        {otpResending ? "Resending..." : "Resend code"}
+                      </button>
+                    </div>
                   </div>
 
                   <button
                     type="submit"
-                    className="op-stagger-item mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                    className="op-stagger-item mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2 disabled:opacity-60"
                     style={{ animationDelay: "140ms" }}
-                    disabled={state.loading}
+                    disabled={state.loading || otpSecondsLeft <= 0}
                   >
                     {state.loading ? t("loading") : t("verify")}
                   </button>
@@ -691,7 +744,7 @@ function Login() {
 
                   <button
                     type="submit"
-                    className="op-stagger-item mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                    className="op-stagger-item mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
                     style={{ animationDelay: "240ms" }}
                     disabled={state.loading}
                   >

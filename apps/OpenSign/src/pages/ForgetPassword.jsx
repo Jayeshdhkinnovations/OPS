@@ -178,7 +178,7 @@ function ForgotPassword() {
 
               <button
                 type="submit"
-                className="op-stagger-item mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white shadow-[0_12px_22px_-8px_rgba(91,94,247,0.7)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_16px_26px_-8px_rgba(91,94,247,0.8)] active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                className="op-stagger-item mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
                 style={{ animationDelay: "140ms" }}
               >
                 {t("submit")}
