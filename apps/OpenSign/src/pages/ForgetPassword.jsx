@@ -48,7 +48,13 @@ function ForgotPassword() {
       if (state.email) {
         const username = state.email;
         try {
-          await Parse.User.requestPasswordReset(username);
+          // Not Parse.User.requestPasswordReset: this page runs on the
+          // shared login origin, whose database holds no accounts - every
+          // user lives in their own company's database. That call therefore
+          // found nobody and silently sent nothing. This cloud function
+          // locates the company owning the address and has that company's
+          // server send the mail, so the reset link points at the right one.
+          await Parse.Cloud.run("requestpasswordreset", { email: username });
           setToast({ type: "success", message: t("reset-password-alert-1") });
         } catch (err) {
           console.log("err ", err.code);

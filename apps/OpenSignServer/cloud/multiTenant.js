@@ -26,6 +26,14 @@ const CONTAINER_PREFIX = 'opensign-';
 const IMAGE = process.env.COMPANY_IMAGE || 'opensign-app';
 const DOCKER_NETWORK = process.env.DOCKER_NETWORK || 'appnet';
 
+// Internal hostname of a company's container, for server-side calls that
+// need to reach one directly (e.g. password reset, which has to run
+// against the company that actually owns the account).
+export function getCompanyHost(slug) {
+  const route = companyRoutes.get(slug);
+  return route ? { host: route.host, port: route.port } : null;
+}
+
 export function isMounted(slug) {
   return companyRoutes.has(slug);
 }

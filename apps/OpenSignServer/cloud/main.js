@@ -58,6 +58,7 @@ import saveAsTemplate from './parsefunction/saveAsTemplate.js';
 import updateTenant from './parsefunction/updateTenant.js';
 import recreateDocument from './parsefunction/recreateDocument.js';
 import loginUser from './parsefunction/loginUser.js';
+import requestPasswordResetForTenant from './parsefunction/requestPasswordReset.js';
 import submitApproval from './parsefunction/submitApproval.js';
 import checkApprovalStatus from './parsefunction/checkApprovalStatus.js';
 import addUser from './parsefunction/addUser.js';
@@ -140,6 +141,7 @@ export default function registerCloudCode() {
   Parse.Cloud.define('updatetenant', updateTenant);
   Parse.Cloud.define('recreatedoc', recreateDocument);
   Parse.Cloud.define('loginuser', loginUser);
+  Parse.Cloud.define('requestpasswordreset', requestPasswordResetForTenant);
   Parse.Cloud.define('submitapproval', submitApproval);
   Parse.Cloud.define('checkapprovalstatus', checkApprovalStatus);
   Parse.Cloud.define('adduser', addUser);
