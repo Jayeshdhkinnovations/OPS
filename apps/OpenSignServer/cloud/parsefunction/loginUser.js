@@ -1,37 +1,89 @@
 import crypto from 'node:crypto';
+import axios from 'axios';
 import { MongoClient } from 'mongodb';
 import { createAndSendOtp } from '../twoFactorAuth.js';
+import { serverAppId } from '../../Utils.js';
+
+// Parse's SDK globals (Parse.serverURL / Parse.applicationId) are set by
+// ParseServer's constructor - process-wide, not per instance. With one
+// instance per company in a single process, the LAST company mounted wins,
+// so a bare `Parse.User.logIn()` inside cloud code authenticates against
+// whichever company happened to mount last rather than the one that
+// actually received the request. That silently fails every login for
+// everyone else ("user is in the database but can't log in").
+//
+// So resolve the mount from the request path and talk to that mount's own
+// REST endpoint explicitly. Deterministic, and immune to the global-state
+// race that mutating Parse.serverURL per request would introduce.
+function resolveMount(request) {
+  const originalPath = request.headers?.['x-original-path'] || '';
+  const match = originalPath.match(/^\/app\/([^/?]+)\//);
+  const segment = match?.[1];
+  // /app/functions/... is the root instance; /app/<slug>/functions/... is a company.
+  const isCompanyMount = segment && segment !== 'functions' && segment !== 'login';
+  const port = process.env.PORT || 8081;
+  return isCompanyMount
+    ? { baseUrl: `http://127.0.0.1:${port}/app/${segment}`, appId: `opensign_${segment}` }
+    : { baseUrl: `http://127.0.0.1:${port}/app`, appId: serverAppId };
+}
 
 export default async function loginUser(request) {
   const username = request.params.email;
   const password = request.params.password;
 
   if (username && password) {
+    const mount = resolveMount(request);
     try {
-      // 1. Try to log in locally first (works for company-specific mounts or single-tenant default)
-      const user = await Parse.User.logIn(username, password);
-      if (user) {
-        const _user = user?.toJSON();
-
+      // 1. Authenticate against the mount that actually received this
+      //    request (see resolveMount above for why this isn't Parse.User.logIn).
+      const loginRes = await axios.post(
+        `${mount.baseUrl}/login`,
+        { username, password },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Parse-Application-Id': mount.appId,
+            'X-Parse-Master-Key': process.env.MASTER_KEY,
+          },
+        }
+      );
+      const _user = loginRes.data;
+      if (_user?.objectId) {
         // If this account has 2FA turned on, the password alone isn't
         // enough - withhold the real session token (never send it to the
         // client), email a one-time code, and require verifyLoginOtp to
         // hand back the session before the frontend can proceed.
-        const extUserQuery = new Parse.Query('contracts_Users');
-        extUserQuery.equalTo('UserId', { __type: 'Pointer', className: '_User', objectId: user.id });
-        const extUser = await extUserQuery.first({ useMasterKey: true });
-        if (extUser?.get('TwoFactorEnabled')) {
-          await createAndSendOtp(extUser, 'login', { PendingUserJson: JSON.stringify(_user) });
-          return { requires2fa: true, userId: extUser.id };
+        const extRes = await axios.get(`${mount.baseUrl}/classes/contracts_Users`, {
+          params: {
+            where: JSON.stringify({
+              UserId: { __type: 'Pointer', className: '_User', objectId: _user.objectId },
+            }),
+            limit: 1,
+          },
+          headers: {
+            'X-Parse-Application-Id': mount.appId,
+            'X-Parse-Master-Key': process.env.MASTER_KEY,
+          },
+        });
+        const extUser = extRes.data?.results?.[0];
+        if (extUser?.TwoFactorEnabled) {
+          await createAndSendOtp(
+            { id: extUser.objectId, get: field => extUser[field] },
+            'login',
+            { PendingUserJson: JSON.stringify(_user) }
+          );
+          return { requires2fa: true, userId: extUser.objectId };
         }
 
-        return {
-          ..._user,
-        };
-      } else {
-        throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'user not found.');
+        return { ..._user };
       }
-    } catch (err) {
+      throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'user not found.');
+    } catch (rawErr) {
+      // Normalize an axios failure back into the ParseError the frontend expects.
+      const parseBody = rawErr?.response?.data;
+      const err = parseBody?.code
+        ? new Parse.Error(parseBody.code, parseBody.error || 'Invalid username/password.')
+        : rawErr;
       // 2. If login fails, check if we are on the root instance and if this email belongs to a dynamic company
       const originalPath = request.headers ? request.headers['x-original-path'] : '';
       const isRootInstance = !originalPath || originalPath.startsWith('/app/functions') || originalPath.startsWith('/app/login') || originalPath === '/app' || originalPath === '/app/';
