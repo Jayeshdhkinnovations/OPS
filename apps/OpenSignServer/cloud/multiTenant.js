@@ -93,32 +93,29 @@ export async function mountCompany({ slug, databaseName }, app, sharedParts) {
   app.use(`/app/${slug}`, (req, res, next) => {
     if (removedSlugs.has(slug)) return res.status(404).json({ error: 'Company not found' });
     const tenantAppId = `opensign_${slug}`;
-    // Parse only reads _SessionToken/_MasterKey/_InstallationId out of the
-    // body when the request carries NO recognised appId header (see
-    // middlewares.js: `if (!info.appId || !AppCache.get(info.appId))`).
-    // The Parse JS SDK sends all of those in the body, so simply setting
-    // the header here would push Parse down the header branch and silently
-    // drop the session token - every authenticated tenant request then
-    // fails as "Invalid session token". Promote the body's auth fields to
-    // headers first so nothing is lost, then rewrite the appId.
-    if (req.body && typeof req.body === 'object') {
-      if (req.body._SessionToken && !req.headers['x-parse-session-token']) {
-        req.headers['x-parse-session-token'] = req.body._SessionToken;
-      }
-      if (req.body._MasterKey && !req.headers['x-parse-master-key']) {
-        req.headers['x-parse-master-key'] = req.body._MasterKey;
-      }
-      if (req.body._InstallationId && !req.headers['x-parse-installation-id']) {
-        req.headers['x-parse-installation-id'] = req.body._InstallationId;
-      }
-      if (req.body._JavaScriptKey && !req.headers['x-parse-javascript-key']) {
-        req.headers['x-parse-javascript-key'] = req.body._JavaScriptKey;
-      }
-      if (req.body._ApplicationId) {
-        req.body._ApplicationId = tenantAppId;
-      }
+    // Two client shapes reach here and they must be handled differently.
+    //
+    // The Parse JS SDK puts everything - appId, session token, master key,
+    // client version - in the request BODY. Parse only reads those when no
+    // recognised appId header is present (middlewares.js:
+    // `if (!info.appId || !AppCache.get(info.appId))`), and that same branch
+    // is what strips them back out of the body afterwards. So for these we
+    // rewrite the body's appId and clear any appId header, letting Parse's
+    // own branch do the reading and the stripping. Forcing the header
+    // instead sent Parse down the header branch, which neither read the
+    // session token nor removed _ApplicationId from the body - the leftover
+    // key then surfaced as "Invalid parameter for query: _ApplicationId".
+    //
+    // Header-style callers (curl, our own internal axios calls) carry no
+    // body params, so for them we just rewrite the header.
+    const bodyHasAppId =
+      req.body && typeof req.body === 'object' && req.body._ApplicationId;
+    if (bodyHasAppId) {
+      req.body._ApplicationId = tenantAppId;
+      delete req.headers['x-parse-application-id'];
+    } else {
+      req.headers['x-parse-application-id'] = tenantAppId;
     }
-    req.headers['x-parse-application-id'] = tenantAppId;
     if (req.query && req.query._ApplicationId) {
       req.query._ApplicationId = tenantAppId;
     }
