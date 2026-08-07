@@ -64,6 +64,11 @@ function companyEnv(slug, databaseName) {
     if (process.env[key] !== undefined) args.push('-e', `${key}=${process.env[key]}`);
   }
   args.push('-e', `MONGODB_URI=${mongoBase}/${databaseName}`);
+  // Without this the company container would run the root's startup path -
+  // proxying, and starting company containers of its own, forever. It also
+  // stops it reaching for SUPERADMIN_MONGODB_URI, which it has no business
+  // touching and which isn't passed to it.
+  args.push('-e', 'COMPANY_MODE=true');
   // Each company answers on /app inside its own container; the public URL
   // it advertises still has to include the slug so links back to it work.
   args.push('-e', `SERVER_URL=${process.env.PUBLIC_ORIGIN || ''}/app/${slug}`);

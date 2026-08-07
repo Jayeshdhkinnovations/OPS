@@ -215,15 +215,17 @@ const defaultServerConfig = {
 };
 const defaultServer = new ParseServer(defaultServerConfig);
 await defaultServer.start();
-// Guarded, not a plain app.use(mountPath, defaultServer.app) - this root
-// instance is registered here at startup, before most (or any) company
-// mounts exist, so without the guard it would swallow every request to
-// /app/<slug>/... with its own 404 before a company mount (registered
-// later, including hot-mounted ones) ever gets a chance to handle it.
+// A company container runs this exact same file, but must behave as a
+// plain single-tenant server: no proxying, and above all no starting of
+// further company containers (which would recurse forever).
+const isCompanyMode = process.env.COMPANY_MODE === 'true';
+
 // Company traffic (/app/<slug>/...) is proxied to that company's own
 // container before the root instance ever sees it; anything else falls
 // through to the root Parse Server below.
-app.use(mountPath, companyProxy());
+if (!isCompanyMode) {
+  app.use(mountPath, companyProxy());
+}
 app.get('/app/health', (req, res) => res.status(200).json({ ok: true }));
 app.use(mountPath, defaultServer.app);
 
@@ -281,12 +283,13 @@ app.get('/', function (req, res) {
 if (!process.env.TESTING) {
   const port = process.env.PORT || 8081;
 
-  // Mount every existing company's Parse Server instance *before* opening
-  // the port to traffic - avoids a window where the server answers
-  // requests for a company whose mount isn't ready yet. New companies
-  // added later come in live via POST /admin/mount-company instead,
-  // without needing to restart or re-run this.
-  await loadAllCompaniesAndMount();
+  // Start every existing company's container *before* opening the port,
+  // so we never answer a request for a company that isn't up yet. New
+  // companies come in live via POST /admin/mount-company. Skipped in
+  // company mode - a company container must not start other companies.
+  if (!isCompanyMode) {
+    await loadAllCompaniesAndMount();
+  }
 
   const httpServer = http.createServer(app);
   // Set the Keep-Alive and headers timeout to 100 seconds
