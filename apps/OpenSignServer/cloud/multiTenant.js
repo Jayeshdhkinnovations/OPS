@@ -93,10 +93,32 @@ export async function mountCompany({ slug, databaseName }, app, sharedParts) {
   app.use(`/app/${slug}`, (req, res, next) => {
     if (removedSlugs.has(slug)) return res.status(404).json({ error: 'Company not found' });
     const tenantAppId = `opensign_${slug}`;
-    req.headers['x-parse-application-id'] = tenantAppId;
-    if (req.body && req.body._ApplicationId) {
-      req.body._ApplicationId = tenantAppId;
+    // Parse only reads _SessionToken/_MasterKey/_InstallationId out of the
+    // body when the request carries NO recognised appId header (see
+    // middlewares.js: `if (!info.appId || !AppCache.get(info.appId))`).
+    // The Parse JS SDK sends all of those in the body, so simply setting
+    // the header here would push Parse down the header branch and silently
+    // drop the session token - every authenticated tenant request then
+    // fails as "Invalid session token". Promote the body's auth fields to
+    // headers first so nothing is lost, then rewrite the appId.
+    if (req.body && typeof req.body === 'object') {
+      if (req.body._SessionToken && !req.headers['x-parse-session-token']) {
+        req.headers['x-parse-session-token'] = req.body._SessionToken;
+      }
+      if (req.body._MasterKey && !req.headers['x-parse-master-key']) {
+        req.headers['x-parse-master-key'] = req.body._MasterKey;
+      }
+      if (req.body._InstallationId && !req.headers['x-parse-installation-id']) {
+        req.headers['x-parse-installation-id'] = req.body._InstallationId;
+      }
+      if (req.body._JavaScriptKey && !req.headers['x-parse-javascript-key']) {
+        req.headers['x-parse-javascript-key'] = req.body._JavaScriptKey;
+      }
+      if (req.body._ApplicationId) {
+        req.body._ApplicationId = tenantAppId;
+      }
     }
+    req.headers['x-parse-application-id'] = tenantAppId;
     if (req.query && req.query._ApplicationId) {
       req.query._ApplicationId = tenantAppId;
     }
