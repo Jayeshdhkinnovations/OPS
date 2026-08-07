@@ -4,9 +4,11 @@
 # backend, which listens on 127.0.0.1:8081 - both processes share one
 # container, so 127.0.0.1 correctly reaches between them.
 #
-# Unlike SuperAdmin, this backend hosts multiple companies at once (see
-# cloud/multiTenant.js) - each company's own login lives at /app/<slug>,
-# all inside this one running process.
+# Each company runs in its OWN container off this same image, with its own
+# database; this root container proxies /app/<slug> to it (see
+# cloud/multiTenant.js). Parse keeps applicationId/serverURL as process
+# globals, so two companies in one process overwrite each other - hence
+# one process each.
 #
 # Build from the repo root (needs both apps/ folders in its context):
 #   docker build -f docker/opensign/Dockerfile -t opensign-app .
@@ -30,7 +32,9 @@ RUN npm run build
 
 # ---- Stage 2: backend + Nginx serving the built frontend ----
 FROM node:20-alpine
-RUN apk add --no-cache nginx
+# docker-cli lets the root container start/stop the per-company containers
+# (it talks to the host daemon through the mounted /var/run/docker.sock).
+RUN apk add --no-cache nginx docker-cli
 
 WORKDIR /app
 COPY apps/OpenSignServer/package*.json ./
