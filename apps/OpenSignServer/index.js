@@ -203,8 +203,14 @@ const defaultServerConfig = {
   appId: serverAppId,
   masterKey: process.env.MASTER_KEY,
   masterKeyIps: ['0.0.0.0/0', '::/0'],
-  serverURL: `${publicOrigin}${mountPath}`,
-  publicServerURL: `${publicOrigin}${mountPath}`,
+  // Honour SERVER_URL when it is set. A company container is reached at
+  // /app/<slug> from outside but serves Parse at plain /app internally, so
+  // deriving this from PUBLIC_ORIGIN + mountPath dropped the slug - and
+  // every link Parse generates (password reset, email verification) then
+  // pointed at the root, whose database has none of those tokens. That is
+  // what produced "Invalid Link" on an otherwise valid reset mail.
+  serverURL: process.env.SERVER_URL || `${publicOrigin}${mountPath}`,
+  publicServerURL: process.env.SERVER_URL || `${publicOrigin}${mountPath}`,
   appName,
   allowClientClassCreation: true,
   encodeParseObjectInCloudFunction: true,
