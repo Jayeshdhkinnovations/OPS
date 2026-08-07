@@ -16,7 +16,7 @@ import { ParseServer } from 'parse-server';
 import { appName, smtpenable, smtpsecure, useLocal, internalAdminSecret, serverAppId, publicOrigin } from './Utils.js';
 import { SSOAuth } from './auth/authadapter.js';
 import { validateSignedLocalUrl } from './cloud/parsefunction/getSignedUrl.js';
-import { mountCompany, unmountCompany, loadAllCompaniesAndMount, listMountedSlugs, guardRootMount } from './cloud/multiTenant.js';
+import { mountCompany, unmountCompany, loadAllCompaniesAndMount, listMountedSlugs, companyProxy } from './cloud/multiTenant.js';
 import registerCloudCode from './cloud/main.js';
 let fsAdapter;
 
@@ -220,7 +220,12 @@ await defaultServer.start();
 // mounts exist, so without the guard it would swallow every request to
 // /app/<slug>/... with its own 404 before a company mount (registered
 // later, including hot-mounted ones) ever gets a chance to handle it.
-app.use(mountPath, guardRootMount(defaultServer.app));
+// Company traffic (/app/<slug>/...) is proxied to that company's own
+// container before the root instance ever sees it; anything else falls
+// through to the root Parse Server below.
+app.use(mountPath, companyProxy());
+app.get('/app/health', (req, res) => res.status(200).json({ ok: true }));
+app.use(mountPath, defaultServer.app);
 
 
 // Internal-only endpoint: SuperAdminServer calls this the moment a new
@@ -237,7 +242,7 @@ app.post('/admin/mount-company', express.json(), async (req, res) => {
     return res.status(422).json({ error: 'slug and databaseName are both required' });
   }
   try {
-    const result = await mountCompany({ slug, databaseName }, app, sharedParts);
+    const result = await mountCompany({ slug, databaseName });
     return res.status(200).json(result);
   } catch (err) {
     console.log(`POST /admin/mount-company failed for "${slug}": ${err.message}`);
@@ -248,13 +253,13 @@ app.post('/admin/mount-company', express.json(), async (req, res) => {
 // Internal-only: SuperAdminServer calls this after deleting a company, so
 // its mount stops answering requests immediately instead of lingering
 // pointed at a now-dropped database until the next restart.
-app.post('/admin/unmount-company', express.json(), (req, res) => {
+app.post('/admin/unmount-company', express.json(), async (req, res) => {
   if (!internalAdminSecret || req.headers['x-internal-secret'] !== internalAdminSecret) {
     return res.status(403).json({ error: 'forbidden' });
   }
   const { slug } = req.body || {};
   if (!slug) return res.status(422).json({ error: 'slug is required' });
-  unmountCompany(slug);
+  await unmountCompany(slug);
   return res.status(200).json({ unmounted: true, slug });
 });
 
@@ -281,7 +286,7 @@ if (!process.env.TESTING) {
   // requests for a company whose mount isn't ready yet. New companies
   // added later come in live via POST /admin/mount-company instead,
   // without needing to restart or re-run this.
-  await loadAllCompaniesAndMount(app, sharedParts);
+  await loadAllCompaniesAndMount();
 
   const httpServer = http.createServer(app);
   // Set the Keep-Alive and headers timeout to 100 seconds

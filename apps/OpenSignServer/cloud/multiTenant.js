@@ -1,176 +1,228 @@
-// Multi-tenant mounting: this one backend process hosts a separate Parse
-// Server instance per company, each bound to that company's own isolated
-// database, all reachable under this same origin at /app/<slug>.
+// Multi-tenant routing: every company keeps its own database, and each one
+// is served by its OWN container running a single Parse Server. This root
+// process only proxies /app/<slug>/... through to the right container.
 //
-// Companies get added here in two ways:
-//   1. On startup - every company already in the control plane's Company
-//      collection gets mounted before this process starts accepting
-//      traffic, so a restart (deploy, crash, reboot) doesn't lose anyone.
-//   2. Live, via mountCompany() - called from the /admin/mount-company
-//      endpoint the moment SuperAdminServer finishes provisioning a new
-//      company. This adds the new mount to the already-running Express
-//      app without restarting anything, so every other company's active
-//      session is completely unaffected.
+// It deliberately does NOT create Parse Server instances per company any
+// more. Parse stores applicationId, serverURL and its REST controller as
+// process-wide globals (ParseServer.js does `Parse.initialize(...)` and
+// `Parse.serverURL = ...` on construction), so a second instance in the
+// same process silently overwrites the first. Every cloud function then
+// talked to whichever company mounted last, which showed up as
+// "User is not authenticated" for everyone else. One process per company
+// is the only arrangement where that cannot happen.
+import http from 'node:http';
 import { MongoClient } from 'mongodb';
-import { ParseServer } from 'parse-server';
-import { serverAppId, appName, superAdminMongoUri, buildMountServerUrl } from '../Utils.js';
-import registerCloudCode from './main.js';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { superAdminMongoUri } from '../Utils.js';
 
-const mountedCompanies = new Map(); // slug -> { databaseName }
-// Express has no clean way to un-register a mounted sub-app, so a removed
-// company is gated at the door instead - the route stays technically
-// mounted, but every request to it is rejected before ever reaching the
-// (now stale, pointed-at-a-deleted-database) Parse Server instance behind it.
-const removedSlugs = new Set();
+const execFileAsync = promisify(execFile);
+
+// slug -> { databaseName, host, port }
+const companyRoutes = new Map();
+
+const COMPANY_PORT = 8081; // the port inside every company container
+const CONTAINER_PREFIX = 'opensign-';
+const IMAGE = process.env.COMPANY_IMAGE || 'opensign-app';
+const DOCKER_NETWORK = process.env.DOCKER_NETWORK || 'appnet';
 
 export function isMounted(slug) {
-  return mountedCompanies.has(slug);
+  return companyRoutes.has(slug);
 }
 
 export function listMountedSlugs() {
-  return [...mountedCompanies.keys()];
+  return [...companyRoutes.keys()];
 }
 
-export function unmountCompany(slug) {
-  removedSlugs.add(slug);
-  mountedCompanies.delete(slug);
+function containerName(slug) {
+  return `${CONTAINER_PREFIX}${slug}`;
 }
 
-// sharedParts carries the pieces every company's Parse Server instance
-// should have in common - same file storage, same email delivery, same
-// master key - only the database and URLs differ per company.
-function buildCompanyConfig(slug, databaseName, sharedParts) {
-  const serverURL = buildMountServerUrl(slug);
-  const mongoUriBase = process.env.MONGODB_URI
-    ? process.env.MONGODB_URI.replace(/\/[^/]+$/, '')
-    : 'mongodb://localhost:27017';
-  const fullDatabaseURI = databaseName.startsWith('mongodb')
-    ? databaseName
-    : `${mongoUriBase}/${databaseName}`;
-
-  return {
-    databaseURI: fullDatabaseURI,
-    cloud: function () {
-      registerCloudCode();
-    },
-    appId: `opensign_${slug}`,
-    logLevel: ['error'],
-    maxLimit: 500,
-    maxUploadSize: '100mb',
-    masterKey: process.env.MASTER_KEY,
-    masterKeyIps: ['0.0.0.0/0', '::/0'],
-    serverURL,
-    publicServerURL: serverURL,
-    verifyUserEmails: false,
-    appName,
-    allowClientClassCreation: false,
-    allowExpiredAuthDataToken: false,
-    enableInsecureAuthAdapters: false,
-    databaseOptions: { allowPublicExplain: false },
-    encodeParseObjectInCloudFunction: true,
-    filesAdapter: sharedParts.fsAdapter,
-    auth: sharedParts.auth,
-    push: { queueOptions: { disablePushWorker: true } },
-    ...(sharedParts.emailAdapter ? { emailAdapter: sharedParts.emailAdapter } : {}),
-  };
+// Env passed to a company container. Everything the root has, except the
+// database - which is what makes it that company's own instance.
+function companyEnv(slug, databaseName) {
+  const mongoBase = (process.env.MONGODB_URI || 'mongodb://mongo:27017/OpenSignDB').replace(
+    /\/[^/]+$/,
+    ''
+  );
+  const pass = [
+    'MASTER_KEY',
+    'APP_ID',
+    'PUBLIC_ORIGIN',
+    'SMTP_ENABLE',
+    'SMTP_HOST',
+    'SMTP_PORT',
+    'SMTP_USER_EMAIL',
+    'SMTP_USERNAME',
+    'SMTP_PASS',
+    'PFX_BASE64',
+    'PASS_PHRASE',
+    'USE_LOCAL',
+  ];
+  const args = [];
+  for (const key of pass) {
+    if (process.env[key] !== undefined) args.push('-e', `${key}=${process.env[key]}`);
+  }
+  args.push('-e', `MONGODB_URI=${mongoBase}/${databaseName}`);
+  // Each company answers on /app inside its own container; the public URL
+  // it advertises still has to include the slug so links back to it work.
+  args.push('-e', `SERVER_URL=${process.env.PUBLIC_ORIGIN || ''}/app/${slug}`);
+  args.push('-e', `PORT=${COMPANY_PORT}`);
+  return args;
 }
 
-// Mounts one company onto the given Express app. Safe to call again for a
-// slug that's already mounted - it's a no-op, since the point of hot
-// mounting is never disturbing a company that's already live.
-export async function mountCompany({ slug, databaseName }, app, sharedParts) {
+async function docker(args) {
+  const { stdout } = await execFileAsync('docker', args, { timeout: 60000 });
+  return stdout.trim();
+}
+
+async function containerState(name) {
+  try {
+    return await docker(['inspect', '-f', '{{.State.Status}}', name]);
+  } catch {
+    return null; // does not exist
+  }
+}
+
+// Waits until the company's Parse Server answers, so callers that
+// immediately start writing records don't race the container's startup.
+async function waitForReady(host, timeoutMs = 60000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const ok = await new Promise(resolve => {
+      const req = http.request(
+        { host, port: COMPANY_PORT, path: '/app/health', method: 'GET', timeout: 3000 },
+        res => {
+          res.resume();
+          resolve(res.statusCode > 0);
+        }
+      );
+      req.on('error', () => resolve(false));
+      req.on('timeout', () => {
+        req.destroy();
+        resolve(false);
+      });
+      req.end();
+    });
+    if (ok) return true;
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  return false;
+}
+
+// Starts (or reuses) the container for one company and registers its route.
+export async function mountCompany({ slug, databaseName }) {
   if (!slug || !databaseName) {
     throw new Error('mountCompany requires both slug and databaseName');
   }
-  if (mountedCompanies.has(slug)) {
-    return { alreadyMounted: true, slug };
+  const name = containerName(slug);
+
+  if (companyRoutes.has(slug)) {
+    const state = await containerState(name);
+    if (state === 'running') return { alreadyMounted: true, slug };
   }
 
-  removedSlugs.delete(slug); // allow a deleted-then-recreated slug to work again
-  const config = buildCompanyConfig(slug, databaseName, sharedParts);
-  const server = new ParseServer(config);
-  await server.start();
-  app.use(`/app/${slug}`, (req, res, next) => {
-    if (removedSlugs.has(slug)) return res.status(404).json({ error: 'Company not found' });
-    const tenantAppId = `opensign_${slug}`;
-    // Two client shapes reach here and they must be handled differently.
-    //
-    // The Parse JS SDK puts everything - appId, session token, master key,
-    // client version - in the request BODY. Parse only reads those when no
-    // recognised appId header is present (middlewares.js:
-    // `if (!info.appId || !AppCache.get(info.appId))`), and that same branch
-    // is what strips them back out of the body afterwards. So for these we
-    // rewrite the body's appId and clear any appId header, letting Parse's
-    // own branch do the reading and the stripping. Forcing the header
-    // instead sent Parse down the header branch, which neither read the
-    // session token nor removed _ApplicationId from the body - the leftover
-    // key then surfaced as "Invalid parameter for query: _ApplicationId".
-    //
-    // Header-style callers (curl, our own internal axios calls) carry no
-    // body params, so for them we just rewrite the header.
-    const bodyHasAppId =
-      req.body && typeof req.body === 'object' && req.body._ApplicationId;
-    if (bodyHasAppId) {
-      req.body._ApplicationId = tenantAppId;
-      delete req.headers['x-parse-application-id'];
-    } else {
-      req.headers['x-parse-application-id'] = tenantAppId;
-    }
-    if (req.query && req.query._ApplicationId) {
-      req.query._ApplicationId = tenantAppId;
-    }
-    next();
-  });
-  app.use(`/app/${slug}`, server.app);
-  mountedCompanies.set(slug, { databaseName });
+  const state = await containerState(name);
+  if (state === null) {
+    await docker([
+      'run',
+      '-d',
+      '--name',
+      name,
+      '--network',
+      DOCKER_NETWORK,
+      '--restart',
+      'unless-stopped',
+      ...companyEnv(slug, databaseName),
+      IMAGE,
+    ]);
+  } else if (state !== 'running') {
+    await docker(['start', name]);
+  }
 
-  console.log(`multiTenant: mounted company "${slug}" -> ${databaseName}`);
+  const ready = await waitForReady(name);
+  if (!ready) {
+    throw new Error(`company container "${name}" did not become ready in time`);
+  }
+
+  companyRoutes.set(slug, { databaseName, host: name, port: COMPANY_PORT });
+  console.log(`multiTenant: company "${slug}" -> container ${name} (${databaseName})`);
   return { alreadyMounted: false, slug };
 }
 
-// Wraps a root-instance Parse Server app (mounted at bare /app in
-// index.js) so it never swallows requests meant for a company mount.
-// Necessary because Express checks middleware in registration order, and
-// the root instance is registered once at startup - long before most
-// companies exist, including any added later via hot-mount. Without this
-// guard, a request to /app/<slug>/... would hit the root mount first
-// (its prefix /app matches), and since the root Parse Server doesn't
-// recognize "/<slug>/..." as one of its own routes, it would 404 the
-// request directly instead of letting Express fall through to the real
-// company mount registered elsewhere in the stack.
-export function guardRootMount(rootApp) {
+export async function unmountCompany(slug) {
+  const name = containerName(slug);
+  companyRoutes.delete(slug);
+  try {
+    await docker(['rm', '-f', name]);
+    console.log(`multiTenant: removed container ${name}`);
+  } catch (err) {
+    console.log(`multiTenant: could not remove ${name}: ${err.message}`);
+  }
+}
+
+// Proxies /app/<slug>/... to that company's container, stripping the slug
+// (each container serves Parse at plain /app). Anything whose first segment
+// isn't a known company falls through to the root instance.
+export function companyProxy() {
   return (req, res, next) => {
-    const firstSegment = req.path.split('/').filter(Boolean)[0];
-    if (firstSegment && isMounted(firstSegment)) return next();
-    return rootApp(req, res, next);
+    const segments = req.path.split('/').filter(Boolean);
+    const slug = segments[0];
+    const route = slug && companyRoutes.get(slug);
+    if (!route) return next();
+
+    const rest = req.originalUrl.replace(new RegExp(`^/app/${slug}`), '') || '/';
+    const proxyReq = http.request(
+      {
+        host: route.host,
+        port: route.port,
+        path: `/app${rest}`,
+        method: req.method,
+        headers: { ...req.headers, host: `${route.host}:${route.port}` },
+      },
+      proxyRes => {
+        res.writeHead(proxyRes.statusCode, proxyRes.headers);
+        proxyRes.pipe(res);
+      }
+    );
+    proxyReq.on('error', err => {
+      console.log(`multiTenant: proxy to "${slug}" failed: ${err.message}`);
+      if (!res.headersSent) res.status(502).json({ error: 'company backend unavailable' });
+    });
+
+    // express.json() already consumed the stream, so replay the parsed body
+    // rather than trying to pipe a request that has nothing left to read.
+    if (req.body && Object.keys(req.body).length) {
+      const payload = Buffer.from(JSON.stringify(req.body));
+      proxyReq.setHeader('content-type', 'application/json');
+      proxyReq.setHeader('content-length', payload.length);
+      proxyReq.end(payload);
+    } else {
+      proxyReq.end();
+    }
   };
 }
 
-// Reads every company from the control plane's Company collection
-// directly (read-only) and mounts each active one. Called once at
-// startup so a restart never loses an existing company.
-export async function loadAllCompaniesAndMount(app, sharedParts) {
+// Starts a container for every active company at boot, so a restart of this
+// root process brings the whole platform back up.
+export async function loadAllCompaniesAndMount() {
   const client = new MongoClient(superAdminMongoUri);
   try {
     await client.connect();
-    const companies = await client
-      .db()
-      .collection('Company')
-      .find({ status: 'active' })
-      .toArray();
+    const companies = await client.db().collection('Company').find({ status: 'active' }).toArray();
 
     for (const company of companies) {
       const slug = company.subdomain;
       const databaseName = company.databaseName;
       if (!slug || !databaseName) continue;
       try {
-        await mountCompany({ slug, databaseName }, app, sharedParts);
+        await mountCompany({ slug, databaseName });
       } catch (err) {
-        // One bad company shouldn't stop every other one from mounting.
-        console.log(`multiTenant: failed to mount "${slug}": ${err.message}`);
+        // One bad company shouldn't stop every other one from starting.
+        console.log(`multiTenant: failed to start "${slug}": ${err.message}`);
       }
     }
-    console.log(`multiTenant: mounted ${mountedCompanies.size} compan${mountedCompanies.size === 1 ? 'y' : 'ies'} on startup.`);
+    console.log(`multiTenant: ${companyRoutes.size} compan${companyRoutes.size === 1 ? 'y' : 'ies'} routed on startup.`);
   } finally {
     await client.close();
   }
