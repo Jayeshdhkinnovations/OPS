@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 
 import { MongoClient } from 'mongodb';
+import bcrypt from 'bcryptjs';
 import { createAndSendOtp } from '../twoFactorAuth.js';
 
 
@@ -50,36 +51,49 @@ export default async function loginUser(request) {
           await client.connect();
           const db = client.db();
 
-          // Fast path: this email is a company's own admin address.
-          const adminCompany = await db.collection('Company').findOne({
-            adminEmail: username,
-            status: 'active',
-          });
-          if (adminCompany?.subdomain) {
-            return { error: 'tenant_redirect', subdomain: adminCompany.subdomain };
-          }
-
-          // Otherwise it may be a regular user created *inside* a company
-          // (via Add User), whose email is nobody's adminEmail. Those users
-          // are real but live only in their company's own database, so the
-          // adminEmail lookup above can never find them - search each active
-          // company's _User collection to work out which tenant owns them.
-          // Same connection, different db, so this is N queries not N connections.
+          // The same address can legitimately exist in more than one
+          // company - the same person may admin two of them, and an email
+          // that is one company's admin can also be an ordinary user in
+          // another. So collect every company holding this address and let
+          // the PASSWORD decide which one is meant; redirecting to the
+          // first match sent correct credentials to the wrong company,
+          // which rejected them as "Invalid username/password".
           const companies = await db
             .collection('Company')
             .find({ status: 'active' }, { projection: { subdomain: 1, databaseName: 1 } })
             .toArray();
 
+          const candidates = [];
           for (const company of companies) {
             if (!company.databaseName || !company.subdomain) continue;
             const match = await client
               .db(company.databaseName)
               .collection('_User')
-              .findOne({ $or: [{ username: username }, { email: username }] }, { projection: { _id: 1 } });
-            if (match) {
-              console.log(`TENANT LOOKUP: matched "${username}" in ${company.databaseName}`);
-              return { error: 'tenant_redirect', subdomain: company.subdomain };
+              .findOne(
+                { $or: [{ username: username }, { email: username }] },
+                { projection: { _hashed_password: 1 } }
+              );
+            if (match) candidates.push({ company, hash: match._hashed_password });
+          }
+
+          if (candidates.length === 1) {
+            console.log(`TENANT LOOKUP: matched "${username}" in ${candidates[0].company.databaseName}`);
+            return { error: 'tenant_redirect', subdomain: candidates[0].company.subdomain };
+          }
+          if (candidates.length > 1) {
+            for (const c of candidates) {
+              if (c.hash && (await bcrypt.compare(password, c.hash))) {
+                console.log(
+                  `TENANT LOOKUP: "${username}" exists in ${candidates.length} companies; password matched ${c.company.databaseName}`
+                );
+                return { error: 'tenant_redirect', subdomain: c.company.subdomain };
+              }
             }
+            // Password matched none of them - fall through to the normal
+            // invalid-credentials error rather than guessing a company.
+            console.log(
+              `TENANT LOOKUP: "${username}" exists in ${candidates.length} companies but the password matched none`
+            );
           }
           console.log(
             `TENANT LOOKUP: no company owns "${username}" (scanned ${companies.length}: ${companies
