@@ -14,6 +14,7 @@
 import { MongoClient } from 'mongodb';
 import { ParseServer } from 'parse-server';
 import { serverAppId, appName, superAdminMongoUri, buildMountServerUrl } from '../Utils.js';
+import registerCloudCode from './main.js';
 
 const mountedCompanies = new Map(); // slug -> { databaseName }
 // Express has no clean way to un-register a mounted sub-app, so a removed
@@ -50,9 +51,9 @@ function buildCompanyConfig(slug, databaseName, sharedParts) {
   return {
     databaseURI: fullDatabaseURI,
     cloud: function () {
-      import('./main.js');
+      registerCloudCode();
     },
-    appId: serverAppId,
+    appId: `opensign_${slug}`,
     logLevel: ['error'],
     maxLimit: 500,
     maxUploadSize: '100mb',
@@ -91,6 +92,14 @@ export async function mountCompany({ slug, databaseName }, app, sharedParts) {
   await server.start();
   app.use(`/app/${slug}`, (req, res, next) => {
     if (removedSlugs.has(slug)) return res.status(404).json({ error: 'Company not found' });
+    const tenantAppId = `opensign_${slug}`;
+    req.headers['x-parse-application-id'] = tenantAppId;
+    if (req.body && req.body._ApplicationId) {
+      req.body._ApplicationId = tenantAppId;
+    }
+    if (req.query && req.query._ApplicationId) {
+      req.query._ApplicationId = tenantAppId;
+    }
     next();
   });
   app.use(`/app/${slug}`, server.app);

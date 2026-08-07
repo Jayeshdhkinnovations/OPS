@@ -17,6 +17,7 @@ import { appName, smtpenable, smtpsecure, useLocal, internalAdminSecret, serverA
 import { SSOAuth } from './auth/authadapter.js';
 import { validateSignedLocalUrl } from './cloud/parsefunction/getSignedUrl.js';
 import { mountCompany, unmountCompany, loadAllCompaniesAndMount, listMountedSlugs, guardRootMount } from './cloud/multiTenant.js';
+import registerCloudCode from './cloud/main.js';
 let fsAdapter;
 
 if (useLocal !== 'true') {
@@ -190,7 +191,7 @@ const mountPath = process.env.PARSE_MOUNT || '/app';
 const defaultServerConfig = {
   databaseURI: process.env.MONGODB_URI || 'mongodb://localhost:27030/OpenSignDB',
   cloud: function () {
-    import('./cloud/main.js');
+    registerCloudCode();
   },
   appId: serverAppId,
   masterKey: process.env.MASTER_KEY,
