@@ -36,6 +36,10 @@ export default async function loginUser(request) {
     try {
       // 1. Authenticate against the mount that actually received this
       //    request (see resolveMount above for why this isn't Parse.User.logIn).
+      // Deliberately NO master key here: /login is a public endpoint, and a
+      // master-key request is treated as already-authenticated, so Parse
+      // returns the user without minting a usable session. The frontend then
+      // calls Parse.User.become(undefined) and gets "Invalid session token".
       const loginRes = await axios.post(
         `${mount.baseUrl}/login`,
         { username, password },
@@ -43,11 +47,22 @@ export default async function loginUser(request) {
           headers: {
             'Content-Type': 'application/json',
             'X-Parse-Application-Id': mount.appId,
-            'X-Parse-Master-Key': process.env.MASTER_KEY,
           },
         }
       );
       const _user = loginRes.data;
+      if (_user?.objectId && !_user?.sessionToken) {
+        // Fail loudly rather than handing the frontend a session-less user
+        // that only breaks later at become().
+        console.log('loginUser: login succeeded but no sessionToken returned', {
+          mount: mount.baseUrl,
+          appId: mount.appId,
+        });
+        throw new Parse.Error(
+          Parse.Error.INTERNAL_SERVER_ERROR,
+          'Login succeeded but no session was created. Please try again.'
+        );
+      }
       if (_user?.objectId) {
         // If this account has 2FA turned on, the password alone isn't
         // enough - withhold the real session token (never send it to the
