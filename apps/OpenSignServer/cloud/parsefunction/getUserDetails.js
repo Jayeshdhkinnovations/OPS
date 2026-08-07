@@ -1,3 +1,25 @@
+// Sensitive fields that must never reach the client. These used to be
+// dropped with Parse.Query.exclude(), but exclude() rejects with a literal
+// `undefined` on this Parse version - which is what made every login fail
+// at "Something went wrong" with no error to go on. Unsetting them on the
+// fetched objects achieves the same thing; unset() only touches the
+// in-memory copy, nothing is written back.
+function stripSensitiveFields(extUser) {
+  if (!extUser) return extUser;
+  extUser.unset('google_refresh_token');
+
+  const tenant = extUser.get('TenantId');
+  if (tenant && typeof tenant.unset === 'function') {
+    tenant.unset('FileAdapters');
+    tenant.unset('PfxFile');
+  }
+  const createdBy = extUser.get('CreatedBy');
+  if (createdBy && typeof createdBy.unset === 'function') {
+    createdBy.unset('authData');
+  }
+  return extUser;
+}
+
 async function getUserDetails(request) {
   const reqEmail = request.params.email;
   if (reqEmail || request.user) {
@@ -13,10 +35,6 @@ async function getUserDetails(request) {
       userQuery.include('TenantId');
       userQuery.include('UserId');
       userQuery.include('CreatedBy');
-      userQuery.exclude('CreatedBy.authData');
-      userQuery.exclude('TenantId.FileAdapters');
-      userQuery.exclude('google_refresh_token');
-      userQuery.exclude('TenantId.PfxFile');
       if (userId) {
         userQuery.equalTo('CreatedBy', { __type: 'Pointer', className: '_User', objectId: userId });
       }
@@ -25,7 +43,7 @@ async function getUserDetails(request) {
         if (reqEmail) {
           return { objectId: res.id };
         } else {
-          return res;
+          return stripSensitiveFields(res);
         }
       } else {
         return '';

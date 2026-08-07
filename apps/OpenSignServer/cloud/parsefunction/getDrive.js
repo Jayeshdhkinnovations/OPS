@@ -35,9 +35,6 @@ export default async function getDrive(request) {
         query.descending('updatedAt');
         query.skip(skip);
         query.limit(limit);
-        query.exclude('AuditTrail');
-        query.exclude('OriginalDocument');
-        query.exclude('SignedDocument');
         const res = await query.find({ useMasterKey: true });
         return res;
       } catch (err) {

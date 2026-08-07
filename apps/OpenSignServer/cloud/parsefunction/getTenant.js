@@ -9,8 +9,10 @@ async function getTenantByUserId(userId, contactId) {
         if (tenantId) {
           const tenantCreditsQuery = new Parse.Query('partners_Tenant');
           tenantCreditsQuery.equalTo('objectId', tenantId);
-          tenantCreditsQuery.exclude('FileAdapters,PfxFile,ContactNumber');
           const res = await tenantCreditsQuery.first({ useMasterKey: true });
+          // exclude() rejects with a literal undefined on this Parse
+          // version, so drop the sensitive fields off the fetched copy.
+          if (res) { res.unset('FileAdapters'); res.unset('PfxFile'); res.unset('ContactNumber'); }
           return res;
         } else {
           return {};
@@ -35,8 +37,8 @@ async function getTenantByUserId(userId, contactId) {
             objectId: user,
           });
         }
-        tenantQuery.exclude('FileAdapters,PfxFile');
         const res = await tenantQuery.first({ useMasterKey: true });
+        if (res) { res.unset('FileAdapters'); res.unset('PfxFile'); }
         return res;
       } else {
         return {};

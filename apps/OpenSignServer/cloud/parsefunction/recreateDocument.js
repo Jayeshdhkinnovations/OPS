@@ -13,16 +13,23 @@ export default async function recreateDocument(request) {
     const docQuery = new Parse.Query('contracts_Document');
     docQuery.equalTo('objectId', docId);
     docQuery.notEqualTo('IsArchive', true);
-    docQuery.exclude([
-      'DocSentAt',
-      'SignedUrl',
-      'AuditTrail',
-      'DeclineBy',
-      'DeclineReason',
-      'DocumentHash',
-      'CertificateUrl',
-    ]);
     const doc = await docQuery.first({ useMasterKey: true });
+    // exclude() rejects with a literal undefined on this Parse version, so
+    // drop these off the fetched copy instead. unset() is in-memory only -
+    // this is a template for the new document, nothing is saved back here.
+    if (doc) {
+      for (const f of [
+        'DocSentAt',
+        'SignedUrl',
+        'AuditTrail',
+        'DeclineBy',
+        'DeclineReason',
+        'DocumentHash',
+        'CertificateUrl',
+      ]) {
+        doc.unset(f);
+      }
+    }
     if (!doc) {
       throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'Document not found');
     }
