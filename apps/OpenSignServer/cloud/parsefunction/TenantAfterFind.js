@@ -13,8 +13,13 @@ const resolveUrl = async rawUrl => {
 };
 
 async function TenantAterFind(request) {
+  // Must always hand back the objects array. Returning undefined - which
+  // it did for any result set that wasn't exactly one object - makes Parse
+  // reject the surrounding query with a literal `undefined`, surfacing as
+  // an unexplainable "Something went wrong" in whatever cloud function
+  // happened to include this pointer.
   if (request.objects.length === 1) {
-    if (request.objects) {
+    {
       const obj = request.objects[0];
       const Logo = obj?.get('Logo') && obj?.get('Logo');
       const Favicon = obj?.get('Favicon') && obj?.get('Favicon');
@@ -24,5 +29,6 @@ async function TenantAterFind(request) {
       return [obj];
     }
   }
+  return request.objects;
 }
 export default TenantAterFind;
