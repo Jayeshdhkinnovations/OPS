@@ -4,20 +4,23 @@
 // at "Something went wrong" with no error to go on. Unsetting them on the
 // fetched objects achieves the same thing; unset() only touches the
 // in-memory copy, nothing is written back.
+// Rebuilt from JSON rather than unset() on the fetched object: unset()
+// leaves the object dirty, and Parse serialises a dirty object back to the
+// caller as a bare Pointer, so the client got {__type:"Pointer"} with none
+// of the fields it needs. fromJSON() produces a clean object that
+// serialises in full.
 function stripSensitiveFields(extUser) {
   if (!extUser) return extUser;
-  extUser.unset('google_refresh_token');
-
-  const tenant = extUser.get('TenantId');
-  if (tenant && typeof tenant.unset === 'function') {
-    tenant.unset('FileAdapters');
-    tenant.unset('PfxFile');
+  const json = extUser.toJSON();
+  delete json.google_refresh_token;
+  if (json.TenantId && typeof json.TenantId === 'object') {
+    delete json.TenantId.FileAdapters;
+    delete json.TenantId.PfxFile;
   }
-  const createdBy = extUser.get('CreatedBy');
-  if (createdBy && typeof createdBy.unset === 'function') {
-    createdBy.unset('authData');
+  if (json.CreatedBy && typeof json.CreatedBy === 'object') {
+    delete json.CreatedBy.authData;
   }
-  return extUser;
+  return Parse.Object.fromJSON({ className: 'contracts_Users', ...json });
 }
 
 async function getUserDetails(request) {
