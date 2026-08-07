@@ -1,4 +1,5 @@
 import { verifyOtp } from '../twoFactorAuth.js';
+import { notifyTwoFactorChange } from '../securityNotifications.js';
 
 // Confirms the code sent by sendTwoFactorSetupOtp.js and, only on success,
 // actually flips TwoFactorEnabled on for this user.
@@ -22,6 +23,9 @@ export default async function verifyTwoFactorSetupOtp(request) {
 
   extUser.set('TwoFactorEnabled', true);
   await extUser.save(null, { useMasterKey: true });
+
+  // Not awaited - losing a courtesy email must not fail the toggle itself.
+  notifyTwoFactorChange(extUser, true);
 
   return { twoFactorEnabled: true };
 }

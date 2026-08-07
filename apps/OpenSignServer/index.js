@@ -14,6 +14,7 @@ import { app as customRoute } from './cloud/customRoute/customApp.js';
 import { createTransport } from 'nodemailer';
 import { ParseServer } from 'parse-server';
 import { appName, smtpenable, smtpsecure, useLocal, internalAdminSecret, serverAppId, publicOrigin } from './Utils.js';
+import { BRAND_NAME } from './cloud/emailTemplates.js';
 import { SSOAuth } from './auth/authadapter.js';
 import { validateSignedLocalUrl } from './cloud/parsefunction/getSignedUrl.js';
 import { mountCompany, unmountCompany, loadAllCompaniesAndMount, listMountedSlugs, companyProxy } from './cloud/multiTenant.js';
@@ -113,7 +114,9 @@ const sharedParts = {
         emailAdapter: {
           module: 'parse-server-api-mail-adapter',
           options: {
-            sender: appName + ' <' + mailsender + '>',
+            // Sign Toowix, not `appName` ("OpenSign™") - these are the
+            // platform's own account emails, not document-signing mail.
+            sender: BRAND_NAME + ' <' + mailsender + '>',
             templates: {
               passwordResetEmail: {
                 subjectPath: './files/password_reset_email_subject.txt',

@@ -221,18 +221,24 @@ function Register() {
                 </div>
                 <div>
                   <label className="sr-only" htmlFor="maxUsers">Max Users</label>
-                  <input
+                  {/* A fixed set of seat counts rather than a free number
+                      input: every value here has to be provisioned on shared
+                      hardware, so an open field invited requests (500, 1000)
+                      that could never be honoured. */}
+                  <select
                     id="maxUsers"
                     name="maxUsers"
-                    type="number"
-                    min="1"
-                    max="1000"
-                    placeholder="Max Users"
                     required
                     value={form.maxUsers}
                     onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
-                  />
+                    className="w-full appearance-none rounded-full border border-gray-300 bg-white text-gray-800 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22%239CA3AF%22%3E%3Cpath%20d%3D%22M4.5%206.5%208%2010l3.5-3.5z%22/%3E%3C/svg%3E')] bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat pr-10"
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n} {n === 1 ? "User" : "Users"}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="op-stagger-item grid grid-cols-2 gap-4" style={{ animationDelay: "240ms" }}>

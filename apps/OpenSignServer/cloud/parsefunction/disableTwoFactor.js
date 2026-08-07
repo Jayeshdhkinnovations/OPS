@@ -1,3 +1,5 @@
+import { notifyTwoFactorChange } from '../securityNotifications.js';
+
 // Turning 2FA off only requires an authenticated session (the user already
 // proved who they are to get one) - no extra OTP step, matching how most
 // apps handle disabling MFA once you're already logged in.
@@ -14,6 +16,9 @@ export default async function disableTwoFactor(request) {
 
   extUser.set('TwoFactorEnabled', false);
   await extUser.save(null, { useMasterKey: true });
+
+  // Not awaited - losing a courtesy email must not fail the toggle itself.
+  notifyTwoFactorChange(extUser, false);
 
   return { twoFactorEnabled: false };
 }

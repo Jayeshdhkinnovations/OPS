@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import { MongoClient } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import { createAndSendOtp } from '../twoFactorAuth.js';
+import { notifyLogin, clientInfo } from '../securityNotifications.js';
 
 
 // Each company now runs in its own container with exactly one Parse Server
@@ -35,6 +36,12 @@ export default async function loginUser(request) {
           await createAndSendOtp(extUser, 'login', { PendingUserJson: JSON.stringify(_user) });
           return { requires2fa: true, userId: extUser.id };
         }
+
+        // Deliberately not awaited: the sign-in alert is a courtesy, and a
+        // slow or dead SMTP host must not delay or fail the login itself.
+        // (The 2FA path above returns before this - that login isn't complete
+        // yet; verifyLoginOtp sends the alert once the code checks out.)
+        if (extUser) notifyLogin(extUser, clientInfo(request));
 
         return { ..._user };
       }

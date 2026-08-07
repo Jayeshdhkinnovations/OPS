@@ -1,4 +1,6 @@
 import { MongoClient } from 'mongodb';
+import sendSystemMail from './sendSystemMail.js';
+import { BRAND_NAME, approvalReceivedEmail } from '../emailTemplates.js';
 
 // Parse's own IDs are short 10-char alphanumeric strings, not MongoDB's
 // native 24-char hex ObjectIds. This record gets written here via the raw
@@ -68,6 +70,20 @@ export default async function submitApproval(request) {
   } finally {
     await client.close();
   }
+
+  // Acknowledge the submission so the registrant isn't left wondering
+  // whether anything happened. Best-effort and not awaited - the request is
+  // already stored, and a mail failure must not report it as not submitted.
+  const ack = approvalReceivedEmail({ name, companyName });
+  sendSystemMail({
+    params: {
+      from: BRAND_NAME,
+      recipient: email,
+      subject: ack.subject,
+      text: ack.text,
+      html: ack.html,
+    },
+  }).catch(err => console.log('approval-received mail failed:', err?.message || err));
 
   return { submitted: true };
 }
