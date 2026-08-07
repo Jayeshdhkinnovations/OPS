@@ -140,7 +140,14 @@ const sharedParts = {
 
 export const app = express();
 app.use(cors());
-app.use(express.json({ limit: '100mb' }));
+// Also parse text/plain: the Parse JS SDK deliberately sends its POST
+// bodies as text/plain to dodge a CORS preflight. Without this they stay
+// unparsed here, so the per-company middleware in multiTenant.js can't
+// rewrite the _ApplicationId inside the body - it only fixes the header.
+// Parse then sees header appId opensign_<slug> against body appId
+// opensign, treats the pair as inconsistent, and rejects the session with
+// "Permission denied" (209) on every authenticated tenant request.
+app.use(express.json({ limit: '100mb', type: ['application/json', 'text/plain'] }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(function (req, res, next) {
   req.headers['x-real-ip'] = getUserIP(req);
