@@ -21,6 +21,7 @@ function ForgotPassword() {
   const [toast, setToast] = useState({ type: "", message: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [image, setImage] = useState();
+  const [sent, setSent] = useState(false);
 
   const handleChange = (event) => {
     let { name, value } = event.target;
@@ -55,7 +56,9 @@ function ForgotPassword() {
           // locates the company owning the address and has that company's
           // server send the mail, so the reset link points at the right one.
           await Parse.Cloud.run("requestpasswordreset", { email: username });
-          setToast({ type: "success", message: t("reset-password-alert-1") });
+          // Confirm inside the card rather than via a toast that vanishes -
+          // the user needs to know to go and check their inbox.
+          setSent(true);
         } catch (err) {
           console.log("err ", err.code);
           setToast({
@@ -119,10 +122,10 @@ function ForgotPassword() {
 
             <div className="relative z-20 mt-10 -ml-4">
               <h2 className="text-xl font-bold leading-snug text-white lg:text-2xl">
-                Forgot Password
+                Sign Documents Securely From Anywhere.
               </h2>
               <p className="mt-3 text-sm text-white/90">
-                Enter your email to receive a password reset link.
+                Create, send, sign and manage documents online with enterprise-grade security.
               </p>
             </div>
 
@@ -157,8 +160,42 @@ function ForgotPassword() {
               </div>
             )}
 
+            {sent ? (
+              <div className="text-center">
+                <div className="op-stagger-item mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#EAF1FF]" style={{ animationDelay: "0ms" }}>
+                  <i className="fa-light fa-envelope-circle-check text-2xl text-[#0B3D73]" />
+                </div>
+                <h1 className="op-stagger-item mt-5 text-2xl font-bold tracking-tight text-gray-800" style={{ animationDelay: "60ms" }}>
+                  Email sent
+                </h1>
+                <p className="op-stagger-item mt-2 text-sm text-gray-500" style={{ animationDelay: "100ms" }}>
+                  We&apos;ve sent a password reset link to{" "}
+                  <span className="font-semibold text-gray-700">{state.email}</span>.
+                  Check your inbox and follow the link to set a new password.
+                </p>
+                <p className="op-stagger-item mt-2 text-xs text-gray-400" style={{ animationDelay: "130ms" }}>
+                  Can&apos;t find it? Check your spam folder.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => authNavigate("/", { replace: true })}
+                  className="op-stagger-item mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                  style={{ animationDelay: "170ms" }}
+                >
+                  {t("login")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSent(false)}
+                  className="op-stagger-item mt-3 w-full text-sm font-semibold text-[#0B3D73] transition-colors duration-200 hover:underline"
+                  style={{ animationDelay: "200ms" }}
+                >
+                  Use a different email
+                </button>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit}>
-              <h1 className="op-stagger-item text-2xl font-bold text-gray-800 tracking-tight" style={{ animationDelay: "0ms" }}>{t("welcome")}</h1>
+              <h1 className="op-stagger-item text-2xl font-bold text-gray-800 tracking-tight" style={{ animationDelay: "0ms" }}>Forgot Password</h1>
               <p className="op-stagger-item mt-1 text-xs text-gray-400 font-medium" style={{ animationDelay: "40ms" }}>
                 {t("reset-password-alert-3")}
               </p>
@@ -171,7 +208,7 @@ function ForgotPassword() {
                   type="email"
                   name="email"
                   placeholder={t("email")}
-                  className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-3 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                  className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
                   value={state.email}
                   onChange={handleChange}
                   onInvalid={(e) =>
@@ -199,6 +236,7 @@ function ForgotPassword() {
                 {t("login")}
               </button>
             </form>
+            )}
           </div>
         </div>
       </div>

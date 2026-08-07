@@ -659,7 +659,7 @@ function Login() {
                       inputMode="numeric"
                       pattern="[0-9]{6}"
                       placeholder="6-digit code"
-                      className="w-full border-0 border-b border-gray-200 bg-transparent py-3 pl-0.5 pr-8 text-[15px] tracking-[4px] text-gray-800 placeholder:text-gray-400 placeholder:tracking-normal focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors py-3 pl-5 pr-12 text-[15px] tracking-[4px] placeholder:tracking-normal"
                       value={otpValue}
                       onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
                       required
@@ -716,7 +716,7 @@ function Login() {
                         id="email"
                         type="email"
                         placeholder="Email Address"
-                        className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-3 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                        className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
                         name="email"
                         autoComplete="username"
                         value={state.email}
@@ -738,7 +738,7 @@ function Login() {
                           id="password"
                           type={state.passwordVisible ? "text" : "password"}
                           placeholder="Password"
-                          className="w-full border-0 border-b border-gray-200 bg-transparent py-3 pl-0.5 pr-8 text-[15px] text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                          className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors py-3 pl-5 pr-12 text-[15px]"
                           name="password"
                           value={state.password}
                           autoComplete="current-password"
@@ -750,7 +750,7 @@ function Login() {
                           required
                         />
                         <span
-                          className="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
                           onClick={togglePasswordVisibility}
                         >
                           {state.passwordVisible ? (

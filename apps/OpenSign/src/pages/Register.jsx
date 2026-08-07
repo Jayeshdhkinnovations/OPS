@@ -155,7 +155,7 @@ function Register() {
             )}
 
             <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-              <div className="op-stagger-item grid grid-cols-2 gap-4" style={{ animationDelay: "90ms" }}>
+              <div className="op-stagger-item flex flex-col gap-4" style={{ animationDelay: "90ms" }}>
                 <div>
                   <label className="sr-only" htmlFor="name">{t("name")}</label>
                   <input
@@ -165,7 +165,7 @@ function Register() {
                     required
                     value={form.name}
                     onChange={handleChange}
-                    className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
                   />
                 </div>
                 <div>
@@ -178,7 +178,7 @@ function Register() {
                     required
                     value={form.email}
                     onChange={handleChange}
-                    className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
                   />
                 </div>
               </div>
@@ -191,7 +191,7 @@ function Register() {
                     placeholder={t("phone")}
                     value={form.phone}
                     onChange={handleChange}
-                    className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
                   />
                 </div>
                 <div>
@@ -202,7 +202,7 @@ function Register() {
                     placeholder={t("job-title")}
                     value={form.jobTitle}
                     onChange={handleChange}
-                    className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
                   />
                 </div>
               </div>
@@ -216,7 +216,7 @@ function Register() {
                     required
                     value={form.companyName}
                     onChange={handleChange}
-                    className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
                   />
                 </div>
                 <div>
@@ -231,7 +231,7 @@ function Register() {
                     required
                     value={form.maxUsers}
                     onChange={handleChange}
-                    className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
                   />
                 </div>
               </div>
@@ -247,10 +247,10 @@ function Register() {
                       required
                       value={form.password}
                       onChange={handleChange}
-                      className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
                     />
                     <span
-                      className="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
                       onClick={() => setPasswordVisible(!passwordVisible)}
                     >
                       {passwordVisible ? (
@@ -272,10 +272,10 @@ function Register() {
                       required
                       value={form.confirmPassword}
                       onChange={handleChange}
-                      className="w-full border-0 border-b border-gray-200 bg-transparent px-0.5 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:outline-none focus:ring-0 transition-colors"
+                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
                     />
                     <span
-                      className="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
                       onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
                     >
                       {confirmPasswordVisible ? (
