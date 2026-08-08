@@ -570,9 +570,9 @@ function Login() {
         <div
           aria-labelledby="loginHeading"
           role="region"
-          className="flex min-h-screen w-full items-center justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8"
+          className="flex min-h-screen w-full justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8"
         >
-          <div className="op-auth-card relative flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
+          <div className="op-auth-card relative m-auto flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
             {/* Left hero panel */}
             {width >= 768 && (
               <div

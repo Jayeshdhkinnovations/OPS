@@ -3,6 +3,7 @@ import Parse from "parse";
 import { NavLink, useNavigate } from "react-router";
 import { useAuthNavigate } from "../hook/useAuthNavigate";
 import { emailRegex } from "../constant/const";
+import { SEAT_TIERS, DEFAULT_SEAT_TIER } from "../constant/seatTiers";
 import Loader from "../primitives/Loader";
 import AuthIllustration from "../components/AuthIllustration";
 import { useWindowSize } from "../hook/useWindowSize";
@@ -26,13 +27,23 @@ function Register() {
     jobTitle: "",
     password: "",
     confirmPassword: "",
-    maxUsers: 5,
+    maxUsers: DEFAULT_SEAT_TIER,
   });
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+
+  // Confirm-password feedback is derived per keystroke rather than checked on
+  // submit, so a typo is visible while the field still has focus instead of
+  // after the form bounces. `prefixOk` distinguishes "still typing, so far so
+  // good" from "these have already diverged" - only the second turns red,
+  // otherwise every partial entry would flash an error.
+  const confirmTyped = form.confirmPassword.length > 0;
+  const passwordsMatch = confirmTyped && form.password === form.confirmPassword;
+  const prefixOk = form.password.startsWith(form.confirmPassword);
+  const confirmHasError = confirmTyped && !prefixOk;
 
   useEffect(() => {
     // Clear any stale session token from localStorage
@@ -74,14 +85,14 @@ function Register() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8">
+    <div className="flex min-h-screen w-full justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8">
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <Loader />
         </div>
       )}
 
-      <div className="op-auth-card relative flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
+      <div className="op-auth-card relative m-auto flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
         {/* Left hero panel */}
         {width >= 768 && (
           <div
@@ -233,9 +244,9 @@ function Register() {
                     onChange={handleChange}
                     className="w-full appearance-none rounded-full border border-gray-300 bg-white text-gray-800 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22%239CA3AF%22%3E%3Cpath%20d%3D%22M4.5%206.5%208%2010l3.5-3.5z%22/%3E%3C/svg%3E')] bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat pr-10"
                   >
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <option key={n} value={n}>
-                        {n} {n === 1 ? "User" : "Users"}
+                    {SEAT_TIERS.map((tier) => (
+                      <option key={tier.value} value={tier.value}>
+                        {tier.label} Users
                       </option>
                     ))}
                   </select>
@@ -278,7 +289,15 @@ function Register() {
                       required
                       value={form.confirmPassword}
                       onChange={handleChange}
-                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
+                      aria-invalid={confirmHasError}
+                      aria-describedby="confirmPasswordStatus"
+                      className={`w-full rounded-full border bg-white text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-colors px-5 py-2.5 text-sm ${
+                        confirmHasError
+                          ? "border-red-400 focus:border-red-500 focus:ring-red-500/15"
+                          : passwordsMatch
+                            ? "border-green-500 focus:border-green-600 focus:ring-green-500/15"
+                            : "border-gray-300 focus:border-[#0B3D73] focus:ring-[#0B3D73]/15"
+                      }`}
                     />
                     <span
                       className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
@@ -291,6 +310,35 @@ function Register() {
                       )}
                     </span>
                   </div>
+                  {/* aria-live so the result is announced as it changes, not
+                      only when the field is re-read. */}
+                  <p
+                    id="confirmPasswordStatus"
+                    aria-live="polite"
+                    className={`mt-1.5 flex items-center gap-1 pl-4 text-[11px] font-semibold transition-opacity ${
+                      confirmHasError
+                        ? "text-red-500"
+                        : passwordsMatch
+                          ? "text-green-600"
+                          : "opacity-0"
+                    }`}
+                  >
+                    {confirmHasError ? (
+                      <>
+                        <i className="fa-light fa-circle-xmark" />
+                        {t("password-not-match", "Passwords do not match")}
+                      </>
+                    ) : passwordsMatch ? (
+                      <>
+                        <i className="fa-light fa-circle-check" />
+                        {t("password-match", "Passwords match")}
+                      </>
+                    ) : (
+                      // Placeholder keeps the row's height reserved so the
+                      // fields below don't jump when the message appears.
+                      <>&nbsp;</>
+                    )}
+                  </p>
                 </div>
               </div>
 

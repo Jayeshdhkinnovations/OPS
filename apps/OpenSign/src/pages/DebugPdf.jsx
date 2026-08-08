@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import RenderAllPdfPage from "../components/pdf/RenderAllPdfPage";
 import RenderDebugPdf from "../components/RenderDebugPdf";
 import { pdfjs } from "react-pdf";
+import "../constant/pdfWorker"; // configures the pdfjs worker
 import ModalUi from "../primitives/ModalUi";
 import Alert from "../primitives/Alert";
 import HandleError from "../primitives/HandleError";

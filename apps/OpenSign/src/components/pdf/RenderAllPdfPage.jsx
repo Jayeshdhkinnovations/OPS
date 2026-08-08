@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Document, Page } from "react-pdf";
+import "../../constant/pdfWorker"; // configures the pdfjs worker
 import { useSelector } from "react-redux";
 import { PDFDocument } from "pdf-lib";
 import {

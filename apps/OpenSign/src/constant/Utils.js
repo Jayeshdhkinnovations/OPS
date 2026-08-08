@@ -114,9 +114,9 @@ const applyDuplicateResponsesToPages = (pages = []) => {
     pos: applyDuplicateResponsesToWidgets(page?.pos || [], responseByName)
   }));
 };
-export function getEnv() {
-  return window?.RUNTIME_ENV || {};
-}
+// Moved to ./env.js so modules in the entry graph can read runtime env
+// without importing this file (and pdf-lib). Re-exported for existing callers.
+export { getEnv } from "./env";
 const appName = "OpenSign™";
 
 export const defaultMailBody = `<p>Hi {{receiver_name}},</p><br><p>We hope this email finds you well. {{sender_name}}&nbsp;has requested you to review and sign&nbsp;{{document_title}}.</p><p>Your signature is crucial to proceed with the next steps as it signifies your agreement and authorization.</p><br><p><a href='{{signing_url}}' rel='noopener noreferrer' target='_blank'>Sign here</a></p><br><br><p>If you have any questions or need further clarification regarding the document or the signing process,  please contact the sender.</p><br><p>Thanks</p><p> Team ${appName}</p><br>`;
@@ -175,13 +175,9 @@ export const fileasbytes = async (filepath) => {
   return new Uint8Array(arrayBuffer);
 };
 
-export const openInNewTab = (url, target) => {
-  if (target) {
-    window.open(url, target, "noopener,noreferrer");
-  } else {
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-};
+// Moved to ./navigation.js so entry-graph components can use it without
+// importing this file (and pdf-lib). Re-exported for existing callers.
+export { openInNewTab } from "./navigation";
 
 export const getUserCountry = async () => {
   try {
@@ -3326,10 +3322,9 @@ export const getContainerScale = (pdfOriginalWH, pageNumber, containerWH) => {
 };
 
 //function to get current laguage and set it in local
-export const saveLanguageInLocal = (i18n) => {
-  const detectedLanguage = i18n.language || "en";
-  localStorage.setItem("i18nextLng", detectedLanguage);
-};
+// Moved to ./language.js so route guards can import it without pulling
+// this module (and pdf-lib) in. Re-exported here for existing callers.
+export { saveLanguageInLocal } from "./language";
 
 // function to get default signature of current user from `contracts_Signature` class
 export const getDefaultSignature = async (objectId) => {

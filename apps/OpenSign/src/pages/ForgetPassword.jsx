@@ -90,7 +90,7 @@ function ForgotPassword() {
     setImage(appInfo?.applogo || undefined);
   };
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8">
+    <div className="flex min-h-screen w-full justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8">
       {isLoading && (
         <div className="fixed w-full h-full flex justify-center items-center bg-black bg-opacity-30 z-50">
           <Loader />
@@ -98,7 +98,7 @@ function ForgotPassword() {
       )}
       {toast?.message && <Alert type={toast.type}>{toast.message}</Alert>}
 
-      <div className="op-auth-card relative flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
+      <div className="op-auth-card relative m-auto flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
         {/* Left hero panel */}
         {!state.hideNav && (
           <div

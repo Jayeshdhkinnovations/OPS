@@ -1,5 +1,5 @@
 import logo from "../assets/images/logo.png";
-import { getEnv } from "./Utils";
+import { getEnv } from "./env";
 
 export function serverUrl_fn() {
   const env = getEnv();

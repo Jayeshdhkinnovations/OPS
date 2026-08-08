@@ -1,5 +1,6 @@
 import React from "react";
 import { Document, Page } from "react-pdf";
+import "../constant/pdfWorker"; // configures the pdfjs worker
 import { Stage, Layer, Rect, Text } from "react-konva";
 import { useTranslation } from "react-i18next";
 const RenderDebugPdf = (props) => {

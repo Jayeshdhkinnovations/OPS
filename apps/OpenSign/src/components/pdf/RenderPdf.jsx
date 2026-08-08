@@ -6,6 +6,7 @@ import React, {
   useEffect
 } from "react";
 import { Document, Page } from "react-pdf";
+import "../../constant/pdfWorker"; // configures the pdfjs worker
 import {
   defaultWidthHeight,
   getContainerScale,
