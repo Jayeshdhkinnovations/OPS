@@ -146,6 +146,13 @@ export async function mountCompany({ slug, databaseName }) {
       DOCKER_NETWORK,
       '--restart',
       'unless-stopped',
+      // Uploaded and signed PDFs are written to the container's filesystem by
+      // the Parse FS files adapter. Without this volume they lived only
+      // inside the container, so every image rebuild silently destroyed every
+      // document a company had ever signed. The volume is named per company
+      // so one tenant's files can never be served to another.
+      '-v',
+      `opensign-files-${slug}:/app/files/files`,
       ...companyEnv(slug, databaseName),
       IMAGE,
     ]);
