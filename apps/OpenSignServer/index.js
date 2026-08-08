@@ -175,9 +175,17 @@ function getUserIP(request) {
 app.use(async function (req, res, next) {
   const isFilePath = req.path?.includes('/files/') || false;
   if (isFilePath && req.method.toLowerCase() === 'get') {
+    // SERVER_URL is this instance's PUBLIC base - for a company container
+    // that includes its slug (https://host/app/<slug>), while req.originalUrl
+    // is the INTERNAL path (/app/files/...) because the root proxy strips the
+    // slug before forwarding. Signed-URL tokens are minted against the public
+    // form, so rebuilding the public URL here is what makes them match;
+    // using the bare origin dropped the slug and rejected every company's
+    // files as unauthorized.
     const serverUrl = new URL(process.env.SERVER_URL);
-    const origin = serverUrl.pathname === '/api/app' ? serverUrl.origin + '/api' : serverUrl.origin;
-    const fileUrl = origin + req.originalUrl;
+    const publicBase = serverUrl.origin + serverUrl.pathname.replace(/\/+$/, '');
+    const localPath = req.originalUrl.replace(/^\/app/, '');
+    const fileUrl = publicBase + localPath;
     const params = fileUrl?.split('?')?.[1];
     if (params) {
       const fileRes = await validateSignedLocalUrl(fileUrl);
