@@ -462,6 +462,15 @@ async function PDF(req) {
       if (pfxFile) {
         try {
           P12Buffer = Buffer.from(pfxFile, 'base64');
+          // P12Signer's constructor does not actually parse the keystore, so
+          // a corrupt certificate passed this check and only failed later,
+          // inside the signing call, as "Too few bytes to read ASN.1 value" -
+          // long after the fallback below had been skipped. Every signature
+          // that completed a document therefore failed. Parsing it here means
+          // a bad certificate is caught while falling back is still possible.
+          const forge = (await import('node-forge')).default;
+          const asn1 = forge.asn1.fromDer(forge.util.createBuffer(P12Buffer.toString('binary')));
+          forge.pkcs12.pkcs12FromAsn1(asn1, false, passphrase || 'opensign');
           new P12Signer(P12Buffer, { passphrase: passphrase || null });
         } catch (err) {
           console.log('Provided PFX_BASE64 is invalid or corrupted. Falling back to default keystore_681.pfx:', err.message);
