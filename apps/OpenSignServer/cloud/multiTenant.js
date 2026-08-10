@@ -225,9 +225,14 @@ export function companyProxy() {
     // forever on a stream that can never emit - which hung every such call
     // until the gateway timed out.
     const contentType = String(req.headers['content-type'] || '').toLowerCase();
-    const bodyAlreadyParsed = /^(application\/json|text\/plain|application\/x-www-form-urlencoded)/.test(
-      contentType
-    );
+    // /files/ is exempt from the body parsers in index.js (Parse installs its
+    // own raw parser there), so its stream is always intact and must be piped
+    // whatever the content type claims - the JS SDK labels base64 uploads
+    // text/plain, which would otherwise be misread as already parsed.
+    const isFileRoute = req.path.includes('/files/');
+    const bodyAlreadyParsed =
+      !isFileRoute &&
+      /^(application\/json|text\/plain|application\/x-www-form-urlencoded)/.test(contentType);
     const hasBody = req.headers['content-length'] || req.headers['transfer-encoding'];
 
     if (bodyAlreadyParsed) {

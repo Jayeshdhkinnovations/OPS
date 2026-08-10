@@ -150,8 +150,19 @@ app.use(cors());
 // Parse then sees header appId opensign_<slug> against body appId
 // opensign, treats the pair as inconsistent, and rejects the session with
 // "Permission denied" (209) on every authenticated tenant request.
-app.use(express.json({ limit: '100mb', type: ['application/json', 'text/plain'] }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
+//
+// File uploads are the one exception. Parse.File built from a byte array is
+// sent by the JS SDK as base64 JSON under that same text/plain content type,
+// and Parse Server's own /files/ route installs a raw body parser expecting
+// a Buffer. If the JSON parser below consumes that stream first, Parse sees
+// req.body as a plain object with no `.length` and rejects every browser
+// upload with "Invalid file upload." So /files/ is skipped here and left to
+// Parse's own parser.
+const jsonParser = express.json({ limit: '100mb', type: ['application/json', 'text/plain'] });
+const urlencodedParser = express.urlencoded({ limit: '100mb', extended: true });
+const isFileRoute = req => req.path.includes('/files/');
+app.use((req, res, next) => (isFileRoute(req) ? next() : jsonParser(req, res, next)));
+app.use((req, res, next) => (isFileRoute(req) ? next() : urlencodedParser(req, res, next)));
 app.use(function (req, res, next) {
   req.headers['x-real-ip'] = getUserIP(req);
   const publicUrl = 'https://' + req?.get('host');
