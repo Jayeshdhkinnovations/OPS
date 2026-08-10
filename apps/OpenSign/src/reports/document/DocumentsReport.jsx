@@ -26,7 +26,7 @@ import {
 } from "../../constant/Utils";
 import BulkSendUi from "../../components/bulksend/BulkSendUi";
 import Loader from "../../primitives/Loader";
-import { serverUrl_fn } from "../../constant/appinfo";
+import { apiServerUrl } from "../../constant/appinfo";
 import { Trans, useTranslation } from "react-i18next";
 import DownloadPdfZip from "../../primitives/DownloadPdfZip";
 import { useElSize } from "../../hook/useElSize";
@@ -366,7 +366,7 @@ const DocumentsReport = (props) => {
     setIsDeleteModal({});
     setActLoader({ [`${item.objectId}`]: true });
     try {
-      const serverUrl = serverUrl_fn();
+      const serverUrl = apiServerUrl();
       const cls = "contracts_Document";
       const url = serverUrl + `/classes/${cls}/`;
       const body = { IsArchive: true };
@@ -743,7 +743,7 @@ const DocumentsReport = (props) => {
         const updateExpiryDate = new Date(expiryDate).toISOString();
         const expiryIsoFormat = { iso: updateExpiryDate, __type: "Date" };
         try {
-          const serverUrl = serverUrl_fn();
+          const serverUrl = apiServerUrl();
           const cls = "contracts_Document";
           const url = serverUrl + `/classes/${cls}/`;
           const body = { ExpiryDate: expiryIsoFormat };

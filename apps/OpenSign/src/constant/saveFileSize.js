@@ -1,14 +1,17 @@
 import axios from "axios";
-import { serverUrl_fn } from "./appinfo";
+import { apiServerUrl } from "./appinfo";
 const parseAppId = process.env.REACT_APP_APPID
   ? process.env.REACT_APP_APPID
   : "opensign";
-const serverUrl = serverUrl_fn();
+// Resolved per call, not at import: this module is loaded before login has
+// stored the company's mount, so capturing it here would freeze the root URL
+// for the lifetime of the page.
 const commonheader = {
   "Content-Type": "application/json",
   "X-Parse-Application-Id": parseAppId
 };
 export const SaveFileSize = async (size, imageUrl, tenantId, userId) => {
+  const serverUrl = apiServerUrl();
   //checking server url and save file's size
   const tenantPtr = {
     __type: "Pointer",

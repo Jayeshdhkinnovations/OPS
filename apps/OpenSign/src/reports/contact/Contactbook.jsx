@@ -7,7 +7,7 @@ import ModalUi from "../../primitives/ModalUi";
 import Alert from "../../primitives/Alert";
 import Tooltip from "../../primitives/Tooltip";
 import Loader from "../../primitives/Loader";
-import { serverUrl_fn } from "../../constant/appinfo";
+import { apiServerUrl } from "../../constant/appinfo";
 import { useElSize } from "../../hook/useElSize";
 import ImportContact from "./ImportContact";
 import AddContact from "../../primitives/AddContact";
@@ -169,7 +169,7 @@ const Contactbook = (props) => {
     setIsDeleteModal({});
     setActLoader({ [`${item.objectId}`]: true });
     try {
-      const serverUrl = serverUrl_fn();
+      const serverUrl = apiServerUrl();
       const cls = "contracts_Contactbook";
       const url = serverUrl + `/classes/${cls}/`;
       const body = { IsDeleted: true };

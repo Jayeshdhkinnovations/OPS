@@ -1,6 +1,18 @@
 import logo from "../assets/images/logo.png";
 import { getEnv } from "./env";
 
+// serverUrl_fn() below resolves the ROOT server, which is what the tenant
+// lookup at login has to talk to. Every authenticated call after login must
+// instead go to the company's own mount (.../app/<slug>), which login stores
+// in `baseUrl` - sending them to the root produces "Invalid session token",
+// because the company's session does not exist there. Direct axios callers
+// need this; the Parse SDK is already pointed at the right server.
+export function apiServerUrl() {
+  const stored = localStorage.getItem("baseUrl");
+  if (stored) return stored.replace(/\/+$/, "");
+  return serverUrl_fn();
+}
+
 export function serverUrl_fn() {
   const env = getEnv();
   const serverurl = env?.REACT_APP_SERVERURL

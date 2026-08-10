@@ -64,7 +64,7 @@ import LoaderWithMsg from "../primitives/LoaderWithMsg";
 import DownloadPdfZip from "../primitives/DownloadPdfZip";
 import Loader from "../primitives/Loader";
 import PdfDeclineModal from "../primitives/PdfDeclineModal";
-import { serverUrl_fn } from "../constant/appinfo";
+import { apiServerUrl } from "../constant/appinfo";
 import AgreementSign from "../components/pdf/AgreementSign";
 import WidgetComponent from "../components/pdf/WidgetComponent";
 import PlaceholderCopy from "../components/pdf/PlaceholderCopy";
@@ -1471,7 +1471,7 @@ function PdfRequestFiles(
       const updateExpiryDate = new Date(expiryDate).toISOString();
       const expiryIsoFormat = { iso: updateExpiryDate, __type: "Date" };
       try {
-        const serverUrl = serverUrl_fn();
+        const serverUrl = apiServerUrl();
         const url = serverUrl + `/classes/contracts_Document/`;
         const body = { ExpiryDate: expiryIsoFormat };
         const res = await axios.put(url + doc.objectId, body, {
