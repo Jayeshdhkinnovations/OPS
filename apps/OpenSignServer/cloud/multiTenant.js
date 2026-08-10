@@ -57,6 +57,9 @@ function companyEnv(slug, databaseName) {
     'MASTER_KEY',
     'APP_ID',
     'PUBLIC_ORIGIN',
+    // Without this the company falls back to a stale default port and every
+    // tenant lookup inside a company container fails with ECONNREFUSED.
+    'SUPERADMIN_MONGODB_URI',
     'SMTP_ENABLE',
     'SMTP_HOST',
     'SMTP_PORT',

@@ -73,18 +73,39 @@ function GuestLogin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Repoints this page (and the Parse SDK) at the company that actually owns
+  // the document. `rootServer` already ends in a slash and looks like
+  // https://host/app/ - the company's mount is that same path plus the slug.
+  const pointAtOwningCompany = async (docId, rootServer, parseAppId) => {
+    try {
+      Parse.initialize(parseAppId);
+      Parse.serverURL = rootServer;
+      const res = await Parse.Cloud.run("resolvesignertenant", { docId });
+      if (res?.subdomain) {
+        const companyServer = `${rootServer.replace(/\/+$/, "")}/${res.subdomain}/`;
+        localStorage.setItem("baseUrl", companyServer);
+        localStorage.setItem("parseAppId", parseAppId);
+        Parse.serverURL = companyServer;
+      }
+    } catch (err) {
+      // Fall through on the root mount rather than blocking the signer - a
+      // single-company deployment resolves to nothing and still works.
+      console.log("could not resolve owning company", err);
+    }
+  };
+
 
   //function generate serverUrl and parseAppId from url and save it in local storage
   const handleServerUrl = async () => {
-      setAppLogo(logo);
+    // Prefer the deployment's configured logo; the bundled OpenSign mark is
+    // only a fallback, and this page is the first thing an external signer
+    // ever sees of the brand.
+    setAppLogo(appInfo?.applogo || logo);
     const favicon = localStorage.getItem("favicon");
 
     localStorage.clear(); // Clears everything
     localStorage.setItem("favicon", favicon);
-    localStorage.setItem(
-      "appname",
-        "OpenSign™"
-    );
+    localStorage.setItem("appname", "Sign Toowix");
     //save isGuestSigner true in local to handle login flow header in mobile view
     localStorage.setItem("isGuestSigner", true);
     saveLanguageInLocal(i18n);
@@ -98,6 +119,12 @@ function GuestLogin() {
       const decodebase64 = atob(base64url);
       //split url in array from '/'
       const checkSplit = decodebase64.split("/");
+      // The emailed link carries no company, so this page starts out pointed
+      // at the root instance - whose database holds no documents. Ask the
+      // root which company owns this document and re-point Parse at that
+      // company's mount before anything else runs, otherwise every lookup
+      // below misses and the signer is dead-ended on an OTP prompt.
+      await pointAtOwningCompany(checkSplit[0], newServer, parseId);
       setDocumentId(checkSplit[0]);
       setContact((prev) => ({
         ...prev,
