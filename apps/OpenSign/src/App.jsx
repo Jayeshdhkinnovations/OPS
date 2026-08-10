@@ -52,7 +52,16 @@ function App() {
     // initialize creds
     const id = process.env.REACT_APP_APPID ?? "opensign";
     localStorage.setItem("parseAppId", id);
-    localStorage.setItem("baseUrl", `${serverUrl_fn()}/`);
+    // Only seed the root URL when nothing is stored yet. Logging in replaces
+    // this with the company's own mount (.../app/<slug>/); overwriting it on
+    // every mount sent each later request back to the root server, where the
+    // company's session token does not exist - which surfaced as "Invalid
+    // session token" and a "something went wrong" toast on actions like
+    // deleting a document, but only after a refresh or navigation.
+    // Logging out clears storage, so a stale value cannot outlive a session.
+    if (!localStorage.getItem("baseUrl")) {
+      localStorage.setItem("baseUrl", `${serverUrl_fn()}/`);
+    }
     hideUpgradeProgress();
     localStorage.removeItem("showUpgradeProgress");
     setIsLoading(false);
