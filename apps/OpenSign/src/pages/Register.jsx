@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toowixLogo from "../assets/images/toowix-logo.png";
 import Parse from "parse";
 import { NavLink, useNavigate } from "react-router";
 import { useAuthNavigate } from "../hook/useAuthNavigate";
@@ -101,7 +102,7 @@ function Register() {
             <div className="relative z-20">
               <div className="flex items-center gap-3">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-md">
-                  <i className="fa-light fa-signature text-lg text-[#0B3D73]" />
+                  <img src={toowixLogo} alt="Sign Toowix" className="h-7 w-7 object-contain" />
                 </div>
                 <div>
                   <span className="text-lg font-bold tracking-tight text-white block leading-none">
@@ -143,8 +144,8 @@ function Register() {
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-4">
             {width < 768 && (
               <div className="mb-8 flex items-center gap-2.5">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#0B3D73] shadow-md">
-                  <i className="fa-light fa-signature text-lg text-white" />
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-md">
+                  <img src={toowixLogo} alt="Sign Toowix" className="h-7 w-7 object-contain" />
                 </div>
                 <div>
                   <span className="text-lg font-bold tracking-tight text-gray-800">
