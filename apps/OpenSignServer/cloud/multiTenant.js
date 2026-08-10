@@ -210,13 +210,22 @@ export function companyProxy() {
       if (!res.headersSent) res.status(502).json({ error: 'company backend unavailable' });
     });
 
-    // express.json() already consumed the stream, so replay the parsed body
-    // rather than trying to pipe a request that has nothing left to read.
+    // express.json()/urlencoded() upstream only consume application/json,
+    // text/plain and urlencoded bodies; for those the stream is already
+    // drained, so the parsed body has to be replayed.
+    //
+    // Everything else still has an intact stream and must be piped through
+    // byte-for-byte. File uploads arrive as multipart or a binary content
+    // type, so they land here: re-encoding them as JSON (or worse, sending
+    // nothing) is what made Parse reject every upload as "Invalid file
+    // upload." - the request reached it with an empty body.
     if (req.body && Object.keys(req.body).length) {
       const payload = Buffer.from(JSON.stringify(req.body));
       proxyReq.setHeader('content-type', 'application/json');
       proxyReq.setHeader('content-length', payload.length);
       proxyReq.end(payload);
+    } else if (req.readable) {
+      req.pipe(proxyReq);
     } else {
       proxyReq.end();
     }
