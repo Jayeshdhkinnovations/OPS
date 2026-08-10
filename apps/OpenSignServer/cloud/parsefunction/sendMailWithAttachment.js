@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import https from 'https';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
@@ -57,6 +58,31 @@ async function sendMailProvider(params) {
         let Pdf = fs.createWriteStream(testPdf);
         const writeToLocalDisk = () => {
           return new Promise((resolve, reject) => {
+            // The signed PDF this URL points at was written by this very
+            // server and is already sitting on local disk. Fetching it back
+            // over the public hostname fails whenever the host cannot route
+            // to its own public address from the inside - the normal case
+            // behind a proxy or NAT - which stalled the mail for ~10s and
+            // then sent it with only the certificate attached. Reading it
+            // locally is faster and independent of external routing. The
+            // network path below is kept as the fallback for files that
+            // genuinely live elsewhere (S3, another host).
+            try {
+              const fileName = decodeURIComponent(
+                new URL(params.url).pathname.split('/').filter(Boolean).pop() || ''
+              );
+              // Guard against a crafted name climbing out of the files dir.
+              if (fileName && !fileName.includes('..') && !path.isAbsolute(fileName)) {
+                const localPath = path.join(process.cwd(), 'files', 'files', fileName);
+                if (fs.existsSync(localPath)) {
+                  Pdf.end();
+                  fs.copyFileSync(localPath, testPdf);
+                  return resolve('success');
+                }
+              }
+            } catch (err) {
+              console.log('local attachment lookup failed, fetching instead:', err.message);
+            }
             const isSecure =
               new URL(params.url)?.protocol === 'https:' &&
               new URL(params.url)?.hostname !== 'localhost';
