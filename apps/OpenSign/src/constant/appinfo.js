@@ -1,4 +1,4 @@
-import logo from "../assets/images/toowix-logo.png";
+import logo from "../assets/images/logo.png";
 import { getEnv } from "./env";
 
 // serverUrl_fn() below resolves the ROOT server, which is what the tenant
