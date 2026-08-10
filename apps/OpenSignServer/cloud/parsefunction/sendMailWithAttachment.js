@@ -75,9 +75,19 @@ async function sendMailProvider(params) {
               if (fileName && !fileName.includes('..') && !path.isAbsolute(fileName)) {
                 const localPath = path.join(process.cwd(), 'files', 'files', fileName);
                 if (fs.existsSync(localPath)) {
-                  Pdf.end();
-                  fs.copyFileSync(localPath, testPdf);
-                  return resolve('success');
+                  // Piped into the same write stream the network path uses,
+                  // rather than closing it and copying over the file: end()
+                  // completes asynchronously, so the close raced the copy and
+                  // truncated the attachment to an unopenable 0-page PDF.
+                  const source = fs.createReadStream(localPath);
+                  source.on('error', e => {
+                    console.log('local attachment read failed:', e.message);
+                    resolve('error');
+                  });
+                  Pdf.on('error', () => resolve('error'));
+                  Pdf.on('finish', () => resolve('success'));
+                  source.pipe(Pdf);
+                  return;
                 }
               }
             } catch (err) {
