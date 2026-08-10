@@ -219,12 +219,26 @@ export function companyProxy() {
     // type, so they land here: re-encoding them as JSON (or worse, sending
     // nothing) is what made Parse reject every upload as "Invalid file
     // upload." - the request reached it with an empty body.
-    if (req.body && Object.keys(req.body).length) {
-      const payload = Buffer.from(JSON.stringify(req.body));
+    // The decision must be made on content-type, NOT on whether req.body has
+    // keys: a cloud function called with an empty body ({}) was parsed and
+    // its stream drained just the same, so trying to pipe it would wait
+    // forever on a stream that can never emit - which hung every such call
+    // until the gateway timed out.
+    const contentType = String(req.headers['content-type'] || '').toLowerCase();
+    const bodyAlreadyParsed = /^(application\/json|text\/plain|application\/x-www-form-urlencoded)/.test(
+      contentType
+    );
+    const hasBody = req.headers['content-length'] || req.headers['transfer-encoding'];
+
+    if (bodyAlreadyParsed) {
+      const payload = Buffer.from(JSON.stringify(req.body ?? {}));
       proxyReq.setHeader('content-type', 'application/json');
       proxyReq.setHeader('content-length', payload.length);
       proxyReq.end(payload);
-    } else if (req.readable) {
+    } else if (hasBody && req.readable) {
+      // Anything the parsers ignored - file uploads arrive as multipart or a
+      // binary content type - still has its stream intact and is forwarded
+      // byte-for-byte.
       req.pipe(proxyReq);
     } else {
       proxyReq.end();
