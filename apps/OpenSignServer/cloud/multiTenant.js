@@ -173,7 +173,7 @@ export async function mountCompany({ slug, databaseName }) {
   return { alreadyMounted: false, slug };
 }
 
-export async function unmountCompany(slug) {
+export async function unmountCompany(slug, { purge = false } = {}) {
   const name = containerName(slug);
   companyRoutes.delete(slug);
   try {
@@ -181,6 +181,17 @@ export async function unmountCompany(slug) {
     console.log(`multiTenant: removed container ${name}`);
   } catch (err) {
     console.log(`multiTenant: could not remove ${name}: ${err.message}`);
+  }
+  // Only on a real deletion. Dropping the database left every signed PDF
+  // sitting in this volume, so a deleted company's documents survived and
+  // would be handed straight back to the next company given the same slug.
+  if (purge) {
+    try {
+      await docker(['volume', 'rm', '-f', `opensign-files-${slug}`]);
+      console.log(`multiTenant: removed files volume for ${slug}`);
+    } catch (err) {
+      console.log(`multiTenant: could not remove volume for ${slug}: ${err.message}`);
+    }
   }
 }
 

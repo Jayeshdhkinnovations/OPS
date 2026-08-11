@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Parse from "parse";
 import Menu from "./Menu";
 import Submenu from "./SubMenu";
 import dp from "../../assets/images/dp.png";
@@ -10,6 +11,16 @@ import {
   setSelectedMenu,
   toggleSidebar
 } from "../../redux/reducers/sidebarReducer";
+
+// Bytes are unreadable in a sidebar; show the largest unit that stays short.
+function formatStorageSize(bytes) {
+  const n = Number(bytes) || 0;
+  if (!n) return "0 KB";
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n / 1024).toFixed(0) + " KB";
+  if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
+  return (n / 1073741824).toFixed(2) + " GB";
+}
 
 const Sidebar = () => {
   const { width } = useWindowSize();
@@ -74,9 +85,27 @@ const Sidebar = () => {
     closeSidebar();
     navigate("/profile");
   };
+
+  // Fetched once per mount from the same cloud function the Users page uses,
+  // so the figure here and there can never disagree.
+  const [storageUsed, setStorageUsed] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    Parse.Cloud.run("gettenantusage")
+      .then((res) => {
+        if (!cancelled) setStorageUsed(res?.usedStorage ?? 0);
+      })
+      .catch(() => {
+        // Usage is informational - a failure just leaves the dash showing.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <aside
-      className={`absolute max-lg:min-h-screen lg:relative bg-base-100 overflow-y-auto transition-all z-[500] shadow-lg hide-scrollbar
+      className={`absolute max-lg:min-h-screen lg:relative bg-base-100 overflow-y-auto transition-all z-[500] shadow-lg hide-scrollbar flex flex-col
      ${isOpen ? "w-full md:w-64" : "w-0"}`}
     >
       <div className="flex px-2 py-3 gap-2 items-center shadow-md">
@@ -136,6 +165,19 @@ const Sidebar = () => {
           )}
         </ul>
       </nav>
+
+      {/* Tenant storage, pinned to the foot of the sidebar so it is visible
+          from every page rather than only the Users screen. */}
+      {isOpen && (
+        <div className="mt-auto border-t border-base-300 px-4 py-3">
+          <div className="text-[11px] font-medium uppercase tracking-wide opacity-60">
+            Storage used
+          </div>
+          <div className="mt-0.5 text-sm font-semibold">
+            {storageUsed === null ? "—" : formatStorageSize(storageUsed)}
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

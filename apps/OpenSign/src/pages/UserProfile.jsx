@@ -569,12 +569,10 @@ function UserProfile() {
               >
                 {editmode ? t("cancel") : t("change-password")}
               </button>
-              <button
-                onClick={() => handleDeleteAccountBtn()}
-                className="op-link op-link-accent text-sm mx-2"
-              >
-                {t("delete-account")}
-              </button>
+              {/* Delete-account removed: on this platform an account belongs to a
+                  company the Super Admin provisions, so self-deletion is not
+                  the user's to make. The modal and handler below are left in
+                  place, unreferenced, in case it is ever re-enabled. */}
             </div>
           </div>
           {isdeleteModal && (

@@ -13,11 +13,25 @@ import FSFilesAdapter from '@parse/fs-files-adapter';
 import { app as customRoute } from './cloud/customRoute/customApp.js';
 import { createTransport } from 'nodemailer';
 import { ParseServer } from 'parse-server';
-import { appName, smtpenable, smtpsecure, useLocal, internalAdminSecret, serverAppId, publicOrigin } from './Utils.js';
+import {
+  appName,
+  smtpenable,
+  smtpsecure,
+  useLocal,
+  internalAdminSecret,
+  serverAppId,
+  publicOrigin,
+} from './Utils.js';
 import { BRAND_NAME } from './cloud/emailTemplates.js';
 import { SSOAuth } from './auth/authadapter.js';
 import { validateSignedLocalUrl } from './cloud/parsefunction/getSignedUrl.js';
-import { mountCompany, unmountCompany, loadAllCompaniesAndMount, listMountedSlugs, companyProxy } from './cloud/multiTenant.js';
+import {
+  mountCompany,
+  unmountCompany,
+  loadAllCompaniesAndMount,
+  listMountedSlugs,
+  companyProxy,
+} from './cloud/multiTenant.js';
 import registerCloudCode from './cloud/main.js';
 let fsAdapter;
 
@@ -257,7 +271,6 @@ if (!isCompanyMode) {
 app.get('/app/health', (req, res) => res.status(200).json({ ok: true }));
 app.use(mountPath, defaultServer.app);
 
-
 // Internal-only endpoint: SuperAdminServer calls this the moment a new
 // company finishes provisioning, so its mount goes live immediately
 // without restarting this process (and without touching any other
@@ -287,10 +300,12 @@ app.post('/admin/unmount-company', express.json(), async (req, res) => {
   if (!internalAdminSecret || req.headers['x-internal-secret'] !== internalAdminSecret) {
     return res.status(403).json({ error: 'forbidden' });
   }
-  const { slug } = req.body || {};
+  const { slug, purge } = req.body || {};
   if (!slug) return res.status(422).json({ error: 'slug is required' });
-  await unmountCompany(slug);
-  return res.status(200).json({ unmounted: true, slug });
+  // purge also destroys the company's files volume - deletion only, never a
+  // plain unmount, which is meant to be reversible.
+  await unmountCompany(slug, { purge: purge === true });
+  return res.status(200).json({ unmounted: true, slug, purged: purge === true });
 });
 
 app.get('/admin/mounted-companies', (req, res) => {

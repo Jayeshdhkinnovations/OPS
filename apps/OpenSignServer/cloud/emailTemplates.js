@@ -12,6 +12,12 @@
 export const BRAND_NAME = 'Sign Toowix';
 export const BRAND_TAGLINE = 'Secure Digital Document Platform';
 
+// Email clients cannot load local files or data URIs, so the mark has to be
+// fetched from a public URL. Same file the document emails use; the header
+// sits on navy, and this logo is the blue-on-white version, so it is placed
+// on a white puck rather than directly on the gradient.
+const MAIL_LOGO_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
+
 const NAVY = '#002864';
 const NAVY_LIGHT = '#1B4F91';
 const INK = '#1A1A1A';
@@ -117,7 +123,9 @@ export function baseTemplate({
       <td style="background:${NAVY};background:linear-gradient(135deg,${NAVY_LIGHT},${NAVY});padding:28px 32px;text-align:center;">
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 10px;">
           <tr>
-            <td style="width:36px;height:36px;border-radius:10px;background:#FFFFFF;text-align:center;vertical-align:middle;font:700 16px/36px 'Segoe UI',Arial,sans-serif;color:#0B3D73;">S</td>
+            <td style="width:44px;height:44px;border-radius:10px;background:#FFFFFF;text-align:center;vertical-align:middle;padding:4px;">
+              <img src="${MAIL_LOGO_URL}" width="36" height="36" alt="${BRAND_NAME}" style="display:block;margin:0 auto;border:0;"/>
+            </td>
           </tr>
         </table>
         <div style="color:#FFFFFF;font-size:18px;font-weight:700;letter-spacing:0.3px;">${BRAND_NAME}</div>
@@ -188,10 +196,10 @@ export function otpEmail(otp, { purposeLabel = 'continue' } = {}) {
   };
 }
 
-export function loginAlertEmail({ name, email, when, ip, device }) {
+export function loginAlertEmail({ name, email, when, location, device }) {
   return {
     subject: `${BRAND_NAME} — New sign-in to your account`,
-    text: `Hi ${name || 'there'}, your ${BRAND_NAME} account (${email}) was just signed in to on ${when}${ip ? ` from IP ${ip}` : ''}. If this wasn't you, reset your password immediately.`,
+    text: `Hi ${name || 'there'}, your ${BRAND_NAME} account (${email}) was just signed in to on ${when}${location ? ` from ${location}` : ''}. If this wasn't you, reset your password immediately.`,
     html: baseTemplate({
       icon: '&#10003;',
       tone: 'success',
@@ -200,7 +208,7 @@ export function loginAlertEmail({ name, email, when, ip, device }) {
       details: [
         { label: 'Account', value: email },
         { label: 'When', value: when },
-        { label: 'IP address', value: ip },
+        { label: 'Location', value: location },
         { label: 'Device', value: device },
       ],
       footnote: `If this was you, no action is needed. If you don't recognise this sign-in, reset your password right away and enable two-factor authentication.`,
