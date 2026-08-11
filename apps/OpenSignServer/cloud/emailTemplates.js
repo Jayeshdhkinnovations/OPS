@@ -151,11 +151,13 @@ export function baseTemplate({
 // against "was that me?", which is the entire point of the email.
 export function formatWhen(date = new Date()) {
   try {
-    return new Intl.DateTimeFormat('en-IN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'Asia/Kolkata',
-    }).format(date) + ' IST';
+    return (
+      new Intl.DateTimeFormat('en-IN', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'Asia/Kolkata',
+      }).format(date) + ' IST'
+    );
   } catch {
     return date.toUTCString();
   }
@@ -166,13 +168,10 @@ export function formatWhen(date = new Date()) {
  * ------------------------------------------------------------------ */
 
 export function otpEmail(otp, { purposeLabel = 'continue' } = {}) {
-  const digitCells = otp
-    .split('')
-    .map(
-      d =>
-        `<td style="width:38px;height:48px;border:1px solid #DCE6F6;border-radius:8px;background:#F4F8FF;font:700 22px/48px 'Segoe UI',Arial,sans-serif;color:${NAVY};text-align:center;">${d}</td>`
-    )
-    .join('<td style="width:8px;"></td>');
+  // One block rather than a box per digit: split cells forced the reader to
+  // reassemble the code before typing it, and copy-pasting from them dragged
+  // in the table whitespace. Wide letter-spacing keeps the digits legible.
+  const codeBlock = `<td style="padding:14px 28px;border:1px solid #DCE6F6;border-radius:10px;background:#F4F8FF;font:700 30px/1 'Segoe UI',Arial,sans-serif;color:${NAVY};letter-spacing:8px;text-align:center;">${esc(otp)}</td>`;
 
   return {
     subject: `${BRAND_NAME} — Your verification code`,
@@ -182,7 +181,7 @@ export function otpEmail(otp, { purposeLabel = 'continue' } = {}) {
       intro: `Enter this code to ${esc(purposeLabel)}. It expires in <strong style="color:${INK};">5 minutes</strong>.`,
       bodyHtml: `
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
-          <tr>${digitCells}</tr>
+          <tr>${codeBlock}</tr>
         </table>`,
       footnote: `Didn't request this code? You can safely ignore this email — your account is still secure.`,
     }),
