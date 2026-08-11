@@ -47,12 +47,69 @@ export default async function getUserListByOrg(req) {
       extUser.include('TeamIds');
       extUser.descending('createdAt');
       const userRes = await extUser.find({ useMasterKey: true });
-      if (userRes.length > 0) {
-        const _userRes = JSON.parse(JSON.stringify(userRes));
-        return _userRes;
-      } else {
-        return [];
+      if (userRes.length === 0) return [];
+      const _userRes = JSON.parse(JSON.stringify(userRes));
+
+      // Per-user storage and signed-document counts, attached here rather
+      // than fetched per row by the client - that would be one round trip per
+      // user on every render of the list.
+      try {
+        const userIds = _userRes.map(u => u.UserId?.objectId).filter(Boolean);
+
+        // Storage: partners_DataFiles carries a FileSize and the uploader.
+        const storageByUser = {};
+        if (userIds.length) {
+          const fileQuery = new Parse.Query('partners_DataFiles');
+          fileQuery.containedIn(
+            'UserId',
+            userIds.map(id => ({ __type: 'Pointer', className: '_User', objectId: id }))
+          );
+          fileQuery.select('FileSize', 'UserId');
+          fileQuery.limit(10000);
+          for (const f of await fileQuery.find({ useMasterKey: true })) {
+            const owner = f.get('UserId')?.id;
+            if (owner)
+              storageByUser[owner] = (storageByUser[owner] || 0) + (f.get('FileSize') || 0);
+          }
+        }
+
+        // Signed count: the audit trail records who signed, so it is the only
+        // reliable source - a document can have many signers and the creator
+        // is not necessarily one of them.
+        const signedByUser = {};
+        const docQuery = new Parse.Query('contracts_Document');
+        docQuery.exists('AuditTrail');
+        docQuery.select('AuditTrail');
+        docQuery.limit(10000);
+        for (const doc of await docQuery.find({ useMasterKey: true })) {
+          const seen = new Set();
+          for (const entry of doc.get('AuditTrail') || []) {
+            if (entry?.Activity !== 'Signed') continue;
+            const signer = entry?.UserPtr?.objectId;
+            // One document counts once per signer even if re-signed.
+            if (signer && !seen.has(signer)) {
+              seen.add(signer);
+              signedByUser[signer] = (signedByUser[signer] || 0) + 1;
+            }
+          }
+        }
+
+        for (const u of _userRes) {
+          const uid = u.UserId?.objectId;
+          u.StorageUsed = uid ? storageByUser[uid] || 0 : 0;
+          // Audit entries point at contracts_Users, so check both ids.
+          u.DocumentsSigned = (signedByUser[u.objectId] || 0) + (uid ? signedByUser[uid] || 0 : 0);
+        }
+      } catch (statsErr) {
+        // Stats are decoration - never fail the whole user list over them.
+        console.log('getuserlistbyorg stats failed:', statsErr.message);
+        for (const u of _userRes) {
+          u.StorageUsed = u.StorageUsed ?? 0;
+          u.DocumentsSigned = u.DocumentsSigned ?? 0;
+        }
       }
+
+      return _userRes;
     } catch (err) {
       console.log('err in getuserlist', err);
       throw err;

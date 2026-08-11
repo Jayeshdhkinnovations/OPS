@@ -24,7 +24,28 @@ function formatBytes(bytes) {
   return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
-const heading = ["Sr.No", "Name", "Email", "Phone", "Role", "Team", "Active"];
+const heading = [
+  "Sr.No",
+  "Name",
+  "Email",
+  "Phone",
+  "Role",
+  "Storage",
+  "Signed",
+  "Team",
+  "Active"
+];
+
+// Bytes are unreadable in a table; show the largest unit that keeps the
+// number short. 0 renders as a dash so empty rows stay quiet.
+function formatStorage(bytes) {
+  const n = Number(bytes) || 0;
+  if (!n) return "-";
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n / 1024).toFixed(0) + " KB";
+  if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
+  return (n / 1073741824).toFixed(2) + " GB";
+}
 const UserList = () => {
   const { t } = useTranslation();
   const [userList, setUserList] = useState([]);
@@ -380,6 +401,12 @@ const UserList = () => {
                               </td>
                               <td className="px-4 py-2">
                                 {item?.UserRole?.split("_").pop() || "-"}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap">
+                                {formatStorage(item?.StorageUsed)}
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                {item?.DocumentsSigned ?? 0}
                               </td>
                               <td className="px-4 py-2">
                                 {formatRow(item.TeamIds)}
