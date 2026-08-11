@@ -5,7 +5,6 @@ import bcrypt from 'bcryptjs';
 import { createAndSendOtp } from '../twoFactorAuth.js';
 import { notifyLogin, clientInfo } from '../securityNotifications.js';
 
-
 // Each company now runs in its own container with exactly one Parse Server
 // (see cloud/multiTenant.js), so the SDK's process-global state can no
 // longer be overwritten by another company. That means a plain
@@ -49,8 +48,18 @@ export default async function loginUser(request) {
     } catch (err) {
       // 2. If login fails, check if we are on the root instance and if this email belongs to a dynamic company
       const originalPath = request.headers ? request.headers['x-original-path'] : '';
-      const isRootInstance = !originalPath || originalPath.startsWith('/app/functions') || originalPath.startsWith('/app/login') || originalPath === '/app' || originalPath === '/app/';
-      console.log('DEBUG LOGIN REDIRECT:', { originalPath, isRootInstance, hasUri: !!process.env.SUPERADMIN_MONGODB_URI, username });
+      const isRootInstance =
+        !originalPath ||
+        originalPath.startsWith('/app/functions') ||
+        originalPath.startsWith('/app/login') ||
+        originalPath === '/app' ||
+        originalPath === '/app/';
+      console.log('DEBUG LOGIN REDIRECT:', {
+        originalPath,
+        isRootInstance,
+        hasUri: !!process.env.SUPERADMIN_MONGODB_URI,
+        username,
+      });
       if (isRootInstance && process.env.SUPERADMIN_MONGODB_URI) {
         let client;
         try {
@@ -80,11 +89,30 @@ export default async function loginUser(request) {
                 { $or: [{ username: username }, { email: username }] },
                 { projection: { _hashed_password: 1 } }
               );
-            if (match) candidates.push({ company, hash: match._hashed_password });
+            if (!match) continue;
+            // Sending someone a document to sign creates a _User for them in
+            // that company, even though they never get dashboard access. Those
+            // invisible signer logins made an address look like it belonged to
+            // several companies and could route a real user into a workspace
+            // where they have nothing - which is what "user not found" was.
+            // A contracts_Users row is what actually grants dashboard access,
+            // so it decides membership here.
+            const isMember = await client
+              .db(company.databaseName)
+              .collection('contracts_Users')
+              .findOne({ Email: username }, { projection: { _id: 1 } });
+            candidates.push({ company, hash: match._hashed_password, isMember: !!isMember });
           }
 
+          // Prefer companies the address is a real member of; fall back to the
+          // full set so a signer-only account can still reach a reset flow.
+          const members = candidates.filter(c => c.isMember);
+          if (members.length) ((candidates.length = 0), candidates.push(...members));
+
           if (candidates.length === 1) {
-            console.log(`TENANT LOOKUP: matched "${username}" in ${candidates[0].company.databaseName}`);
+            console.log(
+              `TENANT LOOKUP: matched "${username}" in ${candidates[0].company.databaseName}`
+            );
             return { error: 'tenant_redirect', subdomain: candidates[0].company.subdomain };
           }
           if (candidates.length > 1) {
@@ -123,4 +151,3 @@ export default async function loginUser(request) {
     throw new Parse.Error(Parse.Error.PASSWORD_MISSING, 'username/password is missing.');
   }
 }
-
