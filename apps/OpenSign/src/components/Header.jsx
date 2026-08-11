@@ -76,7 +76,6 @@ const Header = ({ isConsole, setIsLoggingOut }) => {
     let PageLanding = localStorage.getItem("PageLanding");
     let baseUrl = localStorage.getItem("baseUrl");
     let appid = localStorage.getItem("parseAppId");
-    let favicon = localStorage.getItem("favicon");
 
     localStorage.clear();
     saveLanguageInLocal(i18n);
@@ -86,7 +85,10 @@ const Header = ({ isConsole, setIsLoggingOut }) => {
     localStorage.setItem("userSettings", appdata);
     localStorage.setItem("baseUrl", baseUrl);
     localStorage.setItem("parseAppId", appid);
-    localStorage.setItem("favicon", favicon);
+    // Deliberately NOT preserved across logout: keeping the old value meant a
+    // rebuilt favicon never reached anyone who had already used the app, since
+    // it is only seeded when absent. Dropping it here lets the current build
+    // re-seed it on the next load.
     setIsLoggingOut(false);
     navigate("/");
   };

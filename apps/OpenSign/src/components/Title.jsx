@@ -2,6 +2,7 @@ import { useLocation, matchPath } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 import { useManifestUrl } from "../hook/useManifestUrl";
+import { appInfo } from "../constant/appinfo";
 
 const TITLE_MAP = {
   "/": "login",
@@ -57,9 +58,14 @@ function resolveTitle(pathname, override) {
 export default function Title() {
   const { pathname, state } = useLocation();
   const { t } = useTranslation();
-  const appName =
-    "OpenSign™";
-  const logo = useMemo(() => localStorage.getItem("favicon"), []);
+  const appName = "Sign Toowix";
+  // Falls back to the current build rather than relying on a stored value:
+  // a company favicon (set at login) still wins, but a browser that has none
+  // - or a stale one that was just cleared - now gets this build's icon.
+  const logo = useMemo(
+    () => localStorage.getItem("favicon") || appInfo.fev_Icon,
+    []
+  );
   const prefix = useMemo(
     () => resolveTitle(pathname, state?.title),
     [pathname, state?.title]
