@@ -8,8 +8,8 @@ import GenerateCertificate from './pdf/GenerateCertificate.js';
 import { getSecureUrl } from '../../Utils.js';
 import { parseUploadFile } from '../../utils/fileUtils.js';
 dotenv.config({ quiet: true });
-const eSignName = 'OpenSign';
-const eSigncontact = 'hello@opensignlabs.com';
+const eSignName = 'Sign Toowix';
+const eSigncontact = 'notification@toowix.com';
 
 // `uploadFile` is used to create url in from pdfFile
 async function uploadFile(pdfName, filepath) {
@@ -52,7 +52,10 @@ export default async function generateCertificatebydocId(req) {
       P12Buffer = Buffer.from(pfxFile, 'base64');
       new P12Signer(P12Buffer, { passphrase: passphrase || null });
     } catch (err) {
-      console.log('Provided PFX_BASE64 in generateCertificate is invalid. Falling back to default keystore_681.pfx:', err.message);
+      console.log(
+        'Provided PFX_BASE64 in generateCertificate is invalid. Falling back to default keystore_681.pfx:',
+        err.message
+      );
       P12Buffer = null;
     }
   }

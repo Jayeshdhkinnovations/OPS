@@ -8,6 +8,7 @@ import {
   saveFileUsage,
   getSecureUrl,
   appName,
+  mailLogo,
   serverAppId,
 } from '../../../Utils.js';
 import GenerateCertificate from './GenerateCertificate.js';
@@ -37,8 +38,8 @@ import {
 const serverUrl = cloudServerUrl; // process.env.SERVER_URL;
 const APPID = serverAppId;
 const masterKEY = process.env.MASTER_KEY;
-const eSignName = 'OpenSign';
-const eSigncontact = 'hello@opensignlabs.com';
+const eSignName = 'Sign Toowix';
+const eSigncontact = 'notification@toowix.com';
 const docUrl = `${serverUrl}/classes/contracts_Document`;
 const headers = {
   'Content-Type': 'application/json',
@@ -149,8 +150,7 @@ async function updateDoc(
 async function sendNotifyMail(doc, signUser, mailProvider, publicUrl) {
   try {
     const TenantAppName = appName;
-    const logo =
-      "<img src='https://qikinnovation.ams3.digitaloceanspaces.com/logo.png' height='50' style='padding:20px'/>";
+    const logo = mailLogo;
 
     const auditTrailCount =
       doc?.AuditTrail?.filter(x => COMPLETION_ACTIVITIES.includes(x.Activity))?.length || 0;
@@ -197,8 +197,7 @@ async function sendCompletedMail(obj) {
   const sender = obj.doc.ExtUserPtr;
   const pdfName = doc.Name;
   const TenantAppName = appName;
-  const logo =
-    "<img src='https://qikinnovation.ams3.digitaloceanspaces.com/logo.png' height='50' style='padding:20px'/>";
+  const logo = mailLogo;
 
   let signersMail;
   if (doc?.Signers?.length > 0) {
@@ -454,7 +453,10 @@ async function PDF(req) {
       let P12Buffer;
       let passphrase = process.env.PASS_PHRASE || 'opensign';
       let pfxFile = process.env.PFX_BASE64;
-      if (_resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64 && _resDoc.ExtUserPtr.TenantId.PfxFile.base64.length > 500) {
+      if (
+        _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64 &&
+        _resDoc.ExtUserPtr.TenantId.PfxFile.base64.length > 500
+      ) {
         pfxFile = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64;
         passphrase = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.password;
       }
@@ -473,7 +475,10 @@ async function PDF(req) {
           forge.pkcs12.pkcs12FromAsn1(asn1, false, passphrase || 'opensign');
           new P12Signer(P12Buffer, { passphrase: passphrase || null });
         } catch (err) {
-          console.log('Provided PFX_BASE64 is invalid or corrupted. Falling back to default keystore_681.pfx:', err.message);
+          console.log(
+            'Provided PFX_BASE64 is invalid or corrupted. Falling back to default keystore_681.pfx:',
+            err.message
+          );
           P12Buffer = null;
         }
       }

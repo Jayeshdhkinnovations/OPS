@@ -17,7 +17,15 @@ dotenv.config({ quiet: true });
 
 export const cloudServerUrl = 'http://localhost:8081/app';
 export const serverAppId = process.env.APP_ID || 'opensign';
-export const appName = 'OpenSign™';
+export const appName = 'Sign Toowix';
+
+// One definition for the logo every transactional email embeds. Email clients
+// cannot load local files or data URIs, so it has to be a public URL; deriving
+// it from PUBLIC_ORIGIN keeps it correct on any deployment. This replaced five
+// separately hardcoded copies that all still pointed at OpenSign's own CDN, so
+// every email we sent was fetching a competitor's logo from their servers.
+export const mailLogoUrl = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
+export const mailLogo = `<img src='${mailLogoUrl}' height='50' style='padding:20px'/>`;
 
 // Multi-tenant support: this one backend process hosts a separate Parse
 // Server mount per company, each pointed at that company's own isolated
@@ -28,7 +36,8 @@ export const appName = 'OpenSign™';
 // server at (e.g. https://sign.toowix.com) - used to build each mount's
 // own serverURL/publicServerURL, since cloudServerUrl above is fixed to a
 // single path and can't be reused per-company.
-export const publicOrigin = process.env.PUBLIC_ORIGIN || `http://localhost:${process.env.PORT || 8081}`;
+export const publicOrigin =
+  process.env.PUBLIC_ORIGIN || `http://localhost:${process.env.PORT || 8081}`;
 export function buildMountServerUrl(slug) {
   return `${publicOrigin}/app/${slug}`;
 }
@@ -694,7 +703,7 @@ export const mailTemplate = param => {
   const themeColor = '#47a3ad';
   const subject = `${param.senderName} has requested you to sign "${param.title}"`;
   const AppName = appName;
-  const logo = `<img src='https://qikinnovation.ams3.digitaloceanspaces.com/logo.png' height='50' />`;
+  const logo = mailLogo;
 
   const body =
     "<html><head><meta http-equiv='Content-Type' content='text/html;charset=UTF-8' /></head><body><div style='background-color:#f5f5f5;padding:20px'><div style='background:white;padding-bottom:20px'><div style='padding:10px'>" +
