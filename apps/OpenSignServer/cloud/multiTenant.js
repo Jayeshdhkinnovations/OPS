@@ -282,21 +282,55 @@ export async function loadAllCompaniesAndMount() {
   try {
     await client.connect();
     const companies = await client.db().collection('Company').find({ status: 'active' }).toArray();
+    const failed = [];
 
     for (const company of companies) {
       const slug = company.subdomain;
       const databaseName = company.databaseName;
       if (!slug || !databaseName) continue;
-      try {
-        await mountCompany({ slug, databaseName });
-      } catch (err) {
-        // One bad company shouldn't stop every other one from starting.
-        console.log(`multiTenant: failed to start "${slug}": ${err.message}`);
+      // Retry with backoff. Starting every company at once contends for
+      // memory and Docker's daemon, and a single transient failure used to
+      // leave that company offline until a human noticed and restarted this
+      // process - its route is only registered by a successful mount.
+      let mounted = false;
+      for (let attempt = 1; attempt <= 3 && !mounted; attempt++) {
+        try {
+          await mountCompany({ slug, databaseName });
+          mounted = true;
+        } catch (err) {
+          console.log(`multiTenant: start "${slug}" attempt ${attempt}/3 failed: ${err.message}`);
+          if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 4000));
+        }
       }
+      if (!mounted) failed.push({ slug, databaseName });
+      // Stagger the next one so eight containers don't all boot simultaneously.
+      await new Promise(r => setTimeout(r, 1500));
     }
+
     console.log(
       `multiTenant: ${companyRoutes.size} compan${companyRoutes.size === 1 ? 'y' : 'ies'} routed on startup.`
     );
+
+    // Anything still down gets retried in the background rather than being
+    // abandoned: the process is already serving traffic, and a company that
+    // lost a start-up race should recover on its own.
+    if (failed.length) {
+      console.log(`multiTenant: ${failed.length} company(ies) pending background retry`);
+      setTimeout(async function retryPending(round = 1) {
+        for (const c of [...failed]) {
+          try {
+            await mountCompany(c);
+            failed.splice(failed.indexOf(c), 1);
+            console.log(`multiTenant: recovered "${c.slug}" on background retry`);
+          } catch (err) {
+            console.log(`multiTenant: "${c.slug}" still down: ${err.message}`);
+          }
+        }
+        if (failed.length && round < 10) {
+          setTimeout(() => retryPending(round + 1), 30000);
+        }
+      }, 20000);
+    }
   } finally {
     await client.close();
   }
