@@ -239,8 +239,18 @@ export function companyProxy() {
     const hasBody = req.headers['content-length'] || req.headers['transfer-encoding'];
 
     if (bodyAlreadyParsed) {
-      const payload = Buffer.from(JSON.stringify(req.body ?? {}));
-      proxyReq.setHeader('content-type', 'application/json');
+      // Replay in the SAME encoding it arrived in. Re-encoding a form post as
+      // JSON silently emptied it for Parse's own HTML pages, which read
+      // urlencoded fields - that is what made the password-reset form fail
+      // with "username / email / token is invalid" even on a valid token.
+      const isForm = contentType.startsWith('application/x-www-form-urlencoded');
+      const payload = isForm
+        ? Buffer.from(new URLSearchParams(req.body ?? {}).toString())
+        : Buffer.from(JSON.stringify(req.body ?? {}));
+      proxyReq.setHeader(
+        'content-type',
+        isForm ? 'application/x-www-form-urlencoded' : 'application/json'
+      );
       proxyReq.setHeader('content-length', payload.length);
       proxyReq.end(payload);
     } else if (hasBody && req.readable) {
@@ -273,7 +283,9 @@ export async function loadAllCompaniesAndMount() {
         console.log(`multiTenant: failed to start "${slug}": ${err.message}`);
       }
     }
-    console.log(`multiTenant: ${companyRoutes.size} compan${companyRoutes.size === 1 ? 'y' : 'ies'} routed on startup.`);
+    console.log(
+      `multiTenant: ${companyRoutes.size} compan${companyRoutes.size === 1 ? 'y' : 'ies'} routed on startup.`
+    );
   } finally {
     await client.close();
   }
