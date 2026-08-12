@@ -1,4 +1,4 @@
-import { appName, mailLogo } from '../../Utils.js';
+import { appName, mailLogo, mailDarkModeStyle } from '../../Utils.js';
 import sendSystemMail from './sendSystemMail.js';
 
 async function sendDeclineMail(doc, publicUrl, userId, reason) {
@@ -21,7 +21,7 @@ async function sendDeclineMail(doc, publicUrl, userId, reason) {
     const viewDocUrl = `${publicUrl}/recipientSignPdf/${doc.objectId}`;
     const subject = `Document "${pdfName}" has been declined by ${signerName}`;
     const body =
-      "<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/></head><body><div style='background-color:#f5f5f5;padding:20px'><div style='background-color:white'>" +
+      `<html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'/>${mailDarkModeStyle}</head><body><div style='background-color:#f5f5f5;padding:20px'><div style='background-color:white'>` +
       `<div>${logo}</div><div style='padding:2px;font-family:system-ui;background-color:#47a3ad'><p style='font-size:20px;font-weight:400;color:white;padding-left:20px'>Document declined by ${signerName}</p>` +
       `</div><div style='padding:20px;font-family:system-ui;font-size:14px'><p>Dear ${creatorName},</p>` +
       `<p>${pdfName} has been declined by ${signerName} "${signerEmail}" on ${new Date().toLocaleDateString()}.</p>` +

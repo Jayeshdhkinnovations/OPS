@@ -58,7 +58,7 @@ function resolveTitle(pathname, override) {
 export default function Title() {
   const { pathname, state } = useLocation();
   const { t } = useTranslation();
-  const appName = "Sign Toowix";
+  const appName = "SignToowix";
   // Falls back to the current build rather than relying on a stored value:
   // a company favicon (set at login) still wins, but a browser that has none
   // - or a stale one that was just cleared - now gets this build's icon.

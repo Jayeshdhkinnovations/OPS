@@ -1,5 +1,5 @@
 // Simple flat illustration for the auth hero panel, built to match the
-// navy Sign Toowix theme (no mismatched off-brand colors like the old
+// navy SignToowix theme (no mismatched off-brand colors like the old
 // stock artwork). A signed document + checkmark seal, nothing more.
 function AuthIllustration({ className = "" }) {
   return (

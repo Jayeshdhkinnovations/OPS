@@ -58,7 +58,7 @@ function WaitingApproval() {
             <i className="fa-light fa-signature text-lg text-white" />
           </div>
           <span className="text-lg font-bold tracking-tight text-gray-800">
-            Sign Toowix
+            SignToowix
           </span>
         </div>
 

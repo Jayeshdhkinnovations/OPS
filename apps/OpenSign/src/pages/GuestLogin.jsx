@@ -105,7 +105,7 @@ function GuestLogin() {
 
     localStorage.clear(); // Clears everything
     localStorage.setItem("favicon", favicon);
-    localStorage.setItem("appname", "Sign Toowix");
+    localStorage.setItem("appname", "SignToowix");
     //save isGuestSigner true in local to handle login flow header in mobile view
     localStorage.setItem("isGuestSigner", true);
     saveLanguageInLocal(i18n);

@@ -8,7 +8,7 @@ import GenerateCertificate from './pdf/GenerateCertificate.js';
 import { getSecureUrl } from '../../Utils.js';
 import { parseUploadFile } from '../../utils/fileUtils.js';
 dotenv.config({ quiet: true });
-const eSignName = 'Sign Toowix';
+const eSignName = 'SignToowix';
 const eSigncontact = 'notification@toowix.com';
 
 // `uploadFile` is used to create url in from pdfFile

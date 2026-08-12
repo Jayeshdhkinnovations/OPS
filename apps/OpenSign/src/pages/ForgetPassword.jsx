@@ -108,11 +108,11 @@ function ForgotPassword() {
             <div className="relative z-20">
               <div className="flex items-center gap-3">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-md">
-                  <img src={toowixLogo} alt="Sign Toowix" className="h-7 w-7 object-contain" />
+                  <img src={toowixLogo} alt="SignToowix" className="h-7 w-7 object-contain" />
                 </div>
                 <div>
                   <span className="text-lg font-bold tracking-tight text-white block leading-none">
-                    Sign Toowix
+                    SignToowix
                   </span>
                   <span className="text-[10px] text-white/80 font-medium mt-1 block">
                     Secure Digital Document Platform
@@ -151,11 +151,11 @@ function ForgotPassword() {
             {state.hideNav && (
               <div className="mb-8 flex items-center gap-2.5">
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-md">
-                  <img src={toowixLogo} alt="Sign Toowix" className="h-7 w-7 object-contain" />
+                  <img src={toowixLogo} alt="SignToowix" className="h-7 w-7 object-contain" />
                 </div>
                 <div>
                   <span className="text-lg font-bold tracking-tight text-gray-800">
-                    Sign Toowix
+                    SignToowix
                   </span>
                 </div>
               </div>

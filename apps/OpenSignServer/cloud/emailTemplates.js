@@ -2,7 +2,7 @@
 // below, so brand changes happen in a single place instead of being copied
 // into each call site. Deliberately not the shared `appName` constant from
 // Utils.js (that's "OpenSign™" and feeds the document-signing emails) - these
-// are the Sign Toowix platform notifications.
+// are the SignToowix platform notifications.
 //
 // Design intent: plain and editorial, not a gradient-heavy "template
 // generator" look. One accent colour (navy), used only for the button and
@@ -14,7 +14,7 @@
 // dark-mode support below relies on inline styles plus a small guarded
 // <style> block that the clients which DO support it (Apple Mail, iOS Mail,
 // Outlook.com, some Gmail) will honour and the rest will simply ignore.
-export const BRAND_NAME = 'Sign Toowix';
+export const BRAND_NAME = 'SignToowix';
 export const BRAND_TAGLINE = 'Secure Digital Document Platform';
 
 const NAVY = '#1B4F91';
