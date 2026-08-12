@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!--
+  Restyled version of parse-server's stock public_html/invalid_link.html.
+  Shown for a stale/already-used reset link. Static page, no logic to
+  preserve. Deployed by copying over
+  node_modules/parse-server/public_html/invalid_link.html during the
+  Docker build (see Dockerfile).
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Invalid Link - Sign Toowix</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        background: #F7F8FC;
+        font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        padding: 16px;
+      }
+      .card {
+        margin: auto;
+        width: 100%;
+        max-width: 420px;
+        background: #fff;
+        border-radius: 26px;
+        padding: 44px 40px;
+        text-align: center;
+        box-shadow: 0 40px 80px -30px rgba(70,60,160,0.28);
+      }
+      .icon {
+        width: 64px; height: 64px; margin: 0 auto 20px;
+        border-radius: 50%; background: #FDECEC;
+        display: flex; align-items: center; justify-content: center;
+      }
+      h1 { font-size: 22px; font-weight: 700; color: #1f2937; margin: 0 0 10px; }
+      p { font-size: 14px; color: #6b7280; line-height: 1.6; margin: 0; }
+      a.btn {
+        display: block;
+        margin-top: 26px;
+        padding: 14px 24px;
+        border-radius: 999px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+        text-decoration: none;
+        background: linear-gradient(90deg, #1B4F91, #0B3D73);
+      }
+      a.btn:hover { opacity: .9; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="11" stroke="#C0392B" stroke-width="1.4"/>
+          <path d="M9 9 L15 15 M15 9 L9 15" stroke="#C0392B" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1>Invalid link</h1>
+      <p>This link has expired or has already been used. Request a new one from the Sign Toowix login page.</p>
+      <a class="btn" href="/">Go to Login</a>
+    </div>
+  </body>
+</html>

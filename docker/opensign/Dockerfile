@@ -41,6 +41,16 @@ COPY apps/OpenSignServer/package*.json ./
 RUN npm install --omit=dev
 COPY apps/OpenSignServer/ ./
 
+# Overrides parse-server's stock reset-password pages with our branded
+# versions. These aren't reachable via any supported config option on the
+# legacy PublicAPIRouter (pages.enableRouter is off), so the only place to
+# put them is directly over the package's own template files - which must
+# happen AFTER npm install, since that's what puts them there in the first
+# place, and every image rebuild reinstalls node_modules from scratch.
+RUN cp customPages/choose_password.html node_modules/parse-server/views/choose_password && \
+    cp customPages/password_reset_success.html node_modules/parse-server/public_html/password_reset_success.html && \
+    cp customPages/invalid_link.html node_modules/parse-server/public_html/invalid_link.html
+
 # Note: build output is "build/", not "dist/" - kept as-is for CRA compatibility.
 COPY --from=frontend-build /frontend/build /usr/share/nginx/html
 COPY docker/opensign/nginx.conf /etc/nginx/http.d/default.conf
