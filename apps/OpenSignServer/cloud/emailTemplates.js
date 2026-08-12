@@ -23,9 +23,8 @@ const MUTED = '#6B7280';
 const FAINT = '#9CA3AF';
 const HAIRLINE = '#E5E7EB';
 
-// Public URLs only - email clients cannot load local files or data URIs.
-const LOGO_LIGHT_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo-light.png`;
-const LOGO_DARK_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo-dark.png`;
+// Public URL only - email clients cannot load local files or data URIs.
+const LOGO_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
 
 function esc(value) {
   return String(value ?? '').replace(
@@ -34,16 +33,14 @@ function esc(value) {
   );
 }
 
-// Two stacked <img> tags, toggled by a prefers-color-scheme media query -
-// the standard technique for a light/dark logo swap in email, since clients
-// can't conditionally change an <img src> the way a browser can. Clients
-// that don't support the media query just show the light version, which is
-// also correct on their (always-light) background.
-const logoBlock = `
-  <span style="display:inline-block;">
-    <img src="${LOGO_LIGHT_URL}" width="34" height="34" alt="${BRAND_NAME}" class="logo-light" style="display:block;border:0;" />
-    <img src="${LOGO_DARK_URL}" width="34" height="34" alt="${BRAND_NAME}" class="logo-dark" style="display:none;border:0;" />
-  </span>`;
+// A single image - a two-stacked-image display:none/block swap was tried
+// first for a true light/dark logo, but several webmail sanitizers strip
+// `display:none` from inline styles (a common defence against hidden
+// tracking content), which un-hides the second image and doubles the
+// reserved header height while showing neither cleanly. The mark is baked
+// onto a small neutral-gray chip instead, so one image reads correctly on
+// both a light and a dark surrounding background with no CSS reliance.
+const logoBlock = `<img src="${LOGO_URL}" width="34" height="34" alt="${BRAND_NAME}" style="display:block;border:0;" />`;
 
 // Rows of label/value detail (device, time, location...). A plain table,
 // not a card - matches the rest of the plain-text feel.
@@ -103,8 +100,6 @@ export function baseTemplate({
     .email-ink { color:#F3F4F6 !important; }
     .email-muted { color:#9CA3AF !important; }
     .email-hairline { border-color:#232838 !important; }
-    .logo-light { display:none !important; }
-    .logo-dark { display:block !important; }
   }
 </style>
 <div class="email-bg" style="background:#FFFFFF;padding:40px 20px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">

@@ -25,21 +25,21 @@ export const appName = 'SignToowix';
 // separately hardcoded copies that all still pointed at OpenSign's own CDN, so
 // every email we sent was fetching a competitor's logo from their servers.
 //
-// Two stacked images, toggled by mailDarkModeStyle below - clients can't
-// conditionally swap an <img src>, so both ship and CSS shows only one.
-// Same technique and same source art as cloud/emailTemplates.js.
-const mailLogoLightUrl = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo-light.png`;
-const mailLogoDarkUrl = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo-dark.png`;
-export const mailLogo =
-  `<img src='${mailLogoLightUrl}' height='40' class='mail-logo-light' style='display:block;padding:20px 20px 8px;border:0;'/>` +
-  `<img src='${mailLogoDarkUrl}' height='40' class='mail-logo-dark' style='display:none;padding:20px 20px 8px;border:0;'/>`;
+// A single image - a two-stacked-image display:none/block swap was tried
+// first for a true light/dark logo, but several webmail sanitizers strip
+// `display:none` from inline styles (a common defence against hidden
+// tracking content), which un-hid the second image and doubled the
+// reserved header height while showing neither cleanly - the mark is
+// baked onto a small neutral-gray chip instead (same art, same technique
+// as cloud/emailTemplates.js), so it reads on both a light and dark
+// surrounding background with no CSS reliance.
+const mailLogoUrl = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
+export const mailLogo = `<img src='${mailLogoUrl}' height='40' style='display:block;padding:20px 20px 8px;border:0;'/>`;
 
-// Injected into each document email's <head> so the logo swap above (and,
-// on clients that support it, the surrounding banner) responds to the
-// reader's colour scheme rather than always rendering as if on a light
-// background.
-export const mailDarkModeStyle =
-  '<style>@media (prefers-color-scheme: dark) { .mail-logo-light { display:none !important; } .mail-logo-dark { display:block !important; } }</style>';
+// No longer needed now that mailLogo is a single image (see above) - kept
+// as a harmless empty string rather than editing every call site that
+// interpolates it into an email's <head>.
+export const mailDarkModeStyle = '';
 
 // Multi-tenant support: this one backend process hosts a separate Parse
 // Server mount per company, each pointed at that company's own isolated
