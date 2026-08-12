@@ -23,6 +23,8 @@ import Loader from "../primitives/Loader";
 import { useTranslation } from "react-i18next";
 import SelectLanguage from "../components/pdf/SelectLanguage";
 import { useAuthNavigate } from "../hook/useAuthNavigate";
+import { signInWithGoogle } from "../constant/firebase";
+import GoogleSignupModal from "../components/GoogleSignupModal";
 
 function Login() {
   const appName =
@@ -56,6 +58,12 @@ function Login() {
   const [otpError, setOtpError] = useState("");
   const [otpSecondsLeft, setOtpSecondsLeft] = useState(0);
   const [otpResending, setOtpResending] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  // Holds the verified Firebase token + identity between "we don't know
+  // this email yet" and the signup modal's submit - re-used rather than
+  // re-opening the Google popup a second time just to collect a company name.
+  const [googlePending, setGooglePending] = useState(null);
+  const [googleSignupError, setGoogleSignupError] = useState("");
 
   // Countdown matches the backend's 5-minute OTP expiry (see
   // twoFactorAuth.js OTP_TTL_MS) - purely a UI clock, the server is still
@@ -212,6 +220,83 @@ function Login() {
       return;
     }
     await handleLogin();
+  };
+
+  // Entry point for the "Sign in with Google" button - opens Google's
+  // account picker, then asks the root instance whether this Google account
+  // is already linked anywhere (known), mid-approval (pending), or new.
+  const handleGoogleClick = async () => {
+    setGoogleLoading(true);
+    try {
+      const idToken = await signInWithGoogle();
+
+      // Same "always start the lookup from root" reasoning as handleLogin -
+      // a leftover tenant-specific baseUrl would skip the lookup entirely.
+      const baseUrl = localStorage.getItem("baseUrl");
+      if (baseUrl) {
+        Parse.serverURL = `${baseUrl.replace(/\/app(\/.*)?\/?$/, "")}/app/`;
+      }
+
+      const res = await Parse.Cloud.run("googleloginlookup", { idToken });
+
+      if (res.status === "known") {
+        const currentBaseUrl = localStorage.getItem("baseUrl") || "";
+        const origin = currentBaseUrl.replace(/\/app(\/.*)?\/?$/, "");
+        const newBaseUrl = `${origin}/app/${res.subdomain}/`;
+        localStorage.setItem("baseUrl", newBaseUrl);
+        Parse.serverURL = newBaseUrl;
+
+        const _user = await Parse.Cloud.run("googlelogin", { idToken });
+        if (_user.requires2fa) {
+          setPendingUserId(_user.userId);
+          setOtpStep(true);
+          setOtpSecondsLeft(300);
+          setOtpError("");
+          return;
+        }
+        await completeLogin(_user);
+        return;
+      }
+
+      if (res.status === "pending") {
+        authNavigate("/waiting-approval", { state: { email: res.email } });
+        return;
+      }
+
+      // status === "new": nothing to sign in to yet - collect the details
+      // the password signup form would normally have asked for.
+      setGoogleSignupError("");
+      setGooglePending({ idToken, email: res.email, name: res.name });
+    } catch (error) {
+      console.error("Google sign-in error", error);
+      if (error?.code !== "auth/popup-closed-by-user" && error?.code !== "auth/cancelled-popup-request") {
+        showToast("danger", t("something-went-wrong-mssg"));
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleSignupSubmit = async ({ companyName, jobTitle, phone, maxUsers }) => {
+    setGoogleLoading(true);
+    setGoogleSignupError("");
+    try {
+      await Parse.Cloud.run("submitapprovalgoogle", {
+        idToken: googlePending.idToken,
+        companyName,
+        jobTitle,
+        phone,
+        maxUsers,
+      });
+      const submittedEmail = googlePending.email;
+      setGooglePending(null);
+      authNavigate("/waiting-approval", { state: { email: submittedEmail } });
+    } catch (error) {
+      console.error("Google signup error", error);
+      setGoogleSignupError(error?.message || t("something-went-wrong-mssg"));
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleVerifyOtpBtn = async (event) => {
@@ -804,6 +889,24 @@ function Login() {
                   </NavLink>
                 </p>
                 )}
+
+                {!otpStep && (
+                <button
+                  type="button"
+                  onClick={handleGoogleClick}
+                  disabled={googleLoading}
+                  className="op-stagger-item mt-4 w-full flex items-center justify-center gap-2.5 rounded-full border border-gray-300 bg-white py-[13px] px-6 text-sm font-semibold text-gray-700 transition-colors duration-150 hover:bg-gray-50 disabled:opacity-60"
+                  style={{ animationDelay: "300ms" }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.56 2.7-3.87 2.7-6.62Z"/>
+                    <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.95v2.33A9 9 0 0 0 9 18Z"/>
+                    <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.66 9c0-.59.1-1.16.29-1.7V4.97H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.03l3-2.33Z"/>
+                    <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .95 4.97l3 2.33C4.66 5.17 6.65 3.58 9 3.58Z"/>
+                  </svg>
+                  {googleLoading ? "Please wait..." : "Sign in with Google"}
+                </button>
+                )}
               </div>
             </div>
 
@@ -812,6 +915,16 @@ function Login() {
             )}
           </div>
         </div>
+        {googlePending && (
+          <GoogleSignupModal
+            name={googlePending.name}
+            email={googlePending.email}
+            loading={googleLoading}
+            error={googleSignupError}
+            onSubmit={handleGoogleSignupSubmit}
+            onClose={() => setGooglePending(null)}
+          />
+        )}
         <ModalUi
             isOpen={isModal}
             title={t("additional-info")}
