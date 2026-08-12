@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb';
 import sendSystemMail from './sendSystemMail.js';
 import { BRAND_NAME, approvalReceivedEmail } from '../emailTemplates.js';
-import { verifyGoogleIdToken } from '../firebaseAdmin.js';
+import { verifyGoogleIdToken, deleteFirebaseUser } from '../firebaseAdmin.js';
 
 // Same 10-char Parse-shaped id as submitApproval.js - this record is
 // written via the raw Mongo driver (no company mount exists yet) but later
@@ -23,7 +23,7 @@ export default async function submitApprovalGoogle(request) {
   if (!idToken || !companyName) {
     throw new Parse.Error(Parse.Error.VALIDATION_ERROR, 'idToken and companyName are required.');
   }
-  const { uid, email, name } = await verifyGoogleIdToken(idToken);
+  const { firebaseUid, googleId, email, name } = await verifyGoogleIdToken(idToken);
 
   const requestedMaxUsers = Math.min(Math.max(parseInt(maxUsers, 10) || 5, 1), 1000);
   if (!process.env.SUPERADMIN_MONGODB_URI) {
@@ -63,7 +63,7 @@ export default async function submitApprovalGoogle(request) {
       // No password field at all for a Google signup - authProvider marks
       // which branch approveRequest.js/provisionCompany.js should take.
       authProvider: 'google',
-      googleUid: uid,
+      googleUid: googleId,
       maxUsers: requestedMaxUsers,
       status: 'pending',
       createdAt: new Date(),
@@ -72,6 +72,11 @@ export default async function submitApprovalGoogle(request) {
   } finally {
     await client.close();
   }
+
+  // Nobody can sign in with this yet - it's just a pending request - so
+  // Firebase's own copy of the sign-in is removed rather than left sitting
+  // in the console's user list looking like a real, usable account.
+  deleteFirebaseUser(firebaseUid).catch(() => {});
 
   const ack = approvalReceivedEmail({ name, companyName });
   sendSystemMail({

@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb';
-import { verifyGoogleIdToken } from '../firebaseAdmin.js';
+import { verifyGoogleIdToken, deleteFirebaseUser } from '../firebaseAdmin.js';
 
 // Google counterpart to the tenant-scan branch inside loginUser.js. Same
 // "which company does this address belong to" scan, but there is no
@@ -10,7 +10,7 @@ import { verifyGoogleIdToken } from '../firebaseAdmin.js';
 // Runs on the root instance, same as the email/password lookup.
 export default async function googleLoginLookup(request) {
   const { idToken } = request.params;
-  const { uid, email, name } = await verifyGoogleIdToken(idToken);
+  const { firebaseUid, googleId, email, name } = await verifyGoogleIdToken(idToken);
 
   if (!process.env.SUPERADMIN_MONGODB_URI) {
     throw new Parse.Error(
@@ -35,7 +35,7 @@ export default async function googleLoginLookup(request) {
       const companyDb = client.db(company.databaseName);
       const match = await companyDb
         .collection('_User')
-        .findOne({ GoogleUid: uid }, { projection: { _id: 1, email: 1 } });
+        .findOne({ GoogleUid: googleId }, { projection: { _id: 1, email: 1 } });
       if (!match) continue;
       const isMember = await companyDb
         .collection('contracts_Users')
@@ -57,8 +57,12 @@ export default async function googleLoginLookup(request) {
     }
 
     // No linked account anywhere - either they've never signed up, or
-    // they're mid-approval. Tell the frontend which screen to show instead
-    // of a bare "not found".
+    // they're mid-approval. Neither case grants any real access, so
+    // Firebase's own copy of this sign-in is removed rather than left
+    // sitting in the console's user list looking like a usable account -
+    // it'll reappear naturally the moment a real, approved sign-in happens.
+    deleteFirebaseUser(firebaseUid).catch(() => {});
+
     const pending = await db.collection('ApprovalRequest').findOne({ email, status: 'pending' });
     if (pending) {
       return { status: 'pending', email, name: pending.name, companyName: pending.companyName };

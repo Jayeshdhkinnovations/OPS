@@ -13,14 +13,19 @@ import { notifyLogin, clientInfo } from '../securityNotifications.js';
 // as the second half of a lookup.
 export default async function googleLogin(request) {
   const { idToken } = request.params;
-  const { uid, email } = await verifyGoogleIdToken(idToken);
+  const { googleId, email } = await verifyGoogleIdToken(idToken);
 
   // GoogleUid is a plain custom field, not Parse's authData - see the note
   // in provisionCompany.js for why: Parse's built-in Google adapter, already
   // configured on every mount, would otherwise intercept any authData.google
   // and demand a raw Google id_token this Firebase token can't satisfy.
+  //
+  // Matched on the Google-native id (see firebaseAdmin.js), not Firebase's
+  // own uid - the pending signup's Firebase user record was deleted before
+  // approval, so a fresh sign-in here gets a brand new Firebase uid; the
+  // Google-native id is what stayed constant and is what got stored.
   const userQuery = new Parse.Query(Parse.User);
-  userQuery.equalTo('GoogleUid', uid);
+  userQuery.equalTo('GoogleUid', googleId);
   const user = await userQuery.first({ useMasterKey: true });
   if (!user) {
     throw new Parse.Error(
