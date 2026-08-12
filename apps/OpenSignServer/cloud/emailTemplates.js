@@ -4,36 +4,28 @@
 // Utils.js (that's "OpenSign™" and feeds the document-signing emails) - these
 // are the Sign Toowix platform notifications.
 //
-// Constraints these templates are written to, which explain the otherwise
-// odd choices: Outlook ignores <style> blocks and flexbox, so everything is
-// inline styles on nested tables; Gmail strips <head>, so no CSS classes;
-// and background gradients silently fall back to the solid `background`
-// colour declared before them, so both are always set.
+// Design intent: plain and editorial, not a gradient-heavy "template
+// generator" look. One accent colour (navy), used only for the button and
+// links. Everything else is black/gray text on a white card - the kind of
+// email a person would actually write, not a marketing banner.
+//
+// Constraints these templates are written to: Outlook ignores <style> blocks
+// and flexbox, so layout is inline-styled tables; Gmail strips <head>, so
+// dark-mode support below relies on inline styles plus a small guarded
+// <style> block that the clients which DO support it (Apple Mail, iOS Mail,
+// Outlook.com, some Gmail) will honour and the rest will simply ignore.
 export const BRAND_NAME = 'Sign Toowix';
 export const BRAND_TAGLINE = 'Secure Digital Document Platform';
 
-// Email clients cannot load local files or data URIs, so the mark has to be
-// fetched from a public URL. Same file the document emails use; the header
-// sits on navy, and this logo is the blue-on-white version, so it is placed
-// on a white puck rather than directly on the gradient.
-const MAIL_LOGO_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
-
-const NAVY = '#002864';
-const NAVY_LIGHT = '#1B4F91';
+const NAVY = '#1B4F91';
 const INK = '#1A1A1A';
 const MUTED = '#6B7280';
-const FAINT = '#9AA5B4';
-const HAIRLINE = '#EEF2F9';
+const FAINT = '#9CA3AF';
+const HAIRLINE = '#E5E7EB';
 
-// Accent colours per email tone. Success/security/warning share the layout
-// and differ only in the icon puck, so a reader can tell at a glance whether
-// something routine or something that needs attention just happened.
-const TONES = {
-  brand: { bg: '#EAF1FF', fg: NAVY },
-  success: { bg: '#E7F7EF', fg: '#0F7B4F' },
-  warning: { bg: '#FFF4E5', fg: '#B26A00' },
-  danger: { bg: '#FDECEC', fg: '#C0392B' },
-};
+// Public URLs only - email clients cannot load local files or data URIs.
+const LOGO_LIGHT_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo-light.png`;
+const LOGO_DARK_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo-dark.png`;
 
 function esc(value) {
   return String(value ?? '').replace(
@@ -42,37 +34,40 @@ function esc(value) {
   );
 }
 
-// Rows of label/value detail (IP, time, device...). Rendered as a table
-// rather than a <dl> because Outlook collapses definition-list margins.
+// Two stacked <img> tags, toggled by a prefers-color-scheme media query -
+// the standard technique for a light/dark logo swap in email, since clients
+// can't conditionally change an <img src> the way a browser can. Clients
+// that don't support the media query just show the light version, which is
+// also correct on their (always-light) background.
+const logoBlock = `
+  <span style="display:inline-block;">
+    <img src="${LOGO_LIGHT_URL}" width="34" height="34" alt="${BRAND_NAME}" class="logo-light" style="display:block;border:0;" />
+    <img src="${LOGO_DARK_URL}" width="34" height="34" alt="${BRAND_NAME}" class="logo-dark" style="display:none;border:0;" />
+  </span>`;
+
+// Rows of label/value detail (device, time, location...). A plain table,
+// not a card - matches the rest of the plain-text feel.
 function detailRows(details = []) {
   const rows = details
     .filter(d => d && d.value)
     .map(
       d => `
       <tr>
-        <td style="padding:7px 0;font:400 12px/1.4 'Segoe UI',Arial,sans-serif;color:${FAINT};white-space:nowrap;vertical-align:top;">${esc(d.label)}</td>
-        <td style="padding:7px 0 7px 16px;font:600 12px/1.4 'Segoe UI',Arial,sans-serif;color:${INK};text-align:right;">${esc(d.value)}</td>
+        <td style="padding:5px 0;font:400 13px/1.5 -apple-system,'Segoe UI',Arial,sans-serif;color:${FAINT};white-space:nowrap;vertical-align:top;">${esc(d.label)}</td>
+        <td style="padding:5px 0 5px 20px;font:600 13px/1.5 -apple-system,'Segoe UI',Arial,sans-serif;color:${INK};text-align:right;">${esc(d.value)}</td>
       </tr>`
     )
     .join('');
   if (!rows) return '';
-  return `
-    <tr>
-      <td style="padding:4px 32px 0;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F9FC;border:1px solid ${HAIRLINE};border-radius:12px;padding:6px 16px;">
-          ${rows}
-        </table>
-      </td>
-    </tr>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;">${rows}</table>`;
 }
 
 /**
- * The shared shell: navy header, optional icon puck, heading, body copy,
- * optional detail table, optional CTA button, optional footnote.
+ * The shared shell: small logo + wordmark, a heading, body copy, optional
+ * detail rows, optional button, and a quiet footer. No gradients, no coloured
+ * icon badges, no card-within-a-card - one flat white surface.
  */
 export function baseTemplate({
-  icon = '',
-  tone = 'brand',
   heading,
   intro = '',
   bodyHtml = '',
@@ -81,72 +76,62 @@ export function baseTemplate({
   ctaUrl = '',
   footnote = '',
 }) {
-  const t = TONES[tone] || TONES.brand;
-
-  const iconBlock = icon
-    ? `
-    <tr>
-      <td style="padding:32px 32px 0;text-align:center;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
-          <tr>
-            <td style="width:56px;height:56px;border-radius:28px;background:${t.bg};text-align:center;vertical-align:middle;font:400 26px/56px 'Segoe UI',Arial,sans-serif;color:${t.fg};">${icon}</td>
-          </tr>
-        </table>
-      </td>
-    </tr>`
-    : '';
-
   const ctaBlock =
     ctaLabel && ctaUrl
       ? `
     <tr>
-      <td style="padding:26px 32px 4px;text-align:center;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+      <td style="padding:24px 0 4px;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="background:${NAVY};background:linear-gradient(135deg,${NAVY_LIGHT},${NAVY});border-radius:28px;">
-              <a href="${esc(ctaUrl)}" style="display:inline-block;padding:14px 34px;font:700 14px/1 'Segoe UI',Arial,sans-serif;color:#FFFFFF;text-decoration:none;border-radius:28px;">${esc(ctaLabel)}</a>
+            <td style="background:${NAVY};border-radius:8px;">
+              <a href="${esc(ctaUrl)}" style="display:inline-block;padding:12px 26px;font:600 14px/1 -apple-system,'Segoe UI',Arial,sans-serif;color:#FFFFFF;text-decoration:none;border-radius:8px;">${esc(ctaLabel)}</a>
             </td>
           </tr>
         </table>
-        <div style="margin-top:14px;font:400 11px/1.5 'Segoe UI',Arial,sans-serif;color:${FAINT};word-break:break-all;">
-          Or paste this link into your browser:<br/>
-          <span style="color:${NAVY_LIGHT};">${esc(ctaUrl)}</span>
+        <div style="margin-top:14px;font:400 12px/1.6 -apple-system,'Segoe UI',Arial,sans-serif;color:${FAINT};word-break:break-all;">
+          Or copy this link: <span style="color:${NAVY};">${esc(ctaUrl)}</span>
         </div>
       </td>
     </tr>`
       : '';
 
   return `
-<div style="background:${HAIRLINE};padding:32px 16px;font-family:'Segoe UI',Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;margin:0 auto;background:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px -12px rgba(0,40,100,0.25);">
+<style>
+  @media (prefers-color-scheme: dark) {
+    .email-bg { background:#0B0F19 !important; }
+    .email-card { background:#0B0F19 !important; }
+    .email-ink { color:#F3F4F6 !important; }
+    .email-muted { color:#9CA3AF !important; }
+    .email-hairline { border-color:#232838 !important; }
+    .logo-light { display:none !important; }
+    .logo-dark { display:block !important; }
+  }
+</style>
+<div class="email-bg" style="background:#FFFFFF;padding:40px 20px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;margin:0 auto;">
     <tr>
-      <td style="background:${NAVY};background:linear-gradient(135deg,${NAVY_LIGHT},${NAVY});padding:28px 32px;text-align:center;">
-        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 10px;">
+      <td class="email-card" style="background:#FFFFFF;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:44px;height:44px;border-radius:10px;background:#FFFFFF;text-align:center;vertical-align:middle;padding:4px;">
-              <img src="${MAIL_LOGO_URL}" width="36" height="36" alt="${BRAND_NAME}" style="display:block;margin:0 auto;border:0;"/>
+            <td style="vertical-align:middle;">${logoBlock}</td>
+            <td style="vertical-align:middle;padding-left:10px;">
+              <span class="email-ink" style="font-size:15px;font-weight:700;color:${INK};">${BRAND_NAME}</span>
             </td>
           </tr>
         </table>
-        <div style="color:#FFFFFF;font-size:18px;font-weight:700;letter-spacing:0.3px;">${BRAND_NAME}</div>
-        <div style="color:rgba(255,255,255,0.75);font-size:11px;margin-top:2px;">${BRAND_TAGLINE}</div>
-      </td>
-    </tr>
-    ${iconBlock}
-    <tr>
-      <td style="padding:${icon ? '18px' : '32px'} 32px 0;text-align:center;">
-        <div style="color:${INK};font-size:19px;font-weight:700;line-height:1.35;">${esc(heading)}</div>
-        ${intro ? `<div style="color:${MUTED};font-size:13px;line-height:1.6;margin-top:8px;">${intro}</div>` : ''}
-      </td>
-    </tr>
-    ${bodyHtml ? `<tr><td style="padding:18px 32px 0;">${bodyHtml}</td></tr>` : ''}
-    ${detailRows(details)}
-    ${ctaBlock}
-    <tr>
-      <td style="padding:26px 32px 30px;text-align:center;">
-        <div style="height:1px;background:${HAIRLINE};margin:0 0 16px;"></div>
-        <div style="color:${FAINT};font-size:11px;line-height:1.6;">
-          ${footnote || `This is an automated message from ${BRAND_NAME}. Please do not reply.`}
+
+        <div class="email-hairline" style="height:1px;background:${HAIRLINE};margin:22px 0 26px;"></div>
+
+        <div class="email-ink" style="color:${INK};font-size:18px;font-weight:700;line-height:1.4;">${esc(heading)}</div>
+        ${intro ? `<div class="email-muted" style="color:${MUTED};font-size:14px;line-height:1.65;margin-top:10px;">${intro}</div>` : ''}
+        ${bodyHtml}
+        ${detailRows(details)}
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${ctaBlock}</table>
+
+        <div class="email-hairline" style="height:1px;background:${HAIRLINE};margin:30px 0 16px;"></div>
+        <div class="email-muted" style="color:${FAINT};font-size:12px;line-height:1.6;">
+          ${footnote || `Sent by ${BRAND_NAME}. Please do not reply to this email.`}
         </div>
       </td>
     </tr>
@@ -176,21 +161,15 @@ export function formatWhen(date = new Date()) {
  * ------------------------------------------------------------------ */
 
 export function otpEmail(otp, { purposeLabel = 'continue' } = {}) {
-  // One block rather than a box per digit: split cells forced the reader to
-  // reassemble the code before typing it, and copy-pasting from them dragged
-  // in the table whitespace. Wide letter-spacing keeps the digits legible.
-  const codeBlock = `<td style="padding:14px 28px;border:1px solid #DCE6F6;border-radius:10px;background:#F4F8FF;font:700 30px/1 'Segoe UI',Arial,sans-serif;color:${NAVY};letter-spacing:8px;text-align:center;">${esc(otp)}</td>`;
+  const codeBlock = `<div style="margin:22px 0;padding:16px 0;text-align:center;background:#F9FAFB;border-radius:8px;font:700 28px/1 -apple-system,'Segoe UI',Arial,sans-serif;color:${INK};letter-spacing:8px;">${esc(otp)}</div>`;
 
   return {
     subject: `${BRAND_NAME} — Your verification code`,
     text: `Your ${BRAND_NAME} verification code is ${otp}. It expires in 5 minutes. If you didn't request this, you can ignore this email.`,
     html: baseTemplate({
       heading: 'Your verification code',
-      intro: `Enter this code to ${esc(purposeLabel)}. It expires in <strong style="color:${INK};">5 minutes</strong>.`,
-      bodyHtml: `
-        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
-          <tr>${codeBlock}</tr>
-        </table>`,
+      intro: `Enter this code to ${esc(purposeLabel)}. It expires in 5 minutes.`,
+      bodyHtml: codeBlock,
       footnote: `Didn't request this code? You can safely ignore this email — your account is still secure.`,
     }),
   };
@@ -201,17 +180,15 @@ export function loginAlertEmail({ name, email, when, location, device }) {
     subject: `${BRAND_NAME} — New sign-in to your account`,
     text: `Hi ${name || 'there'}, your ${BRAND_NAME} account (${email}) was just signed in to on ${when}${location ? ` from ${location}` : ''}. If this wasn't you, reset your password immediately.`,
     html: baseTemplate({
-      icon: '&#10003;',
-      tone: 'success',
       heading: 'New sign-in to your account',
-      intro: `Hi ${esc(name || 'there')}, we noticed a new sign-in to your ${BRAND_NAME} account.`,
+      intro: `Hi ${esc(name || 'there')}, we noticed a new sign-in to your account.`,
       details: [
         { label: 'Account', value: email },
         { label: 'When', value: when },
         { label: 'Location', value: location },
         { label: 'Device', value: device },
       ],
-      footnote: `If this was you, no action is needed. If you don't recognise this sign-in, reset your password right away and enable two-factor authentication.`,
+      footnote: `If this was you, no action is needed. If you don't recognise this sign-in, reset your password and enable two-factor authentication.`,
     }),
   };
 }
@@ -221,13 +198,11 @@ export function passwordResetEmail({ name, resetUrl }) {
     subject: `${BRAND_NAME} — Reset your password`,
     text: `Hi ${name || 'there'}, reset your ${BRAND_NAME} password using this link: ${resetUrl}. If you didn't request this, you can ignore this email.`,
     html: baseTemplate({
-      icon: '&#128274;',
-      tone: 'brand',
       heading: 'Reset your password',
-      intro: `Hi ${esc(name || 'there')}, we received a request to reset the password for your ${BRAND_NAME} account. Click below to choose a new one.`,
+      intro: `Hi ${esc(name || 'there')}, we received a request to reset your password. Click below to choose a new one.`,
       ctaLabel: 'Reset password',
       ctaUrl: resetUrl,
-      footnote: `Didn't request a password reset? You can safely ignore this email — your password will stay the same.`,
+      footnote: `Didn't request this? You can safely ignore this email — your password will stay the same.`,
     }),
   };
 }
@@ -237,15 +212,13 @@ export function twoFactorEnabledEmail({ name, email, when }) {
     subject: `${BRAND_NAME} — Two-factor authentication enabled`,
     text: `Hi ${name || 'there'}, two-factor authentication was enabled on your ${BRAND_NAME} account (${email}) on ${when}. If this wasn't you, contact your administrator immediately.`,
     html: baseTemplate({
-      icon: '&#128737;',
-      tone: 'success',
       heading: 'Two-factor authentication is on',
-      intro: `Hi ${esc(name || 'there')}, your ${BRAND_NAME} account is now protected with two-factor authentication. You'll be asked for a verification code each time you sign in.`,
+      intro: `Hi ${esc(name || 'there')}, your account now requires a verification code each time you sign in.`,
       details: [
         { label: 'Account', value: email },
         { label: 'Enabled on', value: when },
       ],
-      footnote: `If you didn't turn this on, contact your administrator immediately — someone else may have access to your account.`,
+      footnote: `If you didn't turn this on, contact your administrator immediately.`,
     }),
   };
 }
@@ -255,15 +228,13 @@ export function twoFactorDisabledEmail({ name, email, when }) {
     subject: `${BRAND_NAME} — Two-factor authentication disabled`,
     text: `Hi ${name || 'there'}, two-factor authentication was disabled on your ${BRAND_NAME} account (${email}) on ${when}. If this wasn't you, reset your password immediately.`,
     html: baseTemplate({
-      icon: '&#9888;',
-      tone: 'warning',
       heading: 'Two-factor authentication is off',
-      intro: `Hi ${esc(name || 'there')}, two-factor authentication has been turned off for your ${BRAND_NAME} account. Your account is now protected by your password alone.`,
+      intro: `Hi ${esc(name || 'there')}, your account is now protected by your password alone.`,
       details: [
         { label: 'Account', value: email },
         { label: 'Disabled on', value: when },
       ],
-      footnote: `Didn't do this? Reset your password immediately and turn two-factor authentication back on from your profile settings.`,
+      footnote: `Didn't do this? Reset your password immediately and turn two-factor authentication back on.`,
     }),
   };
 }
@@ -273,10 +244,8 @@ export function approvalApprovedEmail({ name, companyName, loginUrl, email }) {
     subject: `${BRAND_NAME} — Your workspace is ready`,
     text: `Hi ${name || 'there'}, your ${BRAND_NAME} workspace for ${companyName} has been approved and is ready. Sign in at ${loginUrl} using ${email}.`,
     html: baseTemplate({
-      icon: '&#127881;',
-      tone: 'success',
       heading: 'Your workspace is ready',
-      intro: `Hi ${esc(name || 'there')}, good news — your request has been approved and your ${BRAND_NAME} workspace is live.`,
+      intro: `Hi ${esc(name || 'there')}, your request has been approved and your workspace is live.`,
       details: [
         { label: 'Workspace', value: companyName },
         { label: 'Sign in as', value: email },
@@ -293,12 +262,10 @@ export function approvalRejectedEmail({ name, companyName, reason }) {
     subject: `${BRAND_NAME} — Update on your registration`,
     text: `Hi ${name || 'there'}, we're unable to approve the ${BRAND_NAME} workspace request for ${companyName} at this time.${reason ? ` Reason: ${reason}` : ''}`,
     html: baseTemplate({
-      icon: '&#9888;',
-      tone: 'danger',
       heading: 'We couldn’t approve this request',
-      intro: `Hi ${esc(name || 'there')}, thanks for your interest in ${BRAND_NAME}. Unfortunately we're not able to approve the workspace request for <strong style="color:${INK};">${esc(companyName)}</strong> at this time.`,
+      intro: `Hi ${esc(name || 'there')}, we're not able to approve the workspace request for <strong>${esc(companyName)}</strong> at this time.`,
       details: reason ? [{ label: 'Reason', value: reason }] : [],
-      footnote: `If you believe this was a mistake, reply to the team that invited you or submit a new request with updated details.`,
+      footnote: `If you believe this was a mistake, submit a new request with updated details.`,
     }),
   };
 }
@@ -308,12 +275,10 @@ export function approvalReceivedEmail({ name, companyName }) {
     subject: `${BRAND_NAME} — We received your request`,
     text: `Hi ${name || 'there'}, we've received your ${BRAND_NAME} workspace request for ${companyName}. You'll get an email as soon as it's reviewed.`,
     html: baseTemplate({
-      icon: '&#9203;',
-      tone: 'brand',
       heading: 'We received your request',
-      intro: `Hi ${esc(name || 'there')}, thanks for signing up. Your workspace request is now with our team for review — we'll email you the moment it's approved.`,
+      intro: `Hi ${esc(name || 'there')}, thanks for signing up. We'll email you the moment your workspace is approved.`,
       details: [{ label: 'Workspace', value: companyName }],
-      footnote: `Most requests are reviewed within one business day. No action is needed from you right now.`,
+      footnote: `Most requests are reviewed within one business day.`,
     }),
   };
 }
