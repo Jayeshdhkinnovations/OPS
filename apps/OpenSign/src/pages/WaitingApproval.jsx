@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Parse from "parse";
 import { useLocation } from "react-router";
 import { useAuthNavigate } from "../hook/useAuthNavigate";
+import toowixLogo from "../assets/images/toowix-logo.png";
 
 const POLL_MS = 5000;
 
@@ -54,8 +55,8 @@ function WaitingApproval() {
     <div className="flex min-h-screen w-full items-center justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8">
       <div className="op-auth-card w-full max-w-md rounded-[26px] bg-white p-10 text-center shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
         <div className="mb-6 flex items-center justify-center gap-2.5">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#1B4F91] to-[#002864] shadow-sm">
-            <i className="fa-light fa-signature text-lg text-white" />
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white shadow-sm">
+            <img src={toowixLogo} alt="SignToowix" className="h-7 w-7 object-contain" />
           </div>
           <span className="text-lg font-bold tracking-tight text-gray-800">
             SignToowix
