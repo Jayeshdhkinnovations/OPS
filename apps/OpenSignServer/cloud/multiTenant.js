@@ -60,6 +60,10 @@ function companyEnv(slug, databaseName) {
     // Without this the company falls back to a stale default port and every
     // tenant lookup inside a company container fails with ECONNREFUSED.
     'SUPERADMIN_MONGODB_URI',
+    // googlelogin.js runs inside the company container (after the root
+    // lookup has already redirected here) and needs this to re-verify the
+    // Firebase ID token itself.
+    'FIREBASE_SERVICE_ACCOUNT_JSON',
     'SMTP_ENABLE',
     'SMTP_HOST',
     'SMTP_PORT',
