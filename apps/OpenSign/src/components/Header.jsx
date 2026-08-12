@@ -56,7 +56,10 @@ const Header = ({ isConsole, setIsLoggingOut }) => {
       if (applogo?.logo) {
         setAppLogo(applogo?.logo);
       } else {
-        const logo = localStorage.getItem("appLogo") || appInfo.applogo;
+        // Prefer this build's bundled logo over a stale localStorage value -
+        // localStorage "appLogo" is written with the previous build's hashed
+        // asset URL, which no longer resolves to anything after a rebuild.
+        const logo = appInfo.applogo || localStorage.getItem("appLogo");
         setAppLogo(logo);
       }
   }
