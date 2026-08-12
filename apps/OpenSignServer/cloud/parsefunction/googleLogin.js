@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { cloudServerUrl, serverAppId } from '../Utils.js';
+import { cloudServerUrl, serverAppId } from '../../Utils.js';
 import { verifyGoogleIdToken } from '../firebaseAdmin.js';
 import { createAndSendOtp } from '../twoFactorAuth.js';
 import { notifyLogin, clientInfo } from '../securityNotifications.js';
