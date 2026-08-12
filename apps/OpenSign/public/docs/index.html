@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Documentation - SignToowix</title>
+<style>
+  :root{--navy:#0B3D73;--navy-dark:#002864;--ink:#1A1A1A;--muted:#6B7280;--faint:#9CA3AF;--line:#E5E7EB;--bg:#F7F8FC;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;width:100%;}
+  body{font-family:-apple-system,'Segoe UI',Arial,sans-serif;color:var(--ink);background:#fff;}
+  a{color:var(--navy);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);width:100%;}
+  .topbar{width:100%;padding:14px 32px;display:flex;align-items:center;gap:12px;}
+  .topbar img{height:34px;width:auto;object-fit:contain;}
+  .topbar .brand{font-weight:800;font-size:17px;color:var(--ink);}
+  .topbar .tag{font-size:12px;color:var(--faint);margin-left:2px;padding-left:10px;border-left:1px solid var(--line);}
+  .topbar .spacer{flex:1;}
+  .topbar a.home{font-size:13.5px;font-weight:600;color:#fff;background:linear-gradient(90deg,#1B4F91,#0B3D73);padding:9px 18px;border-radius:999px;}
+  .topbar a.home:hover{opacity:.9;text-decoration:none;}
+
+  .layout{width:100%;display:flex;align-items:flex-start;}
+  nav.side{width:264px;flex-shrink:0;padding:28px 16px 60px 0;position:sticky;top:63px;max-height:calc(100vh - 63px);overflow-y:auto;}
+  nav.side h4{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin:20px 0 6px 12px;font-weight:700;}
+  nav.side h4:first-child{margin-top:0;}
+  nav.side a{display:block;font-size:13.5px;color:var(--muted);padding:5px 12px;line-height:1.4;border-left:2px solid transparent;}
+  nav.side a:hover{color:var(--navy);text-decoration:none;}
+  nav.side a.active{color:var(--navy);font-weight:600;border-left:2px solid var(--navy);}
+  nav.side .grp{margin-bottom:0;}
+  nav.side .grp>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;color:var(--ink);padding:6px 12px;margin:14px 0 2px;}
+  nav.side .grp>summary::-webkit-details-marker{display:none;}
+  nav.side .grp>summary:after{content:'\25BE';font-size:10px;color:var(--faint);transition:transform .15s;}
+  nav.side .grp[open]>summary:after{transform:rotate(180deg);}
+  nav.side .grp .sub a{padding-left:22px;}
+
+  main{flex:1;min-width:0;padding:44px 56px 120px;max-width:1100px;}
+  main section{margin-bottom:64px;scroll-margin-top:84px;}
+  main h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:0 0 10px;}
+  main .lead{color:var(--muted);font-size:16px;line-height:1.75;margin:0 0 30px;max-width:820px;}
+  main h2{font-size:23px;font-weight:800;margin:0 0 14px;border-top:1px solid var(--line);padding-top:28px;}
+  section:first-of-type h2{border-top:none;padding-top:0;}
+  main h3{font-size:16.5px;font-weight:700;margin:22px 0 8px;color:var(--navy-dark);}
+  main p{font-size:14.5px;line-height:1.8;color:#374151;margin:0 0 14px;max-width:820px;}
+  main ul,main ol{font-size:14.5px;line-height:1.85;color:#374151;padding-left:22px;margin:0 0 16px;max-width:820px;}
+  main li{margin-bottom:5px;}
+  code{background:#F1F4F9;border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:13px;font-family:'SFMono-Regular',Consolas,monospace;color:#B23C6B;}
+  pre{background:#0B1220;color:#E5E7EB;border-radius:10px;padding:18px 20px;overflow-x:auto;font-size:13px;line-height:1.6;margin:0 0 16px;max-width:820px;}
+  pre code{background:none;border:none;color:inherit;padding:0;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin:0 0 14px;}
+  .card b{display:block;font-size:14.5px;margin-bottom:5px;}
+  .card span{font-size:13px;color:var(--muted);line-height:1.6;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:820px;margin-bottom:20px;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1020px;margin-bottom:20px;}
+  .badge{display:inline-block;background:#EAF1FF;color:var(--navy);font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:999px;margin-bottom:14px;letter-spacing:.02em;}
+  .note{background:#FFF8E6;border:1px solid #F5DFA0;border-radius:10px;padding:14px 18px;font-size:13.5px;color:#7A5C00;margin:0 0 16px;max-width:820px;}
+  .note b{color:#5C4400;}
+  footer{border-top:1px solid var(--line);padding:30px 32px;text-align:center;font-size:12px;color:var(--faint);width:100%;}
+  @media (max-width:900px){
+    nav.side{display:none;}
+    main{padding:28px 20px 80px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <img src="/docs/toowix-logo.png" alt="SignToowix"/>
+    <span class="brand">SignToowix</span>
+    <span class="tag">Documentation</span>
+    <span class="spacer"></span>
+    <a class="home" href="/">Back to app</a>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="side" id="side-nav">
+    <h4>Help</h4>
+    <a href="#intro" class="active">Introduction</a>
+    <a href="#getting-started">Getting started</a>
+    <a href="#account">Account &amp; sign-in</a>
+
+    <details class="grp" open>
+      <summary>Create New OpenSign Document</summary>
+      <div class="sub">
+        <a href="#sign-yourself">Sign your-self</a>
+        <a href="#request-signatures">Request signatures</a>
+        <a href="#widgets">Widgets in OpenSign</a>
+        <a href="#editing-before-sending">Editing Your Document Before Sending</a>
+        <a href="#enforce-otp">Enforce email OTP verification</a>
+        <a href="#conditional-logic">Conditional logic</a>
+        <a href="#guest-signing">Guest signing flow</a>
+      </div>
+    </details>
+
+    <details class="grp">
+      <summary>Manage Docs using OpenSign&trade; Drive</summary>
+      <div class="sub">
+        <a href="#create-docs-folders">Create Docs &amp; Folders</a>
+        <a href="#grid-list-view">Grid vs List view</a>
+        <a href="#drive-interface">OpenSign&trade; Drive Interface Documentation</a>
+        <a href="#rename-documents">Rename documents from OpenSign&trade; Drive</a>
+      </div>
+    </details>
+
+    <details class="grp">
+      <summary>Documents</summary>
+      <div class="sub">
+        <a href="#need-your-sign">Need your sign</a>
+        <a href="#in-progress">In Progress</a>
+        <a href="#completed">Completed</a>
+        <a href="#drafts">Drafts</a>
+        <a href="#declined">Declined</a>
+        <a href="#expired">Expired</a>
+        <a href="#contacts">Contactbook</a>
+      </div>
+    </details>
+
+    <details class="grp">
+      <summary>Templates</summary>
+      <div class="sub">
+        <a href="#create-templates">Create Templates</a>
+        <a href="#manage-templates">Manage Templates</a>
+        <a href="#use-template">Use template to create documents</a>
+        <a href="#bulk-send">Bulk Document Send for Signature Using Template</a>
+        <a href="#public-signing-template">Setting up an OpenSign template for public signing</a>
+        <a href="#embedding-templates">Embedding OpenSign templates</a>
+      </div>
+    </details>
+
+    <details class="grp">
+      <summary>Settings</summary>
+      <div class="sub">
+        <a href="#my-signature">My Signature</a>
+        <a href="#api-token">API Token</a>
+        <a href="#webhook">Webhook</a>
+        <a href="#preferences">Preferences</a>
+        <a href="#manage-teams">Manage Teams</a>
+        <a href="#users">Manage users</a>
+        <a href="#disable-documentid">Disable DocumentId</a>
+        <a href="#custom-email-templates">Custom email templates</a>
+        <a href="#security">Security</a>
+      </div>
+    </details>
+
+    <h4>APIs</h4>
+    <a href="#api">API overview</a>
+
+    <h4>More</h4>
+    <a href="#faqs">FAQs</a>
+  </nav>
+
+  <main>
+
+    <section id="intro">
+      <span class="badge">SignToowix Docs</span>
+      <h1>SignToowix Documentation</h1>
+      <p class="lead">Everything you need to send, sign and manage documents with SignToowix - a secure, easy-to-use
+      digital document signing platform built for teams of every size. This guide walks through every part of the
+      product in detail: creating and sending documents, managing your Drive, working with templates, and
+      configuring your company's settings.</p>
+      <div class="grid3">
+        <div class="card">
+          <b>Create New OpenSign Document</b>
+          <span>Sign yourself, request signatures, use widgets, OTP verification, conditional logic and guest signing.</span>
+        </div>
+        <div class="card">
+          <b>Manage Docs using Drive</b>
+          <span>Folders, grid/list views, the Drive interface, and renaming documents.</span>
+        </div>
+        <div class="card">
+          <b>Templates &amp; Settings</b>
+          <span>Reusable templates, bulk sending, API tokens, webhooks and company security.</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="getting-started">
+      <h2>Getting started</h2>
+      <p>SignToowix is a cloud-based document signing platform. Your organisation's workspace is provisioned by a
+      Super Admin, after which you sign in with your own email and password (or a linked Google account) to start
+      sending and signing documents. Each company runs in its own isolated workspace and database, so your
+      documents, users and settings are never visible to any other company on the platform.</p>
+      <h3>Signing in</h3>
+      <ol>
+        <li>Go to <code>sign.toowix.com</code></li>
+        <li>Enter your email and password, or click <b>Sign in with Google</b></li>
+        <li>If your account has two-factor authentication enabled, enter the verification code emailed to you</li>
+      </ol>
+      <h3>Requesting access</h3>
+      <p>If your company doesn't have a workspace yet, use <b>Create Account</b> on the sign-in page and fill in your
+      company name, job title, phone number and the number of users you expect to need. Your request is reviewed by
+      a Super Admin - you'll receive an email the moment it's approved, and can then sign in right away.</p>
+    </section>
+
+    <section id="account">
+      <h2>Account &amp; sign-in</h2>
+      <h3>Forgot your password?</h3>
+      <p>Click <b>Forgot Password</b> on the sign-in page and enter your email. You'll receive a reset link by email -
+      it expires after a period of time for security, so use it promptly.</p>
+      <h3>Signing in with Google</h3>
+      <p>Click <b>Sign in with Google</b> and choose your Google account. First-time users are asked for a few extra
+      details (company name, job title, phone, expected number of users) before their request goes to a Super Admin
+      for approval. Once approved, clicking Sign in with Google again logs you straight in - no password needed.</p>
+      <h3>Two-factor authentication</h3>
+      <p>Turn on 2FA from your Profile page for an extra layer of security. Once enabled, every sign-in requires a
+      one-time code sent to your email in addition to your password.</p>
+    </section>
+
+    <section id="sign-yourself">
+      <h2>Sign your-self</h2>
+      <p>Use <b>Sign Yourself</b> when you just need your own signature on a document - no need to send it anywhere.
+      Upload the file, place your signature, initials, date and any other fields, then finish. The signed copy is
+      saved straight to your Documents, complete with a certificate of completion.</p>
+    </section>
+
+    <section id="request-signatures">
+      <h2>Request signatures</h2>
+      <p>Use <b>Request Signatures</b> to send a document to one or more people for signing.</p>
+      <ol>
+        <li>Upload a PDF, Word document, or image</li>
+        <li>Add each signer's name and email</li>
+        <li>Drag signature, date, text and other fields onto the document for each signer</li>
+        <li>Optionally set a signing order, an expiry date, and reminder emails</li>
+        <li>Click <b>Send</b> - each signer receives an email with a secure signing link</li>
+      </ol>
+      <p>Track progress at any time from <b>Documents &rarr; In Progress</b>. You'll be notified by email as each
+      signer completes their part, and again once the document is fully signed.</p>
+    </section>
+
+    <section id="widgets">
+      <h2>Widgets in OpenSign</h2>
+      <p>Widgets are the draggable fields you place on a document while preparing it:</p>
+      <ul>
+        <li><b>Signature</b> and <b>Initials</b> - captured by drawing, typing or uploading an image</li>
+        <li><b>Name</b>, <b>Email</b>, <b>Date</b> and <b>Text</b> - free or auto-filled fields</li>
+        <li><b>Checkbox</b> and <b>Dropdown</b> - for selections and acknowledgements</li>
+        <li><b>Stamp</b> - for a company seal or approval stamp</li>
+      </ul>
+      <p>Drag a widget from the left panel onto the page, resize it as needed, then assign it to the signer it
+      belongs to.</p>
+    </section>
+
+    <section id="editing-before-sending">
+      <h2>Editing your document before sending</h2>
+      <p>Before you click Send, you can reorder pages, delete a page, adjust field position and size, resize text
+      boxes, and preview exactly what each signer will see - all from the same editor, without needing to re-upload
+      the file.</p>
+    </section>
+
+    <section id="enforce-otp">
+      <h2>Enforce email OTP verification</h2>
+      <p>Turn on OTP verification for a document to require each signer to enter a one-time code sent to their email
+      before they can open and sign it. This is especially useful for sensitive agreements sent to a public link, or
+      where you want extra assurance the intended recipient is the one signing.</p>
+    </section>
+
+    <section id="conditional-logic">
+      <h2>Conditional logic</h2>
+      <p>Show or hide specific fields based on a signer's answer to another field - for example, only showing a
+      "spouse name" field if a signer checks "Married". Set this up from the field's settings while preparing the
+      document, so signers only ever see fields relevant to them.</p>
+    </section>
+
+    <section id="guest-signing">
+      <h2>Guest signing flow</h2>
+      <p>Recipients don't need a SignToowix account to sign. A guest opens the emailed link, verifies their identity
+      (OTP if enabled), reviews the document, completes each field assigned to them, and submits. Once every signer
+      has finished, everyone receives a copy of the final signed PDF along with a certificate of completion.</p>
+    </section>
+
+    <section id="create-docs-folders">
+      <h2>Create Docs &amp; Folders</h2>
+      <p>From Drive, click <b>New Folder</b> to organise documents and templates, or upload a file directly into any
+      folder. Folders can be nested to mirror how your team organises paperwork, and can be renamed or moved at any
+      time.</p>
+    </section>
+
+    <section id="grid-list-view">
+      <h2>Grid vs List view</h2>
+      <p>Switch between a thumbnail <b>Grid</b> view and a compact <b>List</b> view from the toggle in the top-right
+      of Drive, depending on whether you want visual previews of each document or to scan more files at once.</p>
+    </section>
+
+    <section id="drive-interface">
+      <h2>OpenSign&trade; Drive interface documentation</h2>
+      <p>Drive's toolbar lets you upload a file, create a folder, search by name, sort by date or name, and switch
+      view. Right-click (or use the row's menu) on any item to rename, move, download or delete it. Breadcrumbs at
+      the top always show your current folder path.</p>
+    </section>
+
+    <section id="rename-documents">
+      <h2>Rename documents from OpenSign&trade; Drive</h2>
+      <p>Select a document in Drive, open its menu, and choose <b>Rename</b>. The new name is reflected everywhere
+      the document appears in your workspace, including in future email notifications - notifications already sent
+      keep the name used at send time.</p>
+    </section>
+
+    <section id="need-your-sign">
+      <h2>Need your sign</h2>
+      <p>Documents waiting on your own signature appear here first, so you always know what's blocking on you before
+      anything else in your queue.</p>
+    </section>
+
+    <section id="in-progress">
+      <h2>In Progress</h2>
+      <p>Documents sent out and still waiting on one or more signers. Open any document to see per-signer status, and
+      send a reminder to whoever hasn't signed yet.</p>
+    </section>
+
+    <section id="completed">
+      <h2>Completed</h2>
+      <p>Every signer has finished. Download the final signed PDF and its certificate of completion from here at any
+      time - both remain available for as long as your workspace retains the document.</p>
+    </section>
+
+    <section id="drafts">
+      <h2>Drafts</h2>
+      <p>Documents with fields placed but not yet sent. Pick up a draft any time to finish preparing and send it -
+      nothing is lost if you get interrupted mid-preparation.</p>
+    </section>
+
+    <section id="declined">
+      <h2>Declined</h2>
+      <p>A signer chose to decline rather than sign. You can see their reason (if provided) and resend a corrected
+      document, or reach out to them directly.</p>
+    </section>
+
+    <section id="expired">
+      <h2>Expired</h2>
+      <p>The signing deadline passed before every signer finished. Resend the document to restart the process with a
+      fresh deadline.</p>
+    </section>
+
+    <section id="contacts">
+      <h2>Contactbook</h2>
+      <p>Anyone you've sent a document to is automatically saved to your <b>Contactbook</b>, so you don't need to
+      retype their name and email next time you send them something.</p>
+    </section>
+
+    <section id="create-templates">
+      <h2>Create Templates</h2>
+      <p>Prepare a document with fields as usual, then choose <b>Save as Template</b> instead of Send. The layout and
+      field placement are kept exactly as prepared, ready to reuse whenever you need to send that same kind of
+      document again.</p>
+    </section>
+
+    <section id="manage-templates">
+      <h2>Manage Templates</h2>
+      <p>View, edit, rename or delete your saved templates from <b>Templates</b>. Editing a template only affects
+      future documents sent from it - documents already sent are never changed retroactively.</p>
+    </section>
+
+    <section id="use-template">
+      <h2>Use template to create documents</h2>
+      <p>Open a template, click <b>Use Template</b>, add the recipient(s) for this specific send, and click Send -
+      the field layout carries over automatically so you only need to fill in who it's for.</p>
+    </section>
+
+    <section id="bulk-send">
+      <h2>Bulk document send for signature using template</h2>
+      <p>Upload a CSV of recipients against a template to send the same document to many signers at once. Each
+      recipient gets their own individual copy and signing link, and their progress is tracked separately.</p>
+    </section>
+
+    <section id="public-signing-template">
+      <h2>Setting up an OpenSign template for public signing</h2>
+      <p>Enable <b>Public Link</b> on a template to get a shareable URL anyone can open and sign, without you sending
+      it to a specific named recipient first - handy for intake forms, waivers and open enrollment documents.</p>
+    </section>
+
+    <section id="embedding-templates">
+      <h2>Embedding OpenSign templates</h2>
+      <p>A public template link can be embedded directly in your own website using an iframe, so signers complete it
+      without ever leaving your site.</p>
+    </section>
+
+    <section id="my-signature">
+      <h2>My Signature</h2>
+      <p>Draw, type or upload your signature and initials from <b>Settings &rarr; My Signature</b>. It's reused
+      automatically whenever you sign a document yourself, so you only need to set it up once.</p>
+    </section>
+
+    <section id="api-token">
+      <h2>API Token</h2>
+      <p>Generate a personal API token from <b>Settings &rarr; API Token</b> to authenticate requests made through
+      the SignToowix API.</p>
+      <div class="note"><b>Keep it secret:</b> treat your API token like a password. Regenerate it immediately if it
+      is ever exposed.</div>
+    </section>
+
+    <section id="webhook">
+      <h2>Webhook</h2>
+      <p>Add a webhook URL to receive real-time notifications - document sent, viewed, signed, completed, declined -
+      as HTTP callbacks to your own server, so you can automate what happens next in your own systems.</p>
+    </section>
+
+    <section id="preferences">
+      <h2>Preferences</h2>
+      <p>Set your default timezone, date format and notification preferences from <b>Settings &rarr; Preferences</b>,
+      so dates and reminders line up with how your team actually works.</p>
+    </section>
+
+    <section id="manage-teams">
+      <h2>Manage Teams</h2>
+      <p>Group users into teams to organise document ownership and reporting - particularly useful once your company
+      grows beyond a handful of users and needs department-level visibility.</p>
+    </section>
+
+    <section id="users">
+      <h2>Manage users</h2>
+      <p>Company Admins can add teammates from <b>Settings &rarr; Manage Users</b> and assign a role:</p>
+      <ul>
+        <li><b>Admin</b> - full access, including user management and company settings</li>
+        <li><b>Org Admin</b> - manages an organisation within the company</li>
+        <li><b>Editor</b> - can create, send and manage documents</li>
+        <li><b>User</b> - can sign and view documents shared with them</li>
+      </ul>
+    </section>
+
+    <section id="disable-documentid">
+      <h2>Disable DocumentId</h2>
+      <p>By default, a document ID is printed on the signed PDF's footer for traceability. Turn this off from
+      <b>Settings</b> if you'd rather not have it included in the final file.</p>
+    </section>
+
+    <section id="custom-email-templates">
+      <h2>Custom email templates</h2>
+      <p>Customise the subject and body of the emails signers and senders receive - invitation, reminder, completion
+      - to match your company's own tone and branding.</p>
+    </section>
+
+    <section id="security">
+      <h2>Security</h2>
+      <p>Manage two-factor authentication requirements and session behaviour for your company's workspace from
+      <b>Settings &rarr; Security</b>. Company Admins can require 2FA for all users in sensitive workspaces.</p>
+    </section>
+
+    <section id="api">
+      <h2>API overview</h2>
+      <p>SignToowix exposes a REST API for sending documents, checking status and retrieving signed files
+      programmatically. A request looks like this:</p>
+      <pre><code>curl -X POST https://sign.toowix.com/app/&lt;company&gt;/functions/createdocumentfromapp \
+  -H "Content-Type: application/json" \
+  -H "X-Parse-Application-Id: opensign" \
+  -H "X-Parse-Session-Token: &lt;your-session-token&gt;" \
+  -d '{ "...": "..." }'</code></pre>
+      <p>Generate a token from <a href="#api-token">Settings &rarr; API Token</a>, then contact your administrator if
+      you need the full endpoint reference for your integration.</p>
+    </section>
+
+    <section id="faqs">
+      <h2>FAQs</h2>
+      <h3>Is my data secure?</h3>
+      <p>Yes. Each company's data is stored in its own isolated database, and all traffic is encrypted in transit.</p>
+      <h3>Can I use this without creating an account?</h3>
+      <p>Yes, if you're only signing a document someone sent you - just open the link in the email, no sign-up
+      required.</p>
+      <h3>What happens if I don't sign before the expiry date?</h3>
+      <p>The document moves to <b>Expired</b> and the sender will need to resend it with a new deadline.</p>
+      <h3>Who do I contact for help?</h3>
+      <p>Reach out to your company's Admin, or email
+      <a href="mailto:notification@toowix.com">notification@toowix.com</a>.</p>
+    </section>
+
+  </main>
+</div>
+
+<footer>&copy; <span id="year"></span> SignToowix. All rights reserved.</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+  const links = Array.from(document.querySelectorAll('nav.side a[href^="#"]'));
+  const sections = links.map(a => document.querySelector(a.getAttribute('href')));
+  function onScroll(){
+    let idx = 0;
+    for (let i = 0; i < sections.length; i++) {
+      if (sections[i] && sections[i].getBoundingClientRect().top < 100) idx = i;
+    }
+    links.forEach((a, i) => a.classList.toggle('active', i === idx));
+    const activeLink = links[idx];
+    const parentDetails = activeLink && activeLink.closest('details.grp');
+    if (parentDetails) parentDetails.open = true;
+  }
+  document.addEventListener('scroll', onScroll);
+  onScroll();
+</script>
+</body>
+</html>
