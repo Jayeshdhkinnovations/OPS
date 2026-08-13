@@ -169,6 +169,11 @@ function Login() {
         // Retry login against the dynamic tenant instance
         return handleLogin(true);
       }
+      if (_user && _user.error === "account_suspended") {
+        setState({ ...state, loading: false });
+        showToast("danger", "Your account is suspended. Please contact admin.");
+        return;
+      }
       if (!_user) {
         setState({ ...state, loading: false });
         return;

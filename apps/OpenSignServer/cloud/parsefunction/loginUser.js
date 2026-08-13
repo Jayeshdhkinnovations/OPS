@@ -135,6 +135,31 @@ export default async function loginUser(request) {
               .map(c => c.databaseName)
               .join(', ')})`
           );
+
+          // Not found among active companies - before falling through to a
+          // generic "invalid credentials" error, check whether this address
+          // belongs to a suspended company. A suspended admin's password is
+          // still correct; they just shouldn't be told it's wrong.
+          const suspended = await db
+            .collection('Company')
+            .find({ status: 'suspended' }, { projection: { subdomain: 1, databaseName: 1 } })
+            .toArray();
+          for (const company of suspended) {
+            if (!company.databaseName) continue;
+            const match = await client
+              .db(company.databaseName)
+              .collection('_User')
+              .findOne(
+                { $or: [{ username: username }, { email: username }] },
+                { projection: { _id: 1 } }
+              );
+            if (match) {
+              console.log(
+                `TENANT LOOKUP: "${username}" belongs to suspended company ${company.databaseName}`
+              );
+              return { error: 'account_suspended' };
+            }
+          }
         } catch (superAdminErr) {
           console.error('Error querying SuperAdmin for tenant redirect:', superAdminErr);
         } finally {
