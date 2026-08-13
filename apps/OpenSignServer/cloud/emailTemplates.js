@@ -96,6 +96,8 @@ export function baseTemplate({
       : '';
 
   return `
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-scheme" content="light dark">
 <style>
   @media (prefers-color-scheme: dark) {
     .email-bg { background:#0B0F19 !important; }
@@ -106,6 +108,17 @@ export function baseTemplate({
     .logo-light { display:none !important; }
     .logo-dark { display:block !important; }
   }
+  /* Gmail (web and app) doesn't reliably honour prefers-color-scheme on
+     injected mail HTML - it instead stamps [data-ogsc] onto the message
+     when its own dark mode is on. Same rules, repeated under that selector,
+     is the standard workaround; every other client just ignores it. */
+  [data-ogsc] .email-bg { background:#0B0F19 !important; }
+  [data-ogsc] .email-card { background:#0B0F19 !important; }
+  [data-ogsc] .email-ink { color:#F3F4F6 !important; }
+  [data-ogsc] .email-muted { color:#9CA3AF !important; }
+  [data-ogsc] .email-hairline { border-color:#232838 !important; }
+  [data-ogsc] .logo-light { display:none !important; }
+  [data-ogsc] .logo-dark { display:block !important; }
 </style>
 <div class="email-bg" style="background:#FFFFFF;padding:40px 20px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;margin:0 auto;">
