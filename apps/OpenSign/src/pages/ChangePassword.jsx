@@ -71,6 +71,8 @@ function ChangePassword() {
               alert(t("password-update-alert-3"));
               console.error("Error while logging in user", error);
             });
+        } else {
+          alert(t("password-requirements-not-met", "Password must be at least 8 characters, include upper and lower case letters, a number, and a special character."));
         }
       } else {
         alert(t("password-update-alert-4"));
@@ -165,36 +167,10 @@ function ChangePassword() {
               </span>
             </div>
           </div>
-          {confirmpassword.length > 0 && (
-            <div className="mt-1 text-[11px]">
-              {newpassword.length > 0 && (
-                <p
-                  className={`${newpassword === confirmpassword ? "text-green-600" : "text-red-600"} text-[11px] mt-1`}
-                >
-                  {newpassword === confirmpassword ? "✓" : "✗"}{" "}
-                  {t("password-match-length")}
-                </p>
-              )}
-              <p
-                className={`${lengthValid ? "text-green-600" : "text-red-600"}`}
-              >
-                {lengthValid ? "✓" : "✗"} {t("password-length")}
-              </p>
-              <p
-                className={`${
-                  caseDigitValid ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {caseDigitValid ? "✓" : "✗"} {t("password-case")}
-              </p>
-              <p
-                className={`${
-                  specialCharValid ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {specialCharValid ? "✓" : "✗"} {t("password-special-char")}
-              </p>
-            </div>
+          {confirmpassword.length > 0 && newpassword !== confirmpassword && (
+            <p className="mt-1 text-[11px] text-red-600">
+              {t("password-match-length")}
+            </p>
           )}
           <button
             type="submit"

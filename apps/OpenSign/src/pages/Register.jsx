@@ -37,15 +37,8 @@ function Register() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
-  // Confirm-password feedback is derived per keystroke rather than checked on
-  // submit, so a typo is visible while the field still has focus instead of
-  // after the form bounces. `prefixOk` distinguishes "still typing, so far so
-  // good" from "these have already diverged" - only the second turns red,
-  // otherwise every partial entry would flash an error.
-  const confirmTyped = form.confirmPassword.length > 0;
-  const passwordsMatch = confirmTyped && form.password === form.confirmPassword;
-  const prefixOk = form.password.startsWith(form.confirmPassword);
-  const confirmHasError = confirmTyped && !prefixOk;
+  const confirmHasError =
+    form.confirmPassword.length > 0 && form.password !== form.confirmPassword;
 
   useEffect(() => {
     // Clear any stale session token from localStorage
@@ -321,9 +314,7 @@ function Register() {
                       className={`w-full rounded-full border bg-white text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-colors px-5 py-2.5 text-sm ${
                         confirmHasError
                           ? "border-red-400 focus:border-red-500 focus:ring-red-500/15"
-                          : passwordsMatch
-                            ? "border-green-500 focus:border-green-600 focus:ring-green-500/15"
-                            : "border-gray-300 focus:border-[#0B3D73] focus:ring-[#0B3D73]/15"
+                          : "border-gray-300 focus:border-[#0B3D73] focus:ring-[#0B3D73]/15"
                       }`}
                     />
                     <span
@@ -337,35 +328,15 @@ function Register() {
                       )}
                     </span>
                   </div>
-                  {/* aria-live so the result is announced as it changes, not
-                      only when the field is re-read. */}
-                  <p
-                    id="confirmPasswordStatus"
-                    aria-live="polite"
-                    className={`mt-1.5 flex items-center gap-1 pl-4 text-[11px] font-semibold transition-opacity ${
-                      confirmHasError
-                        ? "text-red-500"
-                        : passwordsMatch
-                          ? "text-green-600"
-                          : "opacity-0"
-                    }`}
-                  >
-                    {confirmHasError ? (
-                      <>
-                        <i className="fa-light fa-circle-xmark" />
-                        {t("password-not-match", "Passwords do not match")}
-                      </>
-                    ) : passwordsMatch ? (
-                      <>
-                        <i className="fa-light fa-circle-check" />
-                        {t("password-match", "Passwords match")}
-                      </>
-                    ) : (
-                      // Placeholder keeps the row's height reserved so the
-                      // fields below don't jump when the message appears.
-                      <>&nbsp;</>
-                    )}
-                  </p>
+                  {confirmHasError && (
+                    <p
+                      id="confirmPasswordStatus"
+                      aria-live="polite"
+                      className="mt-1.5 pl-4 text-[11px] font-semibold text-red-500"
+                    >
+                      {t("password-not-match", "Passwords do not match")}
+                    </p>
+                  )}
                 </div>
               </div>
 
