@@ -10,7 +10,7 @@ import { verifyGoogleIdToken, deleteFirebaseUser } from '../firebaseAdmin.js';
 // Runs on the root instance, same as the email/password lookup.
 export default async function googleLoginLookup(request) {
   const { idToken } = request.params;
-  const { firebaseUid, googleId, email, name } = await verifyGoogleIdToken(idToken);
+  const { firebaseUid, googleId, email, name, emailVerified } = await verifyGoogleIdToken(idToken);
 
   if (!process.env.SUPERADMIN_MONGODB_URI) {
     throw new Parse.Error(
@@ -33,10 +33,31 @@ export default async function googleLoginLookup(request) {
     for (const company of companies) {
       if (!company.databaseName || !company.subdomain) continue;
       const companyDb = client.db(company.databaseName);
-      const match = await companyDb
+      let match = await companyDb
         .collection('_User')
         .findOne({ GoogleUid: googleId }, { projection: { _id: 1, email: 1 } });
+
+      // No GoogleUid link yet - this happens for anyone who originally
+      // signed up with a password and has never clicked "Sign in with
+      // Google" before. Google already verified they own this exact
+      // address, so an email match here is just as trustworthy as a
+      // GoogleUid match - fall back to it instead of forcing them through
+      // signup again for an account that already exists.
+      if (!match && emailVerified) {
+        match = await companyDb
+          .collection('_User')
+          .findOne({ email }, { projection: { _id: 1, email: 1 } });
+        // Opportunistically link it now, so the next sign-in (and the
+        // company-level googleLogin.js right after this lookup) can go
+        // through the fast GoogleUid path instead of repeating this scan.
+        if (match) {
+          await companyDb
+            .collection('_User')
+            .updateOne({ _id: match._id }, { $set: { GoogleUid: googleId } });
+        }
+      }
       if (!match) continue;
+
       const isMember = await companyDb
         .collection('contracts_Users')
         .findOne({ Email: match.email || email }, { projection: { _id: 1 } });
