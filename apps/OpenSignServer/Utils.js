@@ -34,7 +34,7 @@ export const appName = 'SignToowix';
 // as cloud/emailTemplates.js), so it reads on both a light and dark
 // surrounding background with no CSS reliance.
 const mailLogoUrl = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
-export const mailLogo = `<img src='${mailLogoUrl}' height='40' style='display:block;padding:20px 20px 8px;border:0;'/>`;
+export const mailLogo = `<img src='${mailLogoUrl}' width='109' height='40' style='display:block;padding:20px 20px 8px;border:0;background:transparent;'/>`;
 
 // No longer needed now that mailLogo is a single image (see above) - kept
 // as a harmless empty string rather than editing every call site that
