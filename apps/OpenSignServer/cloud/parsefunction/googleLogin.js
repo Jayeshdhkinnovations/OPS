@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { cloudServerUrl, serverAppId } from '../../Utils.js';
 import { verifyGoogleIdToken } from '../firebaseAdmin.js';
-import { createAndSendOtp } from '../twoFactorAuth.js';
 import { notifyLogin, clientInfo } from '../securityNotifications.js';
 
 // Runs inside the COMPANY's own container/database, after the frontend has
@@ -52,16 +51,13 @@ export default async function googleLogin(request) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, 'Could not sign in.');
   }
 
-  // Same 2FA gate as the password flow: withhold the session, email a code,
-  // require verifyLoginOtp before the frontend gets anything usable.
+  // Deliberately no 2FA gate here, unlike the password flow - Google already
+  // proved who this is (a second factor in its own right), so a Google
+  // sign-in goes straight through even on an account with 2FA turned on.
+  // OTP is only ever asked for a plain username/password login.
   const extUserQuery = new Parse.Query('contracts_Users');
   extUserQuery.equalTo('UserId', { __type: 'Pointer', className: '_User', objectId: user.id });
   const extUser = await extUserQuery.first({ useMasterKey: true });
-  if (extUser?.get('TwoFactorEnabled')) {
-    await createAndSendOtp(extUser, 'login', { PendingUserJson: JSON.stringify(_user) });
-    return { requires2fa: true, userId: extUser.id };
-  }
-
   if (extUser) notifyLogin(extUser, clientInfo(request));
 
   if (email && !_user.emailVerified) {
