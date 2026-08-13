@@ -7,7 +7,7 @@ async function sendMailProvider(req) {
   const extUserId = req.params?.extUserId || '';
   // Points at our own address: this previously sent recipients to
   // complaints@opensignlabs.com, i.e. reported our senders to OpenSign.
-  const reportMsg = `<p style="font-size: 13px; color:grey; text-align: center;">If you think this email is inappropriate or spam, you may report it to <a href="mailto:notification@toowix.com?subject=Spam%20report%20for%20user%20ID%20${extUserId}">notification@toowix.com</a>.</p>`;
+  const reportMsg = `<style>@media (prefers-color-scheme: dark){.op-report-bg{background:#0B0F19 !important;}}</style><div class="op-report-bg" style="background:#FFFFFF;padding:16px 20px;"><p style="font-size: 13px; color:grey; text-align: center; margin:0;">If you think this email is inappropriate or spam, you may report it to <a href="mailto:notification@toowix.com?subject=Spam%20report%20for%20user%20ID%20${extUserId}">notification@toowix.com</a>.</p></div>`;
 
   const mailgunApiKey = process.env.MAILGUN_API_KEY;
   let transporterSMTP;
