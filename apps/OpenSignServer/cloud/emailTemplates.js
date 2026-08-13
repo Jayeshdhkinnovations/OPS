@@ -40,7 +40,7 @@ function esc(value) {
 // reserved header height while showing neither cleanly. The mark is baked
 // onto a small neutral-gray chip instead, so one image reads correctly on
 // both a light and a dark surrounding background with no CSS reliance.
-const logoBlock = `<img src="${LOGO_URL}" width="34" height="34" alt="${BRAND_NAME}" style="display:block;border:0;" />`;
+const logoBlock = `<img src="${LOGO_URL}" width="87" height="32" alt="${BRAND_NAME}" style="display:block;border:0;background:transparent;" />`;
 
 // Rows of label/value detail (device, time, location...). A plain table,
 // not a card - matches the rest of the plain-text feel.
@@ -109,9 +109,6 @@ export function baseTemplate({
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="vertical-align:middle;">${logoBlock}</td>
-            <td style="vertical-align:middle;padding-left:10px;">
-              <span class="email-ink" style="font-size:15px;font-weight:700;color:${INK};">${BRAND_NAME}</span>
-            </td>
           </tr>
         </table>
 
