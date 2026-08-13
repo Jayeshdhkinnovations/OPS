@@ -278,3 +278,25 @@ export function approvalReceivedEmail({ name, companyName }) {
     }),
   };
 }
+
+// Sent to the platform admin, not the registrant - the counterpart to
+// approvalReceivedEmail above. Points at the Approval section of the
+// console rather than assuming a specific URL the admin already has open.
+export function newApprovalRequestEmail({ name, email, companyName, jobTitle, phone }) {
+  return {
+    subject: `${BRAND_NAME} — New request from ${companyName}`,
+    text: `${name || 'Someone'} (${email}) submitted a workspace request for "${companyName}". Review and approve it from the Approval section of the Super Admin console.`,
+    html: baseTemplate({
+      heading: 'New request pending approval',
+      intro: `<strong>${esc(name || 'Someone')}</strong> just submitted a workspace request for <strong>${esc(companyName)}</strong>.`,
+      details: [
+        { label: 'Company', value: companyName },
+        { label: 'Contact', value: name },
+        { label: 'Email', value: email },
+        { label: 'Job title', value: jobTitle },
+        { label: 'Phone', value: phone },
+      ],
+      footnote: `Review and approve it from the Approval section of the Super Admin console.`,
+    }),
+  };
+}

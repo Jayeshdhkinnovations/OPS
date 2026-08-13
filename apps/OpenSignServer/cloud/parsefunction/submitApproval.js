@@ -1,6 +1,10 @@
 import { MongoClient } from 'mongodb';
 import sendSystemMail from './sendSystemMail.js';
-import { BRAND_NAME, approvalReceivedEmail } from '../emailTemplates.js';
+import { BRAND_NAME, approvalReceivedEmail, newApprovalRequestEmail } from '../emailTemplates.js';
+
+// Where the "review this" notification goes - overridable per-deploy, not
+// baked in, since the platform admin's own address can change.
+const SUPERADMIN_EMAIL = process.env.SUPERADMIN_NOTIFY_EMAIL || 'hari@toowix.com';
 
 // Parse's own IDs are short 10-char alphanumeric strings, not MongoDB's
 // native 24-char hex ObjectIds. This record gets written here via the raw
@@ -24,14 +28,20 @@ function generateParseObjectId() {
 export default async function submitApproval(request) {
   const { name, email, phone, companyName, jobTitle, password, maxUsers } = request.params;
   if (!name || !email || !companyName || !password) {
-    throw new Parse.Error(Parse.Error.VALIDATION_ERROR, 'name, email, companyName and password are all required.');
+    throw new Parse.Error(
+      Parse.Error.VALIDATION_ERROR,
+      'name, email, companyName and password are all required.'
+    );
   }
   // The registrant picks their own seat count now (the Super Admin only
   // approves/rejects) - clamp to a sane range so a bad/missing value can't
   // produce a company provisioned with 0 or an absurd number of seats.
   const requestedMaxUsers = Math.min(Math.max(parseInt(maxUsers, 10) || 5, 1), 1000);
   if (!process.env.SUPERADMIN_MONGODB_URI) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, 'SUPERADMIN_MONGODB_URI is not configured.');
+    throw new Parse.Error(
+      Parse.Error.INTERNAL_SERVER_ERROR,
+      'SUPERADMIN_MONGODB_URI is not configured.'
+    );
   }
 
   const client = new MongoClient(process.env.SUPERADMIN_MONGODB_URI);
@@ -41,11 +51,17 @@ export default async function submitApproval(request) {
 
     const existing = await db.collection('ApprovalRequest').findOne({ email, status: 'pending' });
     if (existing) {
-      throw new Parse.Error(Parse.Error.DUPLICATE_VALUE, 'A request with this email is already pending approval.');
+      throw new Parse.Error(
+        Parse.Error.DUPLICATE_VALUE,
+        'A request with this email is already pending approval.'
+      );
     }
     const existingCompany = await db.collection('Company').findOne({ adminEmail: email });
     if (existingCompany) {
-      throw new Parse.Error(Parse.Error.DUPLICATE_VALUE, 'An account with this email already exists - try logging in instead.');
+      throw new Parse.Error(
+        Parse.Error.DUPLICATE_VALUE,
+        'An account with this email already exists - try logging in instead.'
+      );
     }
 
     // NOTE: password is stored as plain text here, temporarily, until a
@@ -84,6 +100,19 @@ export default async function submitApproval(request) {
       html: ack.html,
     },
   }).catch(err => console.log('approval-received mail failed:', err?.message || err));
+
+  // Tell the admin there's something to review - same best-effort,
+  // fire-and-forget treatment as the registrant's ack above.
+  const adminNotice = newApprovalRequestEmail({ name, email, companyName, jobTitle, phone });
+  sendSystemMail({
+    params: {
+      from: BRAND_NAME,
+      recipient: SUPERADMIN_EMAIL,
+      subject: adminNotice.subject,
+      text: adminNotice.text,
+      html: adminNotice.html,
+    },
+  }).catch(err => console.log('new-request admin notice failed:', err?.message || err));
 
   return { submitted: true };
 }

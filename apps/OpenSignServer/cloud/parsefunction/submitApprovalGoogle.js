@@ -1,7 +1,9 @@
 import { MongoClient } from 'mongodb';
 import sendSystemMail from './sendSystemMail.js';
-import { BRAND_NAME, approvalReceivedEmail } from '../emailTemplates.js';
+import { BRAND_NAME, approvalReceivedEmail, newApprovalRequestEmail } from '../emailTemplates.js';
 import { verifyGoogleIdToken, deleteFirebaseUser } from '../firebaseAdmin.js';
+
+const SUPERADMIN_EMAIL = process.env.SUPERADMIN_NOTIFY_EMAIL || 'hari@toowix.com';
 
 // Same 10-char Parse-shaped id as submitApproval.js - this record is
 // written via the raw Mongo driver (no company mount exists yet) but later
@@ -88,6 +90,17 @@ export default async function submitApprovalGoogle(request) {
       html: ack.html,
     },
   }).catch(err => console.log('approval-received mail failed:', err?.message || err));
+
+  const adminNotice = newApprovalRequestEmail({ name, email, companyName, jobTitle, phone });
+  sendSystemMail({
+    params: {
+      from: BRAND_NAME,
+      recipient: SUPERADMIN_EMAIL,
+      subject: adminNotice.subject,
+      text: adminNotice.text,
+      html: adminNotice.html,
+    },
+  }).catch(err => console.log('new-request admin notice failed:', err?.message || err));
 
   return { submitted: true };
 }
