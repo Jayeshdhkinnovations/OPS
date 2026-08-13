@@ -65,6 +65,7 @@ import submitApprovalGoogle from './parsefunction/submitApprovalGoogle.js';
 import googleLoginLookup from './parsefunction/googleLoginLookup.js';
 import googleLogin from './parsefunction/googleLogin.js';
 import checkApprovalStatus from './parsefunction/checkApprovalStatus.js';
+import requestCompanyNameChange from './parsefunction/requestCompanyNameChange.js';
 import addUser from './parsefunction/addUser.js';
 import filterDocs from './parsefunction/filterDocs.js';
 import sendDeleteUserMail from './parsefunction/sendDeleteUserMail.js';
@@ -152,6 +153,7 @@ export default function registerCloudCode() {
   Parse.Cloud.define('googleloginlookup', googleLoginLookup);
   Parse.Cloud.define('googlelogin', googleLogin);
   Parse.Cloud.define('checkapprovalstatus', checkApprovalStatus);
+  Parse.Cloud.define('requestcompanynamechange', requestCompanyNameChange);
   Parse.Cloud.define('adduser', addUser);
   Parse.Cloud.define('filterdocs', filterDocs);
   Parse.Cloud.define('senddeleterequest', sendDeleteUserMail);

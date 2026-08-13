@@ -43,6 +43,11 @@ function UserProfile() {
   const [company, setCompany] = useState(
     extendUser && extendUser?.[0]?.Company
   );
+  const [companyChangeModal, setCompanyChangeModal] = useState(false);
+  const [newCompanyName, setNewCompanyName] = useState("");
+  const [companyChangeLoading, setCompanyChangeLoading] = useState(false);
+  const [companyChangeError, setCompanyChangeError] = useState("");
+  const [companyChangeSubmitted, setCompanyChangeSubmitted] = useState(false);
   const [jobTitle, setJobTitle] = useState(
     extendUser && extendUser?.[0]?.JobTitle
   );
@@ -169,6 +174,26 @@ function UserProfile() {
       console.log("error in save data in contracts_Users class", err);
     }
   });
+
+  // Company name doesn't save directly - it's shared by every user in the
+  // workspace and also drives routing/branding platform-wide, so a change
+  // goes to a Super Admin for approval instead of an inline save.
+  const handleRequestCompanyNameChange = async () => {
+    if (!newCompanyName.trim()) return;
+    setCompanyChangeLoading(true);
+    setCompanyChangeError("");
+    try {
+      await Parse.Cloud.run("requestcompanynamechange", {
+        newName: newCompanyName.trim(),
+      });
+      setCompanyChangeSubmitted(true);
+    } catch (err) {
+      setCompanyChangeError(err.message || t("something-went-wrong-mssg"));
+    } finally {
+      setCompanyChangeLoading(false);
+    }
+  };
+
   // file upload function
   const fileUpload = async (event) => {
     if (event.target.files && event.target.files[0]) {
@@ -477,16 +502,21 @@ function UserProfile() {
                 }`}
               >
                 <span className="font-semibold">{t("company")}:</span>{" "}
-                {editmode ? (
-                  <input
-                    type="text"
-                    value={company}
-                    className="op-input op-input-bordered op-input-sm w-[180px] focus:outline-none hover:border-base-content text-sm"
-                    onChange={(e) => setCompany(e.target.value)}
-                  />
-                ) : (
-                  <span>{extendUser?.[0].Company}</span>
-                )}
+                <span className="flex items-center gap-2">
+                  <span>{extendUser?.[0]?.Company}</span>
+                  <button
+                    type="button"
+                    title="Request a company name change"
+                    onClick={() => {
+                      setNewCompanyName(extendUser?.[0]?.Company || "");
+                      setCompanyChangeError("");
+                      setCompanyChangeModal(true);
+                    }}
+                    className="text-gray-400 hover:text-[#0B3D73] transition-colors"
+                  >
+                    <i className="fa-light fa-pen text-xs" />
+                  </button>
+                </span>
               </li>
               <li
                 className={`flex justify-between items-center border-b-[1px] border-gray-300 break-all ${
@@ -703,6 +733,55 @@ function UserProfile() {
                     </button>
                   </div>
                 </form>
+              )}
+            </ModalUi>
+          )}
+          {companyChangeModal && (
+            <ModalUi
+              isOpen
+              title="Request company name change"
+              handleClose={() => {
+                setCompanyChangeModal(false);
+                setCompanyChangeSubmitted(false);
+              }}
+            >
+              {companyChangeSubmitted ? (
+                <div className="p-6 text-center text-sm text-base-content">
+                  Request submitted. A Super Admin will review it and the name will update automatically once approved.
+                </div>
+              ) : (
+                <div className="px-6 py-4">
+                  <label className="block text-xs font-semibold mb-1">
+                    New company name
+                  </label>
+                  <input
+                    type="text"
+                    autoFocus
+                    value={newCompanyName}
+                    onChange={(e) => setNewCompanyName(e.target.value)}
+                    className="op-input op-input-bordered op-input-sm w-full focus:outline-none hover:border-base-content text-sm"
+                  />
+                  {companyChangeError && (
+                    <p className="mt-2 text-xs text-red-600">{companyChangeError}</p>
+                  )}
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      type="button"
+                      disabled={companyChangeLoading || !newCompanyName.trim()}
+                      onClick={handleRequestCompanyNameChange}
+                      className="op-btn op-btn-primary w-[140px]"
+                    >
+                      {companyChangeLoading ? t("loading") : "Submit request"}
+                    </button>
+                    <button
+                      type="button"
+                      className="op-btn op-btn-secondary w-[100px]"
+                      onClick={() => setCompanyChangeModal(false)}
+                    >
+                      {t("cancel")}
+                    </button>
+                  </div>
+                </div>
               )}
             </ModalUi>
           )}
