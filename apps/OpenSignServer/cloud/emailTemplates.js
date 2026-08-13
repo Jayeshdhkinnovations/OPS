@@ -175,9 +175,8 @@ export function loginAlertEmail({ name, email, when, location, device }) {
       heading: 'New sign-in to your account',
       intro: `Hi ${esc(name || 'there')}, we noticed a new sign-in to your account.`,
       details: [
-        { label: 'Account', value: email },
         { label: 'When', value: when },
-        { label: 'Location', value: location },
+        { label: 'Location', value: location || 'Unknown' },
         { label: 'Device', value: device },
       ],
       footnote: `If this was you, no action is needed. If you don't recognise this sign-in, reset your password and enable two-factor authentication.`,
