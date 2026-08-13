@@ -25,6 +25,7 @@ const HAIRLINE = '#E5E7EB';
 
 // Public URL only - email clients cannot load local files or data URIs.
 const LOGO_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
+const LOGO_URL_DARK = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/logo-dark.png`;
 
 function esc(value) {
   return String(value ?? '').replace(
@@ -33,14 +34,16 @@ function esc(value) {
   );
 }
 
-// A single image - a two-stacked-image display:none/block swap was tried
-// first for a true light/dark logo, but several webmail sanitizers strip
-// `display:none` from inline styles (a common defence against hidden
-// tracking content), which un-hides the second image and doubles the
-// reserved header height while showing neither cleanly. The mark is baked
-// onto a small neutral-gray chip instead, so one image reads correctly on
-// both a light and a dark surrounding background with no CSS reliance.
-const logoBlock = `<img src="${LOGO_URL}" width="87" height="32" alt="${BRAND_NAME}" style="display:block;border:0;background:transparent;" />`;
+// Two stacked images, swapped by the same `.logo-light`/`.logo-dark` +
+// prefers-color-scheme pattern already used in password_reset_email.html -
+// the light mark for a light/unknown-theme inbox, the dark-mode mark once a
+// client actually signals dark mode. Falls back to the light mark wherever
+// prefers-color-scheme support is stripped, which just means the light logo
+// on a dark background - never nothing.
+const logoBlock = `<span style="display:inline-block;">
+    <img src="${LOGO_URL}" width="87" height="32" alt="${BRAND_NAME}" class="logo-light" style="display:block;border:0;background:transparent;" />
+    <img src="${LOGO_URL_DARK}" width="87" height="32" alt="${BRAND_NAME}" class="logo-dark" style="display:none;border:0;background:transparent;" />
+  </span>`;
 
 // Rows of label/value detail (device, time, location...). A plain table,
 // not a card - matches the rest of the plain-text feel.
@@ -100,6 +103,8 @@ export function baseTemplate({
     .email-ink { color:#F3F4F6 !important; }
     .email-muted { color:#9CA3AF !important; }
     .email-hairline { border-color:#232838 !important; }
+    .logo-light { display:none !important; }
+    .logo-dark { display:block !important; }
   }
 </style>
 <div class="email-bg" style="background:#FFFFFF;padding:40px 20px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
