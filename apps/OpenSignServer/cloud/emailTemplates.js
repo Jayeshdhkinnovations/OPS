@@ -24,7 +24,7 @@ const FAINT = '#9CA3AF';
 const HAIRLINE = '#E5E7EB';
 
 // Public URL only - email clients cannot load local files or data URIs.
-const LOGO_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
+const LOGO_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.svg`;
 const LOGO_URL_DARK = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/logo-dark.png`;
 
 function esc(value) {
