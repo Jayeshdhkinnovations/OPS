@@ -91,7 +91,7 @@ function ForgotPassword() {
     setImage(appInfo?.applogo || undefined);
   };
   return (
-    <div className="flex min-h-screen w-full justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8">
+    <div className="flex h-[100dvh] w-full items-center justify-center overflow-y-auto bg-[#F7F8FC] p-3 font-['Poppins'] sm:h-auto sm:min-h-screen sm:overflow-visible sm:p-8">
       {isLoading && (
         <div className="fixed w-full h-full flex justify-center items-center bg-black bg-opacity-30 z-50">
           <Loader />
@@ -139,15 +139,15 @@ function ForgotPassword() {
         {/* Right form panel - overlaps the hero panel's right edge with a
             negative margin + large left corner radius, so the seam reads as
             one continuous curve instead of a straight line. */}
-        <div className="relative z-20 flex w-full flex-col bg-white px-6 py-10 sm:px-10 md:w-[56%] md:-ml-[30px] md:rounded-[34px_16px_16px_34px] md:px-[46px] md:py-[38px] lg:px-[46px]">
+        <div className="relative z-20 flex w-full flex-col bg-white px-4 py-4 sm:px-10 sm:py-10 md:w-[56%] md:-ml-[30px] md:rounded-[34px_16px_16px_34px] md:px-[46px] md:py-[38px] lg:px-[46px]">
           {!state.hideNav && (
             <div className="absolute right-[34px] top-[26px]">
               <SelectLanguage isProfile isLoginStyle />
             </div>
           )}
-          <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-4">
+          <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-1 sm:py-4">
             {state.hideNav && (
-              <div className="mb-8 flex items-center gap-2.5">
+              <div className="mb-4 flex items-center gap-2.5 sm:mb-8">
                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0B3D73]">
                   <img src={toowixLogo} alt="SignToowix" className="h-6 w-6 object-contain" />
                 </div>
@@ -178,7 +178,7 @@ function ForgotPassword() {
                 <button
                   type="button"
                   onClick={() => authNavigate("/", { replace: true })}
-                  className="op-stagger-item mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                  className="op-stagger-item mt-4 sm:mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
                   style={{ animationDelay: "170ms" }}
                 >
                   {t("login")}
@@ -199,7 +199,7 @@ function ForgotPassword() {
                 {t("reset-password-alert-3")}
               </p>
 
-              <div className="op-stagger-item mt-8" style={{ animationDelay: "90ms" }}>
+              <div className="op-stagger-item mt-4 sm:mt-8" style={{ animationDelay: "90ms" }}>
                 <label className="sr-only">
                   {t("email")}
                 </label>
@@ -220,7 +220,7 @@ function ForgotPassword() {
 
               <button
                 type="submit"
-                className="op-stagger-item mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                className="op-stagger-item mt-4 sm:mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
                 style={{ animationDelay: "140ms" }}
               >
                 {t("submit")}

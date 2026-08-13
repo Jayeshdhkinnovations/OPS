@@ -83,7 +83,7 @@ function Register() {
   }
 
   return (
-    <div className="flex min-h-screen w-full justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8">
+    <div className="flex h-[100dvh] w-full items-center justify-center overflow-y-auto bg-[#F7F8FC] p-3 font-['Poppins'] sm:h-auto sm:min-h-screen sm:overflow-visible sm:p-8">
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <Loader />
@@ -130,15 +130,15 @@ function Register() {
         {/* Right form panel - overlaps the hero panel's right edge with a
             negative margin + large left corner radius, so the seam reads as
             one continuous curve instead of a straight line. */}
-        <div className="relative z-20 flex w-full flex-col bg-white px-6 py-10 sm:px-10 md:w-[56%] md:-ml-[30px] md:rounded-[34px_16px_16px_34px] md:px-[46px] md:py-[38px] lg:px-[46px]">
+        <div className="relative z-20 flex w-full flex-col bg-white px-4 py-4 sm:px-10 sm:py-10 md:w-[56%] md:-ml-[30px] md:rounded-[34px_16px_16px_34px] md:px-[46px] md:py-[38px] lg:px-[46px]">
           {width >= 768 && (
             <div className="absolute right-[34px] top-[26px]">
               <SelectLanguage isProfile isLoginStyle />
             </div>
           )}
-          <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-4">
+          <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-1 sm:py-4">
             {width < 768 && (
-              <div className="mb-8 flex items-center gap-2.5">
+              <div className="mb-4 flex items-center gap-2.5 sm:mb-8">
                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0B3D73]">
                   <img src={toowixLogo} alt="SignToowix" className="h-6 w-6 object-contain" />
                 </div>
@@ -161,8 +161,8 @@ function Register() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-              <div className="op-stagger-item flex flex-col gap-4" style={{ animationDelay: "90ms" }}>
+            <form onSubmit={handleSubmit} className="mt-3 flex flex-col gap-2.5 sm:mt-6 sm:gap-4">
+              <div className="op-stagger-item flex flex-col gap-2.5 sm:gap-4" style={{ animationDelay: "90ms" }}>
                 <div>
                   <label className="sr-only" htmlFor="name">{t("name")}</label>
                   <input
@@ -172,7 +172,7 @@ function Register() {
                     required
                     value={form.name}
                     onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                   />
                 </div>
                 <div>
@@ -185,11 +185,11 @@ function Register() {
                     required
                     value={form.email}
                     onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                   />
                 </div>
               </div>
-              <div className="op-stagger-item grid grid-cols-2 gap-4" style={{ animationDelay: "140ms" }}>
+              <div className="op-stagger-item grid grid-cols-2 gap-2.5 sm:gap-4" style={{ animationDelay: "140ms" }}>
                 <div>
                   <label className="sr-only" htmlFor="phone">{t("phone")}</label>
                   <input
@@ -198,7 +198,7 @@ function Register() {
                     placeholder={t("phone")}
                     value={form.phone}
                     onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                   />
                 </div>
                 <div>
@@ -209,7 +209,7 @@ function Register() {
                     placeholder={t("job-title")}
                     value={form.jobTitle}
                     onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                   />
                 </div>
               </div>
@@ -222,7 +222,7 @@ function Register() {
                   required
                   value={form.companyName}
                   onChange={handleChange}
-                  className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
+                  className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                 />
               </div>
 
@@ -260,7 +260,7 @@ function Register() {
                     required
                     value={form.maxUsers}
                     onChange={handleChange}
-                    className="w-full appearance-none rounded-full border border-gray-300 bg-white text-gray-800 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22%239CA3AF%22%3E%3Cpath%20d%3D%22M4.5%206.5%208%2010l3.5-3.5z%22/%3E%3C/svg%3E')] bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat pr-10"
+                    className="w-full appearance-none rounded-full border border-gray-300 bg-white text-gray-800 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22%239CA3AF%22%3E%3Cpath%20d%3D%22M4.5%206.5%208%2010l3.5-3.5z%22/%3E%3C/svg%3E')] bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat pr-10"
                   >
                     {SEAT_TIERS.map((tier) => (
                       <option key={tier.value} value={tier.value}>
@@ -270,7 +270,7 @@ function Register() {
                   </select>
                 </div>
               )}
-              <div className="op-stagger-item grid grid-cols-2 gap-4" style={{ animationDelay: "240ms" }}>
+              <div className="op-stagger-item grid grid-cols-2 gap-2.5 sm:gap-4" style={{ animationDelay: "240ms" }}>
                 <div>
                   <label className="sr-only" htmlFor="password">{t("password")}</label>
                   <div className="relative">
@@ -282,7 +282,7 @@ function Register() {
                       required
                       value={form.password}
                       onChange={handleChange}
-                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
+                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                     />
                     <span
                       className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
@@ -309,7 +309,7 @@ function Register() {
                       onChange={handleChange}
                       aria-invalid={confirmHasError}
                       aria-describedby="confirmPasswordStatus"
-                      className={`w-full rounded-full border bg-white text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-colors px-5 py-2.5 text-sm ${
+                      className={`w-full rounded-full border bg-white text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-colors px-5 py-2 text-sm sm:py-2.5 ${
                         confirmHasError
                           ? "border-red-400 focus:border-red-500 focus:ring-red-500/15"
                           : "border-gray-300 focus:border-[#0B3D73] focus:ring-[#0B3D73]/15"
@@ -338,7 +338,7 @@ function Register() {
                 </div>
               </div>
 
-              <div className="op-stagger-item mt-2 flex items-center gap-2" style={{ animationDelay: "290ms" }}>
+              <div className="op-stagger-item mt-1 flex items-center gap-2 sm:mt-2" style={{ animationDelay: "290ms" }}>
                 <input
                   type="checkbox"
                   id="agreeTerms"
@@ -372,14 +372,14 @@ function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="op-stagger-item mt-4 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                className="op-stagger-item mt-3 sm:mt-4 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
                 style={{ animationDelay: "330ms" }}
               >
                 {t("create-account")}
               </button>
             </form>
 
-            <p className="op-stagger-item mt-8 text-center text-xs text-gray-500 font-medium" style={{ animationDelay: "370ms" }}>
+            <p className="op-stagger-item mt-4 sm:mt-8 text-center text-xs text-gray-500 font-medium" style={{ animationDelay: "370ms" }}>
               Already have an account?{" "}
               <NavLink
                 to="/login"

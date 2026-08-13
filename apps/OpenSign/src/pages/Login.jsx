@@ -661,7 +661,7 @@ function Login() {
         <div
           aria-labelledby="loginHeading"
           role="region"
-          className="flex min-h-screen w-full justify-center bg-[#F7F8FC] p-4 font-['Poppins'] sm:p-8"
+          className="flex h-[100dvh] w-full items-center justify-center overflow-y-auto bg-[#F7F8FC] p-3 font-['Poppins'] sm:h-auto sm:min-h-screen sm:overflow-visible sm:p-8"
         >
           <div className="op-auth-card relative m-auto flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
             {/* Left hero panel */}
@@ -704,16 +704,16 @@ function Login() {
                 negative margin + large left corner radius, so the seam reads
                 as one continuous curve instead of a straight line. */}
             <div
-              className="relative z-20 flex w-full flex-col bg-white px-6 py-10 sm:px-10 md:w-[56%] md:-ml-[30px] md:rounded-[34px_16px_16px_34px] md:px-[46px] md:py-[38px] lg:px-[46px]"
+              className="relative z-20 flex w-full flex-col bg-white px-4 py-4 sm:px-10 sm:py-10 md:w-[56%] md:-ml-[30px] md:rounded-[34px_16px_16px_34px] md:px-[46px] md:py-[38px] lg:px-[46px]"
             >
               {width >= 768 && (
                 <div className="absolute right-[34px] top-[26px]">
                   <SelectLanguage isProfile isLoginStyle />
                 </div>
               )}
-              <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-4">
+              <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-1 sm:py-4">
                 {width < 768 && (
-                  <div className="mb-8 flex items-center gap-2.5">
+                  <div className="mb-4 flex items-center gap-2.5 sm:mb-8">
                     <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0B3D73]">
                       <img src={toowixLogo} alt="SignToowix" className="h-6 w-6 object-contain" />
                     </div>
@@ -768,7 +768,7 @@ function Login() {
 
                   <button
                     type="submit"
-                    className="op-stagger-item mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2 disabled:opacity-60"
+                    className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2 disabled:opacity-60"
                     style={{ animationDelay: "140ms" }}
                     disabled={state.loading || otpSecondsLeft <= 0}
                   >
@@ -788,7 +788,7 @@ function Login() {
                   <h1 className="op-stagger-item text-2xl font-bold text-gray-800 tracking-tight" style={{ animationDelay: "0ms" }}>{t("welcome")}</h1>
                   <p className="op-stagger-item mt-1 text-xs text-gray-400 font-medium" style={{ animationDelay: "40ms" }}>{t("Login-to-your-account")}</p>
 
-                  <div className="mt-8 flex flex-col gap-5">
+                  <div className="mt-4 flex flex-col gap-3 sm:mt-8 sm:gap-5">
                     <div className="op-stagger-item" style={{ animationDelay: "90ms" }}>
                       <label className="sr-only" htmlFor="email">
                         {t("email")}
@@ -868,7 +868,7 @@ function Login() {
 
                   <button
                     type="submit"
-                    className="op-stagger-item mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                    className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
                     style={{ animationDelay: "240ms" }}
                     disabled={state.loading}
                   >
@@ -878,7 +878,7 @@ function Login() {
                 )}
 
                 {!otpStep && (
-                <p className="op-stagger-item mt-8 text-center text-xs text-gray-500 font-medium" style={{ animationDelay: "280ms" }}>
+                <p className="op-stagger-item mt-4 sm:mt-8 text-center text-xs text-gray-500 font-medium" style={{ animationDelay: "280ms" }}>
                   Don&apos;t have an account?{" "}
                   <NavLink
                     to="/register"
@@ -898,7 +898,7 @@ function Login() {
                   type="button"
                   onClick={handleGoogleClick}
                   disabled={googleLoading}
-                  className="op-stagger-item mt-4 w-full flex items-center justify-center gap-2.5 rounded-full border border-gray-300 bg-white py-[13px] px-6 text-sm font-semibold text-gray-700 transition-colors duration-150 hover:bg-gray-50 disabled:opacity-60"
+                  className="op-stagger-item mt-3 w-full flex items-center justify-center gap-2.5 rounded-full border border-gray-300 bg-white py-[13px] px-6 text-sm font-semibold text-gray-700 transition-colors duration-150 hover:bg-gray-50 disabled:opacity-60"
                   style={{ animationDelay: "300ms" }}
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18">
