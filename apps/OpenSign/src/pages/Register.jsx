@@ -30,6 +30,7 @@ function Register() {
     confirmPassword: "",
     maxUsers: DEFAULT_SEAT_TIER,
   });
+  const [signupType, setSignupType] = useState("myself"); // "myself" | "team"
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -70,13 +71,16 @@ function Register() {
       setError("Passwords do not match.");
       return;
     }
-    if (!form.maxUsers || Number(form.maxUsers) < 1) {
+    if (signupType === "team" && (!form.maxUsers || Number(form.maxUsers) < 1)) {
       setError("Max users must be at least 1.");
       return;
     }
     setLoading(true);
     try {
-      await Parse.Cloud.run("submitapproval", form);
+      await Parse.Cloud.run("submitapproval", {
+        ...form,
+        maxUsers: signupType === "team" ? form.maxUsers : 1,
+      });
       navigate("/waiting-approval", { state: { email: form.email } });
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
@@ -218,20 +222,42 @@ function Register() {
                   />
                 </div>
               </div>
-              <div className="op-stagger-item grid grid-cols-2 gap-4" style={{ animationDelay: "190ms" }}>
-                <div>
-                  <label className="sr-only" htmlFor="companyName">{t("company")}</label>
+              <div className="op-stagger-item" style={{ animationDelay: "190ms" }}>
+                <label className="sr-only" htmlFor="companyName">{t("company")}</label>
+                <input
+                  id="companyName"
+                  name="companyName"
+                  placeholder={t("company")}
+                  required
+                  value={form.companyName}
+                  onChange={handleChange}
+                  className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
+                />
+              </div>
+
+              <div className="op-stagger-item flex items-center gap-6 px-1" style={{ animationDelay: "215ms" }}>
+                <label className="flex items-center gap-2 text-sm text-gray-700 font-medium cursor-pointer">
                   <input
-                    id="companyName"
-                    name="companyName"
-                    placeholder={t("company")}
-                    required
-                    value={form.companyName}
-                    onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
+                    type="checkbox"
+                    checked={signupType === "myself"}
+                    onChange={() => setSignupType("myself")}
+                    className="h-4 w-4 rounded border-gray-300 text-[#0B3D73] focus:ring-[#0B3D73]/30"
                   />
-                </div>
-                <div>
+                  Myself
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700 font-medium cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={signupType === "team"}
+                    onChange={() => setSignupType("team")}
+                    className="h-4 w-4 rounded border-gray-300 text-[#0B3D73] focus:ring-[#0B3D73]/30"
+                  />
+                  Team
+                </label>
+              </div>
+
+              {signupType === "team" && (
+                <div className="op-stagger-item" style={{ animationDelay: "225ms" }}>
                   <label className="sr-only" htmlFor="maxUsers">Max Users</label>
                   {/* A fixed set of seat counts rather than a free number
                       input: every value here has to be provisioned on shared
@@ -252,7 +278,7 @@ function Register() {
                     ))}
                   </select>
                 </div>
-              </div>
+              )}
               <div className="op-stagger-item grid grid-cols-2 gap-4" style={{ animationDelay: "240ms" }}>
                 <div>
                   <label className="sr-only" htmlFor="password">{t("password")}</label>

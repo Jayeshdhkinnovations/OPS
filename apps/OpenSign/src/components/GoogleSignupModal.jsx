@@ -12,13 +12,19 @@ export default function GoogleSignupModal({ name, email, onSubmit, onClose, load
   const [jobTitle, setJobTitle] = useState("");
   const [phone, setPhone] = useState("");
   const [maxUsers, setMaxUsers] = useState(DEFAULT_SEAT_TIER);
+  const [signupType, setSignupType] = useState("myself"); // "myself" | "team"
 
   const canSubmit = companyName.trim().length > 0;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!canSubmit || loading) return;
-    onSubmit({ companyName: companyName.trim(), jobTitle: jobTitle.trim(), phone: phone.trim(), maxUsers });
+    onSubmit({
+      companyName: companyName.trim(),
+      jobTitle: jobTitle.trim(),
+      phone: phone.trim(),
+      maxUsers: signupType === "team" ? maxUsers : 1,
+    });
   };
 
   return (
@@ -65,21 +71,43 @@ export default function GoogleSignupModal({ name, email, onSubmit, onClose, load
               className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm"
             />
           </div>
-          <div>
-            <label className="sr-only" htmlFor="google-maxusers">Max Users</label>
-            <select
-              id="google-maxusers"
-              value={maxUsers}
-              onChange={(e) => setMaxUsers(Number(e.target.value))}
-              className="w-full appearance-none rounded-full border border-gray-300 bg-white text-gray-800 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22%239CA3AF%22%3E%3Cpath%20d%3D%22M4.5%206.5%208%2010l3.5-3.5z%22/%3E%3C/svg%3E')] bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat pr-10"
-            >
-              {SEAT_TIERS.map((tier) => (
-                <option key={tier.value} value={tier.value}>
-                  {tier.label} Users
-                </option>
-              ))}
-            </select>
+          <div className="flex items-center gap-6 px-1">
+            <label className="flex items-center gap-2 text-sm text-gray-700 font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={signupType === "myself"}
+                onChange={() => setSignupType("myself")}
+                className="h-4 w-4 rounded border-gray-300 text-[#0B3D73] focus:ring-[#0B3D73]/30"
+              />
+              Myself
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700 font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={signupType === "team"}
+                onChange={() => setSignupType("team")}
+                className="h-4 w-4 rounded border-gray-300 text-[#0B3D73] focus:ring-[#0B3D73]/30"
+              />
+              Team
+            </label>
           </div>
+          {signupType === "team" && (
+            <div>
+              <label className="sr-only" htmlFor="google-maxusers">Max Users</label>
+              <select
+                id="google-maxusers"
+                value={maxUsers}
+                onChange={(e) => setMaxUsers(Number(e.target.value))}
+                className="w-full appearance-none rounded-full border border-gray-300 bg-white text-gray-800 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2.5 text-sm bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22%239CA3AF%22%3E%3Cpath%20d%3D%22M4.5%206.5%208%2010l3.5-3.5z%22/%3E%3C/svg%3E')] bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat pr-10"
+              >
+                {SEAT_TIERS.map((tier) => (
+                  <option key={tier.value} value={tier.value}>
+                    {tier.label} Users
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <button
