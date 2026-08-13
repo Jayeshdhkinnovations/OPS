@@ -307,8 +307,13 @@ export async function loadAllCompaniesAndMount() {
         }
       }
       if (!mounted) failed.push({ slug, databaseName });
-      // Stagger the next one so eight containers don't all boot simultaneously.
-      await new Promise(r => setTimeout(r, 1500));
+      // Stagger the next one so several containers don't all boot
+      // simultaneously - each needs a burst of extra memory just to start,
+      // and on a memory-constrained host those bursts overlapping is what
+      // was tipping the whole system into an OOM kill of every company at
+      // once. 1.5s wasn't enough headroom; bumped to give each one room to
+      // settle before the next starts.
+      await new Promise(r => setTimeout(r, 4000));
     }
 
     console.log(
