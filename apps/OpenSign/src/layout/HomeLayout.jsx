@@ -55,30 +55,32 @@ const HomeLayout = () => {
 
   useEffect(() => {
     if (localStorage.getItem("accesstoken")) {
-      if (!tenantId) {
-        dispatch(sessionStatus(false));
-      } else {
-        (async () => {
-          try {
-            // Use the session token to validate the user
-            const userQuery = new Parse.Query(Parse.User);
-            const user = await userQuery.get(Parse?.User?.current()?.id, {
-              sessionToken: localStorage.getItem("accesstoken")
-            });
-            if (user) {
-              localStorage.setItem("profileImg", user.get("ProfilePic") || "");
-                dispatch(sessionStatus(true));
-                setIsLoader(false);
-            } else {
+      // Not gated on tenantId being present in localStorage - that's just a
+      // cached convenience value, not proof of anything. Declaring the
+      // session dead because ONE unrelated cache key happens to be empty
+      // (which can legitimately happen depending on exactly how the user
+      // last signed in) skipped the actual check below entirely and showed
+      // "session expired" on a perfectly valid login.
+      (async () => {
+        try {
+          // Use the session token to validate the user
+          const userQuery = new Parse.Query(Parse.User);
+          const user = await userQuery.get(Parse?.User?.current()?.id, {
+            sessionToken: localStorage.getItem("accesstoken")
+          });
+          if (user) {
+            localStorage.setItem("profileImg", user.get("ProfilePic") || "");
               dispatch(sessionStatus(true));
-            }
-          } catch (error) {
-            console.error("error in authentication:", error?.message);
-            // Session token is invalid or there was an error
-            dispatch(sessionStatus(false));
+              setIsLoader(false);
+          } else {
+            dispatch(sessionStatus(true));
           }
-        })();
-      }
+        } catch (error) {
+          console.error("error in authentication:", error?.message);
+          // Session token is invalid or there was an error
+          dispatch(sessionStatus(false));
+        }
+      })();
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
