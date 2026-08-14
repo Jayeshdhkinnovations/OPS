@@ -170,10 +170,10 @@ const Sidebar = () => {
           from every page rather than only the Users screen. */}
       {isOpen && (
         <div className="mt-auto border-t border-base-300 px-4 py-3">
-          <div className="text-[11px] font-medium uppercase tracking-wide opacity-60">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-base-content opacity-60">
             Storage used
           </div>
-          <div className="mt-0.5 text-sm font-semibold">
+          <div className="mt-0.5 text-sm font-semibold text-base-content">
             {storageUsed === null ? "—" : formatStorageSize(storageUsed)}
           </div>
         </div>
