@@ -144,10 +144,11 @@ function Login() {
       // session can leave a tenant-specific baseUrl (/app/<subdomain>/) in
       // localStorage; starting from that skips the tenant lookup entirely,
       // so signing in as a user from a *different* company always failed.
-      const baseUrl = localStorage.getItem("baseUrl");
-      if (baseUrl) {
-        Parse.serverURL = `${baseUrl.replace(/\/app(\/.*)?\/?$/, "")}/app/`;
-      }
+      // Built from window.location.origin, not the stored baseUrl - an
+      // empty/broken baseUrl otherwise produced a relative URL here
+      // ("/app/" with no host), which every later session check against
+      // this server then failed against ("Invalid session token").
+      Parse.serverURL = `${window.location.origin}/app/`;
     }
     localStorage.removeItem("accesstoken");
     await Parse.User.logOut().catch(() => { });
@@ -160,9 +161,7 @@ function Login() {
         // Strip any existing /app or /app/<tenant> suffix first - matching
         // only a trailing /app meant a second redirect compounded into
         // /app/x/app/x/, which 404s and sticks around in localStorage.
-        const currentBaseUrl = localStorage.getItem("baseUrl") || "";
-        const origin = currentBaseUrl.replace(/\/app(\/.*)?\/?$/, "");
-        const newBaseUrl = `${origin}/app/${_user.subdomain}/`;
+        const newBaseUrl = `${window.location.origin}/app/${_user.subdomain}/`;
         localStorage.setItem("baseUrl", newBaseUrl);
         Parse.serverURL = newBaseUrl;
 
@@ -235,19 +234,25 @@ function Login() {
     try {
       const idToken = await signInWithGoogle();
 
+      // handleLogin already does this before its own attempt - the Parse
+      // SDK auto-attaches whatever session token it has cached (from a
+      // previous, possibly different-company session in this browser) to
+      // every Cloud.run call. Left in place, that stale token gets sent
+      // alongside googlelogin and the server rejects the whole request
+      // with "Invalid session token" before the cloud function even runs.
+      localStorage.removeItem("accesstoken");
+      await Parse.User.logOut().catch(() => {});
+
       // Same "always start the lookup from root" reasoning as handleLogin -
       // a leftover tenant-specific baseUrl would skip the lookup entirely.
-      const baseUrl = localStorage.getItem("baseUrl");
-      if (baseUrl) {
-        Parse.serverURL = `${baseUrl.replace(/\/app(\/.*)?\/?$/, "")}/app/`;
-      }
+      // Built from window.location.origin, not the stored baseUrl - see
+      // the matching comment in handleLogin for why.
+      Parse.serverURL = `${window.location.origin}/app/`;
 
       const res = await Parse.Cloud.run("googleloginlookup", { idToken });
 
       if (res.status === "known") {
-        const currentBaseUrl = localStorage.getItem("baseUrl") || "";
-        const origin = currentBaseUrl.replace(/\/app(\/.*)?\/?$/, "");
-        const newBaseUrl = `${origin}/app/${res.subdomain}/`;
+        const newBaseUrl = `${window.location.origin}/app/${res.subdomain}/`;
         localStorage.setItem("baseUrl", newBaseUrl);
         Parse.serverURL = newBaseUrl;
 
