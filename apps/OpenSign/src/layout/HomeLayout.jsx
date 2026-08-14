@@ -17,6 +17,20 @@ import { useTranslation } from "react-i18next";
 import { sessionStatus } from "../redux/reducers/userReducer";
 import SessionExpiredModal from "../primitives/SessionExpiredModal";
 
+// A hard reload landing directly on a dashboard route (e.g. /dashboard/:id)
+// never passes through ValidateRoute/Validate at all - this layout is its
+// own, separate route wrapper (see App.jsx). Same restoration those two
+// need, for the same reason: done at module scope, during this lazy chunk's
+// own load, so it runs before Sidebar/Header/the routed page (Dashboard,
+// UserList, ...) - all children of this layout - get a chance to fire their
+// own data calls with the wrong server still active.
+if (typeof window !== "undefined" && localStorage.getItem("accesstoken")) {
+  const storedBaseUrl = localStorage.getItem("baseUrl");
+  if (storedBaseUrl) {
+    Parse.serverURL = storedBaseUrl;
+  }
+}
+
 const HomeLayout = () => {
   const appName =
     "OpenSign™";
@@ -41,30 +55,46 @@ const HomeLayout = () => {
 
   useEffect(() => {
     if (localStorage.getItem("accesstoken")) {
-      if (!tenantId) {
-        dispatch(sessionStatus(false));
-      } else {
-        (async () => {
-          try {
-            // Use the session token to validate the user
-            const userQuery = new Parse.Query(Parse.User);
-            const user = await userQuery.get(Parse?.User?.current()?.id, {
-              sessionToken: localStorage.getItem("accesstoken")
-            });
-            if (user) {
-              localStorage.setItem("profileImg", user.get("ProfilePic") || "");
-                dispatch(sessionStatus(true));
-                setIsLoader(false);
-            } else {
-              dispatch(sessionStatus(true));
+      // Not gated on tenantId being present in localStorage - that's just a
+      // cached convenience value, not proof of anything. Declaring the
+      // session dead because ONE unrelated cache key happens to be empty
+      // (which can legitimately happen depending on exactly how the user
+      // last signed in) skipped the actual check below entirely and showed
+      // "session expired" on a perfectly valid login.
+      (async () => {
+        try {
+          const storedBaseUrl = localStorage.getItem("baseUrl");
+          const parseAppId = localStorage.getItem("parseAppId");
+          const sessionToken = localStorage.getItem("accesstoken");
+          if (!storedBaseUrl) throw new Error("no stored server for this session");
+          // Deliberately a direct request naming the stored company server
+          // explicitly, not a Parse.Query relying on the SDK's shared,
+          // mutable Parse.serverURL - anything else on the page touching
+          // that global between when it was last set and when this call
+          // actually fires reintroduces the exact "checked against the
+          // wrong server" bug this exists to prevent. This has no such
+          // dependency: the URL is read fresh and used directly.
+          const res = await axios.get(`${storedBaseUrl.replace(/\/$/, "")}/users/me`, {
+            headers: {
+              "X-Parse-Session-Token": sessionToken,
+              "X-Parse-Application-Id": parseAppId
             }
-          } catch (error) {
-            console.error("error in authentication:", error?.message);
-            // Session token is invalid or there was an error
-            dispatch(sessionStatus(false));
+          });
+          const user = res?.data;
+          if (user?.objectId) {
+            Parse.serverURL = storedBaseUrl;
+            localStorage.setItem("profileImg", user.ProfilePic || "");
+            dispatch(sessionStatus(true));
+            setIsLoader(false);
+          } else {
+            dispatch(sessionStatus(true));
           }
-        })();
-      }
+        } catch (error) {
+          console.error("error in authentication:", error?.message);
+          // Session token is invalid or there was an error
+          dispatch(sessionStatus(false));
+        }
+      })();
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
