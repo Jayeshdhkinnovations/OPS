@@ -144,10 +144,10 @@ function Login() {
       // session can leave a tenant-specific baseUrl (/app/<subdomain>/) in
       // localStorage; starting from that skips the tenant lookup entirely,
       // so signing in as a user from a *different* company always failed.
-      const baseUrl = localStorage.getItem("baseUrl");
-      if (baseUrl) {
-        Parse.serverURL = `${baseUrl.replace(/\/app(\/.*)?\/?$/, "")}/app/`;
-      }
+      // Derived from window.location.origin, not the stored baseUrl - an
+      // empty/missing baseUrl (first login on this browser, or cleared by
+      // a prior logout) otherwise produced a bare relative path here too.
+      Parse.serverURL = `${window.location.origin}/app/`;
     }
     localStorage.removeItem("accesstoken");
     await Parse.User.logOut().catch(() => { });
@@ -160,9 +160,7 @@ function Login() {
         // Strip any existing /app or /app/<tenant> suffix first - matching
         // only a trailing /app meant a second redirect compounded into
         // /app/x/app/x/, which 404s and sticks around in localStorage.
-        const currentBaseUrl = localStorage.getItem("baseUrl") || "";
-        const origin = currentBaseUrl.replace(/\/app(\/.*)?\/?$/, "");
-        const newBaseUrl = `${origin}/app/${_user.subdomain}/`;
+        const newBaseUrl = `${window.location.origin}/app/${_user.subdomain}/`;
         localStorage.setItem("baseUrl", newBaseUrl);
         Parse.serverURL = newBaseUrl;
 
@@ -237,17 +235,17 @@ function Login() {
 
       // Same "always start the lookup from root" reasoning as handleLogin -
       // a leftover tenant-specific baseUrl would skip the lookup entirely.
-      const baseUrl = localStorage.getItem("baseUrl");
-      if (baseUrl) {
-        Parse.serverURL = `${baseUrl.replace(/\/app(\/.*)?\/?$/, "")}/app/`;
-      }
+      // Derived from window.location.origin, not the stored baseUrl - if
+      // that was ever empty (first-ever login on this browser, or cleared
+      // by a prior logout), reading it back gave a bare relative path like
+      // "/app/italy/" instead of a full URL, which then failed session
+      // validation against the wrong place ("Invalid session token").
+      Parse.serverURL = `${window.location.origin}/app/`;
 
       const res = await Parse.Cloud.run("googleloginlookup", { idToken });
 
       if (res.status === "known") {
-        const currentBaseUrl = localStorage.getItem("baseUrl") || "";
-        const origin = currentBaseUrl.replace(/\/app(\/.*)?\/?$/, "");
-        const newBaseUrl = `${origin}/app/${res.subdomain}/`;
+        const newBaseUrl = `${window.location.origin}/app/${res.subdomain}/`;
         localStorage.setItem("baseUrl", newBaseUrl);
         Parse.serverURL = newBaseUrl;
 
