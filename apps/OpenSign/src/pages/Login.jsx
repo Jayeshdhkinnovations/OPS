@@ -650,6 +650,14 @@ function Login() {
     }
   };
 
+  if (localStorage.getItem("accesstoken")) {
+    return (
+      <div className="h-screen w-full flex justify-center items-center bg-[#F7F8FC]">
+        <Loader />
+      </div>
+    );
+  }
+
   return errMsg ? (
     <div className="h-screen flex justify-center text-center items-center p-4 text-gray-500 text-base">
       {errMsg}
