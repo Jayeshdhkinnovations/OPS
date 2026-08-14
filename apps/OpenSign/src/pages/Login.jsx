@@ -233,6 +233,15 @@ function Login() {
     try {
       const idToken = await signInWithGoogle();
 
+      // handleLogin already does this before its own attempt - the Parse
+      // SDK auto-attaches whatever session token it has cached (from a
+      // previous, possibly different-company session in this browser) to
+      // every Cloud.run call. Left in place, that stale token gets sent
+      // alongside googlelogin and the server rejects the whole request
+      // with "Invalid session token" before the cloud function even runs.
+      localStorage.removeItem("accesstoken");
+      await Parse.User.logOut().catch(() => {});
+
       // Same "always start the lookup from root" reasoning as handleLogin -
       // a leftover tenant-specific baseUrl would skip the lookup entirely.
       // Derived from window.location.origin, not the stored baseUrl - if
