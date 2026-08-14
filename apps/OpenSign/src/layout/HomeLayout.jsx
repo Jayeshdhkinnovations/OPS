@@ -30,7 +30,6 @@ const HomeLayout = () => {
   const [tourStatusArr, setTourStatusArr] = useState([]);
   const [tourConfigs, setTourConfigs] = useState([]);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const tenantId = localStorage.getItem("TenantId");
 
   useEffect(() => {
     const language = localStorage.getItem("i18nextLng");
@@ -41,34 +40,30 @@ const HomeLayout = () => {
 
   useEffect(() => {
     if (localStorage.getItem("accesstoken")) {
-      if (!tenantId) {
-        dispatch(sessionStatus(false));
-      } else {
-        (async () => {
-          try {
-            // Use the session token to validate the user
-            const userQuery = new Parse.Query(Parse.User);
-            const user = await userQuery.get(Parse?.User?.current()?.id, {
-              sessionToken: localStorage.getItem("accesstoken")
-            });
-            if (user) {
-              localStorage.setItem("profileImg", user.get("ProfilePic") || "");
-                dispatch(sessionStatus(true));
-                setIsLoader(false);
-            } else {
-              dispatch(sessionStatus(true));
-            }
-          } catch (error) {
-            console.error("error in authentication:", error?.message);
-            // Session token is invalid or there was an error
-            dispatch(sessionStatus(false));
-          }
-        })();
-      }
+      (async () => {
+        try {
+          // Parse.User.become() looks the session up by the token alone -
+          // no id needed. The previous check instead queried by
+          // Parse.User.current()?.id, which the SDK only populates from its
+          // own persisted currentUser (keyed by appId, shared across every
+          // company in this browser) - on a fresh reload that id could be
+          // missing or belong to a different company than this session
+          // token, so the lookup failed and a perfectly valid session on
+          // refresh got reported as expired.
+          const user = await Parse.User.become(localStorage.getItem("accesstoken"));
+          localStorage.setItem("profileImg", user.get("ProfilePic") || "");
+          dispatch(sessionStatus(true));
+          setIsLoader(false);
+        } catch (error) {
+          console.error("error in authentication:", error?.message);
+          // Session token is invalid or there was an error
+          dispatch(sessionStatus(false));
+        }
+      })();
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantId]);
+  }, []);
 
 
   useEffect(() => {
