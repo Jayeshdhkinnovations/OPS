@@ -63,15 +63,29 @@ const HomeLayout = () => {
       // "session expired" on a perfectly valid login.
       (async () => {
         try {
-          // Use the session token to validate the user
-          const userQuery = new Parse.Query(Parse.User);
-          const user = await userQuery.get(Parse?.User?.current()?.id, {
-            sessionToken: localStorage.getItem("accesstoken")
+          const storedBaseUrl = localStorage.getItem("baseUrl");
+          const parseAppId = localStorage.getItem("parseAppId");
+          const sessionToken = localStorage.getItem("accesstoken");
+          if (!storedBaseUrl) throw new Error("no stored server for this session");
+          // Deliberately a direct request naming the stored company server
+          // explicitly, not a Parse.Query relying on the SDK's shared,
+          // mutable Parse.serverURL - anything else on the page touching
+          // that global between when it was last set and when this call
+          // actually fires reintroduces the exact "checked against the
+          // wrong server" bug this exists to prevent. This has no such
+          // dependency: the URL is read fresh and used directly.
+          const res = await axios.get(`${storedBaseUrl.replace(/\/$/, "")}/users/me`, {
+            headers: {
+              "X-Parse-Session-Token": sessionToken,
+              "X-Parse-Application-Id": parseAppId
+            }
           });
-          if (user) {
-            localStorage.setItem("profileImg", user.get("ProfilePic") || "");
-              dispatch(sessionStatus(true));
-              setIsLoader(false);
+          const user = res?.data;
+          if (user?.objectId) {
+            Parse.serverURL = storedBaseUrl;
+            localStorage.setItem("profileImg", user.ProfilePic || "");
+            dispatch(sessionStatus(true));
+            setIsLoader(false);
           } else {
             dispatch(sessionStatus(true));
           }
