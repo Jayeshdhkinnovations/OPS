@@ -100,7 +100,7 @@
       "Manage templates": "Manage templates",
       "Embedding": "Embedding"
     },
-    "OpenSign™ Drive": "{{appName}} Drive",
+    "OpenSign™ Drive": "SignToowix Drive",
     "Reports": "Reports",
     "Documents": "Documents",
     "Documents-Children": {
@@ -178,6 +178,8 @@
     "Title": "Title",
     "Email": "Email",
     "Phone": "Phone",
+    "Storage": "Storage",
+    "Signed": "Signed",
     "File": "File",
     "Owner": "Owner",
     "Signers": "Signers",

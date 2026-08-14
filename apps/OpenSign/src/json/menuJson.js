@@ -73,7 +73,7 @@ const sidebarList = [
   },
   {
     icon: "fa-light fa-folder",
-    title: "SignToowix Drive",
+    title: "OpenSign™ Drive",
     target: "_self",
     pageType: "",
     description: "",
