@@ -7,16 +7,12 @@ const ValidateRoute = () => {
   const { i18n } = useTranslation();
   useEffect(() => {
     (async () => {
-      if (localStorage.getItem("accesstoken")) {
+      const token = localStorage.getItem("accesstoken");
+      if (token) {
         try {
-          // Use the session token to validate the user
-          const userQuery = new Parse.Query(Parse.User);
-          const user = await userQuery.get(Parse?.User?.current()?.id, {
-            sessionToken: localStorage.getItem("accesstoken")
-          });
-          if (!user) {
-            handlelogout();
-          }
+          // Validates the token directly against the server instead of
+          // relying on Parse.User.current() being hydrated/in-namespace
+          await Parse.User.become(token);
         } catch (error) {
           console.log("err in validate route", error);
           handlelogout();

@@ -50,8 +50,10 @@ function App() {
   const [isloading, setIsLoading] = useState(true);
   useEffect(() => {
     // initialize creds
-    const id = process.env.REACT_APP_APPID ?? "opensign";
-    localStorage.setItem("parseAppId", id);
+    if (!localStorage.getItem("parseAppId")) {
+      const id = process.env.REACT_APP_APPID ?? "opensign";
+      localStorage.setItem("parseAppId", id);
+    }
     // Only seed the root URL when nothing is stored yet. Logging in replaces
     // this with the company's own mount (.../app/<slug>/); overwriting it on
     // every mount sent each later request back to the root server, where the
