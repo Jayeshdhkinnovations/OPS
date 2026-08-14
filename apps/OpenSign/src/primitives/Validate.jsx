@@ -9,6 +9,14 @@ const Validate = () => {
     (async () => {
       if (localStorage.getItem("accesstoken")) {
         try {
+          // Same restoration ValidateRoute.jsx needs - a hard reload landing
+          // directly here must reconnect to the company's own server before
+          // checking the session, or the check always fails against the
+          // wrong server even though the login is still perfectly valid.
+          const baseUrl = localStorage.getItem("baseUrl");
+          if (baseUrl) {
+            Parse.serverURL = baseUrl;
+          }
           const userDetails = JSON.parse(
             localStorage.getItem(
               `Parse/${localStorage.getItem("parseAppId")}/currentUser`
