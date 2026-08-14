@@ -17,6 +17,20 @@ import { useTranslation } from "react-i18next";
 import { sessionStatus } from "../redux/reducers/userReducer";
 import SessionExpiredModal from "../primitives/SessionExpiredModal";
 
+// A hard reload landing directly on a dashboard route (e.g. /dashboard/:id)
+// never passes through ValidateRoute/Validate at all - this layout is its
+// own, separate route wrapper (see App.jsx). Same restoration those two
+// need, for the same reason: done at module scope, during this lazy chunk's
+// own load, so it runs before Sidebar/Header/the routed page (Dashboard,
+// UserList, ...) - all children of this layout - get a chance to fire their
+// own data calls with the wrong server still active.
+if (typeof window !== "undefined" && localStorage.getItem("accesstoken")) {
+  const storedBaseUrl = localStorage.getItem("baseUrl");
+  if (storedBaseUrl) {
+    Parse.serverURL = storedBaseUrl;
+  }
+}
+
 const HomeLayout = () => {
   const appName =
     "OpenSign™";
