@@ -144,10 +144,10 @@ function Login() {
       // session can leave a tenant-specific baseUrl (/app/<subdomain>/) in
       // localStorage; starting from that skips the tenant lookup entirely,
       // so signing in as a user from a *different* company always failed.
-      // Derived from window.location.origin, not the stored baseUrl - an
-      // empty/missing baseUrl (first login on this browser, or cleared by
-      // a prior logout) otherwise produced a bare relative path here too.
-      Parse.serverURL = `${window.location.origin}/app/`;
+      const baseUrl = localStorage.getItem("baseUrl");
+      if (baseUrl) {
+        Parse.serverURL = `${baseUrl.replace(/\/app(\/.*)?\/?$/, "")}/app/`;
+      }
     }
     localStorage.removeItem("accesstoken");
     await Parse.User.logOut().catch(() => { });
@@ -160,7 +160,9 @@ function Login() {
         // Strip any existing /app or /app/<tenant> suffix first - matching
         // only a trailing /app meant a second redirect compounded into
         // /app/x/app/x/, which 404s and sticks around in localStorage.
-        const newBaseUrl = `${window.location.origin}/app/${_user.subdomain}/`;
+        const currentBaseUrl = localStorage.getItem("baseUrl") || "";
+        const origin = currentBaseUrl.replace(/\/app(\/.*)?\/?$/, "");
+        const newBaseUrl = `${origin}/app/${_user.subdomain}/`;
         localStorage.setItem("baseUrl", newBaseUrl);
         Parse.serverURL = newBaseUrl;
 
@@ -233,28 +235,19 @@ function Login() {
     try {
       const idToken = await signInWithGoogle();
 
-      // handleLogin already does this before its own attempt - the Parse
-      // SDK auto-attaches whatever session token it has cached (from a
-      // previous, possibly different-company session in this browser) to
-      // every Cloud.run call. Left in place, that stale token gets sent
-      // alongside googlelogin and the server rejects the whole request
-      // with "Invalid session token" before the cloud function even runs.
-      localStorage.removeItem("accesstoken");
-      await Parse.User.logOut().catch(() => {});
-
       // Same "always start the lookup from root" reasoning as handleLogin -
       // a leftover tenant-specific baseUrl would skip the lookup entirely.
-      // Derived from window.location.origin, not the stored baseUrl - if
-      // that was ever empty (first-ever login on this browser, or cleared
-      // by a prior logout), reading it back gave a bare relative path like
-      // "/app/italy/" instead of a full URL, which then failed session
-      // validation against the wrong place ("Invalid session token").
-      Parse.serverURL = `${window.location.origin}/app/`;
+      const baseUrl = localStorage.getItem("baseUrl");
+      if (baseUrl) {
+        Parse.serverURL = `${baseUrl.replace(/\/app(\/.*)?\/?$/, "")}/app/`;
+      }
 
       const res = await Parse.Cloud.run("googleloginlookup", { idToken });
 
       if (res.status === "known") {
-        const newBaseUrl = `${window.location.origin}/app/${res.subdomain}/`;
+        const currentBaseUrl = localStorage.getItem("baseUrl") || "";
+        const origin = currentBaseUrl.replace(/\/app(\/.*)?\/?$/, "");
+        const newBaseUrl = `${origin}/app/${res.subdomain}/`;
         localStorage.setItem("baseUrl", newBaseUrl);
         Parse.serverURL = newBaseUrl;
 
@@ -446,14 +439,6 @@ function Login() {
   const GetLoginData = async () => {
     setState({ ...state, loading: true });
     try {
-      // Every other re-auth path in this file re-asserts the stored
-      // company server right before the call that needs it - this was the
-      // one place that didn't, silently trusting whatever Parse.serverURL
-      // happened to already be.
-      const baseUrl = localStorage.getItem("baseUrl");
-      if (baseUrl) {
-        Parse.serverURL = baseUrl;
-      }
       const user = await Parse.User.become(localStorage.getItem("accesstoken"));
       const _user = user.toJSON();
       setLocalVar(_user);
@@ -656,14 +641,6 @@ function Login() {
       showToast("danger", error.message || t("something-went-wrong-mssg"));
     }
   };
-
-  if (localStorage.getItem("accesstoken")) {
-    return (
-      <div className="h-screen w-full flex justify-center items-center bg-[#F7F8FC]">
-        <Loader />
-      </div>
-    );
-  }
 
   return errMsg ? (
     <div className="h-screen flex justify-center text-center items-center p-4 text-gray-500 text-base">
