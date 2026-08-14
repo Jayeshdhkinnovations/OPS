@@ -3,21 +3,26 @@ import Parse from "parse";
 import { Outlet } from "react-router";
 import { saveLanguageInLocal } from "../constant/language";
 import { useTranslation } from "react-i18next";
+// A hard reload landing directly on a dashboard route (rather than through
+// Login.jsx) must restore the company-specific server before anything below
+// this guard gets a chance to run - React fires a nested route's own
+// child-component effects (report/user data fetches, etc.) BEFORE this
+// guard's own useEffect, so doing the restore there was always too late.
+// Done here, at module scope during render, it happens before Outlet's
+// children even mount.
+if (typeof window !== "undefined" && localStorage.getItem("accesstoken")) {
+  const storedBaseUrl = localStorage.getItem("baseUrl");
+  if (storedBaseUrl) {
+    Parse.serverURL = storedBaseUrl;
+  }
+}
+
 const ValidateRoute = () => {
   const { i18n } = useTranslation();
   useEffect(() => {
     (async () => {
       if (localStorage.getItem("accesstoken")) {
         try {
-          // A hard reload landing directly on a dashboard route (rather than
-          // through Login.jsx) must restore the company-specific server
-          // itself - nothing upstream guarantees it's already set, and
-          // checking the session against the wrong server always reads back
-          // as "invalid" even though the login is perfectly valid.
-          const baseUrl = localStorage.getItem("baseUrl");
-          if (baseUrl) {
-            Parse.serverURL = baseUrl;
-          }
           // Use the session token to validate the user
           const userQuery = new Parse.Query(Parse.User);
           const user = await userQuery.get(Parse?.User?.current()?.id, {
