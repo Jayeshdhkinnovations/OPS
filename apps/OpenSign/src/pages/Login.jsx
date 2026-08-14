@@ -439,6 +439,14 @@ function Login() {
   const GetLoginData = async () => {
     setState({ ...state, loading: true });
     try {
+      // Every other re-auth path in this file re-asserts the stored
+      // company server right before the call that needs it - this was the
+      // one place that didn't, silently trusting whatever Parse.serverURL
+      // happened to already be.
+      const baseUrl = localStorage.getItem("baseUrl");
+      if (baseUrl) {
+        Parse.serverURL = baseUrl;
+      }
       const user = await Parse.User.become(localStorage.getItem("accesstoken"));
       const _user = user.toJSON();
       setLocalVar(_user);
