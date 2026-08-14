@@ -3,17 +3,6 @@ import Parse from "parse";
 import { Outlet } from "react-router";
 import SessionExpiredModal from "./SessionExpiredModal";
 
-// Same restoration ValidateRoute.jsx needs, done the same way: at module
-// scope during render, before Outlet's children mount - putting it inside
-// this component's own useEffect fired too late, since React runs a nested
-// route's child-component effects before this guard's effect.
-if (typeof window !== "undefined" && localStorage.getItem("accesstoken")) {
-  const storedBaseUrl = localStorage.getItem("baseUrl");
-  if (storedBaseUrl) {
-    Parse.serverURL = storedBaseUrl;
-  }
-}
-
 const Validate = () => {
   const [isUserValid, setIsUserValid] = useState(true);
   useEffect(() => {
