@@ -9,10 +9,16 @@ async function getUserId(request) {
       query.equalTo('email', email);
     }
     const user = await query.first({ useMasterKey: true });
+    if (!user) {
+      throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'User not found');
+    }
     return { id: user.id };
   } catch (err) {
     console.log('err', err);
-    return err;
+    if (err instanceof Parse.Error) {
+      throw err;
+    }
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, 'Something went wrong');
   }
 }
 export default getUserId;

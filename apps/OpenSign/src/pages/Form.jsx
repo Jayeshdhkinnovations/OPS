@@ -166,6 +166,7 @@ const Forms = (props) => {
       }
 
       const pdfBuffers = [];
+      const skippedFiles = [];
       for (const file of files) {
         setFormData((prev) => ({ ...prev, file: file }));
         if (file.type === "application/pdf") {
@@ -303,7 +304,15 @@ const Forms = (props) => {
             }
             return;
           }
+        } else {
+          skippedFiles.push(file.name);
         }
+      }
+
+      if (skippedFiles.length > 0) {
+        alert(
+          `${t("unsupported-file-type-skipped", "Unsupported file type, skipped:")} ${skippedFiles.join(", ")}`
+        );
       }
 
       if (!pdfBuffers.length) {

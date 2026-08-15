@@ -2777,8 +2777,7 @@ export const handleCopyNextToWidget = (
     const getPageNumer = getPlaceHolder?.filter(
       (data) => data.pageNumber === index
     );
-    const getXYdata = getPageNumer?.[0]?.pos || [];
-    getXYdata.push(newposition);
+    const getXYdata = [...(getPageNumer?.[0]?.pos || []), newposition];
     if (getPageNumer && getPageNumer.length > 0) {
       const newUpdateSignPos = getPlaceHolder.map((obj) => {
         if (obj.pageNumber === index) {
@@ -2798,9 +2797,7 @@ export const handleCopyNextToWidget = (
     }
   } else {
     const getPageNumer = xyPosition?.find((data) => data.pageNumber === index);
-    const getXYdata = getPageNumer?.pos;
-
-    getXYdata.push(newposition);
+    const getXYdata = [...(getPageNumer?.pos || []), newposition];
     const updatePlaceholder = xyPosition.map((obj, ind) => {
       if (obj?.pageNumber === index) {
         return { ...obj, pos: getXYdata };
