@@ -33,13 +33,13 @@ const ValidateRoute = () => {
     localStorage.clear();
     saveLanguageInLocal(i18n);
 
-    localStorage.setItem("appLogo", applogo);
-    localStorage.setItem("defaultmenuid", defaultmenuid);
-    localStorage.setItem("PageLanding", PageLanding);
-    localStorage.setItem("userSettings", appdata);
-    localStorage.setItem("baseUrl", baseUrl);
-    localStorage.setItem("parseAppId", appid);
-    localStorage.setItem("favicon", favicon);
+    if (applogo !== null) localStorage.setItem("appLogo", applogo);
+    if (defaultmenuid !== null) localStorage.setItem("defaultmenuid", defaultmenuid);
+    if (PageLanding !== null) localStorage.setItem("PageLanding", PageLanding);
+    if (appdata !== null) localStorage.setItem("userSettings", appdata);
+    if (baseUrl !== null) localStorage.setItem("baseUrl", baseUrl);
+    if (appid !== null) localStorage.setItem("parseAppId", appid);
+    if (favicon !== null) localStorage.setItem("favicon", favicon);
   };
   return <>{<Outlet />}</>;
 };

@@ -82,12 +82,12 @@ const Header = ({ isConsole, setIsLoggingOut }) => {
 
     localStorage.clear();
     saveLanguageInLocal(i18n);
-    localStorage.setItem("appLogo", applogo);
-    localStorage.setItem("defaultmenuid", defaultmenuid);
-    localStorage.setItem("PageLanding", PageLanding);
-    localStorage.setItem("userSettings", appdata);
-    localStorage.setItem("baseUrl", baseUrl);
-    localStorage.setItem("parseAppId", appid);
+    if (applogo !== null) localStorage.setItem("appLogo", applogo);
+    if (defaultmenuid !== null) localStorage.setItem("defaultmenuid", defaultmenuid);
+    if (PageLanding !== null) localStorage.setItem("PageLanding", PageLanding);
+    if (appdata !== null) localStorage.setItem("userSettings", appdata);
+    if (baseUrl !== null) localStorage.setItem("baseUrl", baseUrl);
+    if (appid !== null) localStorage.setItem("parseAppId", appid);
     // Deliberately NOT preserved across logout: keeping the old value meant a
     // rebuilt favicon never reached anyone who had already used the app, since
     // it is only seeded when absent. Dropping it here lets the current build

@@ -851,7 +851,7 @@ const TemplatePlaceholder = () => {
     try {
       const templateCls = new Parse.Object("contracts_Template");
       templateCls.id = templateId;
-      if (signerPos && signerPos?.length > 0) {
+      if (Array.isArray(signerPos)) {
         templateCls.set("Placeholders", signerPos);
       }
       if (signers && signers?.length > 0) {

@@ -1,14 +1,16 @@
 import { sessionStatus } from "../redux/reducers/userReducer";
 import { store } from "../redux/store";
-import Parse from "parse";
 
 export function withSessionValidation(fn) {
   return async (...args) => {
     try {
       const tenantId = localStorage.getItem("TenantId");
-      const user =
-        typeof Parse !== "undefined" ? Parse.User?.current?.() : null;
-      const sessionToken = user?.getSessionToken?.();
+      // Read the token directly from localStorage instead of
+      // Parse.User.current()?.getSessionToken?.() - the SDK's cached
+      // currentUser is keyed by a namespace shared across tenants, so on a
+      // fresh reload it can be stale, missing, or belong to a different
+      // company than the token actually stored for this session.
+      const sessionToken = localStorage.getItem("accesstoken");
 
       if (!tenantId || !sessionToken) {
         store.dispatch(sessionStatus(false));

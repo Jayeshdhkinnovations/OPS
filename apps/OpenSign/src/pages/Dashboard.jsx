@@ -31,23 +31,25 @@ const Dashboard = () => {
   const getDashboard = async (id) => {
     try {
       const dashboard = dashboardJson.find((x) => x.id === id);
-      setdashboard(dashboard);
-      const dashboardTour = dashboard.columns
-        .filter((col) => {
-          if (col.widget.data && col.widget.data.tourSection) {
-            return col;
-          }
-        })
-        .map((col) => {
-          return {
-            selector: `[data-tut=${col.widget.data.tourSection}]`,
-            content: t(`tour-mssg.${col.widget.label}`),
-            position: "top",
-            styles: { fontSize: "13px" }
-            // style: { backgroundColor: "#abd4d2" },
-          };
-        });
-      dispatch(saveTourSteps(dashboardTour));
+      setdashboard(dashboard || {});
+      if (dashboard) {
+        const dashboardTour = dashboard.columns
+          .filter((col) => {
+            if (col.widget.data && col.widget.data.tourSection) {
+              return col;
+            }
+          })
+          .map((col) => {
+            return {
+              selector: `[data-tut=${col.widget.data.tourSection}]`,
+              content: t(`tour-mssg.${col.widget.label}`),
+              position: "top",
+              styles: { fontSize: "13px" }
+              // style: { backgroundColor: "#abd4d2" },
+            };
+          });
+        dispatch(saveTourSteps(dashboardTour));
+      }
       setloading(false);
     } catch (e) {
       console.error("Problem", e);

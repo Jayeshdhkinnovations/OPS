@@ -588,7 +588,7 @@ function SignYourSelf() {
         (useNameAsSender ? currentExtUser?.Email || "" : "");
       const docCls = new Parse.Object("contracts_Document");
       docCls.id = documentId;
-      if (xyPosition?.length > 0) {
+      if (Array.isArray(xyPosition)) {
         docCls.set("Placeholders", updatedXYPosition);
       }
       docCls.set("IsSignyourself", true);

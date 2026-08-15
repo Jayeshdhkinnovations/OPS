@@ -212,7 +212,7 @@ const Report = () => {
           sessiontoken: localStorage.getItem("accesstoken")
         };
         try {
-          const skipRecord = id === "4Hhwbp482K" ? 0 : skipUserRecord;
+          const skipRecord = skipUserRecord;
           const limitRecord = id === "4Hhwbp482K" ? 200 : limit;
           const params = { reportId: id, skip: skipRecord, limit: limitRecord };
           if (term) {
@@ -257,11 +257,7 @@ const Report = () => {
                 }
               }
             }
-            if (arr.length === docPerPage) {
-              setIsMoreDocs(true);
-            } else {
-              setIsMoreDocs(false);
-            }
+            setIsMoreDocs(listData.length >= limitRecord);
             setList((prevRecord) =>
               prevRecord.length > 0 ? [...prevRecord, ...arr] : arr
             );

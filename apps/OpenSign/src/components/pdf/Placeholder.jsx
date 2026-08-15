@@ -302,7 +302,7 @@ function Placeholder(props) {
       const checkIndex = props.xyPosition
         .filter((data) => data?.Role !== "prefill")
         .findIndex((data) => data.Id === props.data.Id);
-      props.setIsSelectId && props.setIsSelectId(checkIndex || 0);
+      props.setIsSelectId && props.setIsSelectId(checkIndex >= 0 ? checkIndex : 0);
     } else if (
       !props.isSelfSign &&
       props.data &&
@@ -325,7 +325,7 @@ function Placeholder(props) {
       const checkIndex = props.xyPosition
         .filter((data) => data?.Role !== "prefill")
         .findIndex((data) => data.Id === props.data.Id);
-      props.setIsSelectId && props.setIsSelectId(checkIndex || 0);
+      props.setIsSelectId && props.setIsSelectId(checkIndex >= 0 ? checkIndex : 0);
     } else if (
       !props.isSelfSign &&
       props.data &&
@@ -463,7 +463,7 @@ function Placeholder(props) {
                       const checkIndex = props.xyPosition.findIndex(
                         (data) => data.Id === props.data.Id
                       );
-                      props.setIsSelectId(checkIndex || 0);
+                      props.setIsSelectId(checkIndex >= 0 ? checkIndex : 0);
                     }}
                     onTouchEnd={(e) => {
                       e.stopPropagation();
@@ -472,7 +472,7 @@ function Placeholder(props) {
                       const checkIndex = props.xyPosition.findIndex(
                         (data) => data.Id === props.data.Id
                       );
-                      props.setIsSelectId(checkIndex || 0);
+                      props.setIsSelectId(checkIndex >= 0 ? checkIndex : 0);
                     }}
                   ></i>
                 )}
@@ -499,7 +499,7 @@ function Placeholder(props) {
                   const checkIndex = props.xyPosition.findIndex(
                     (data) => data.Id === props.data.Id
                   );
-                  props.setIsSelectId(checkIndex || 0);
+                  props.setIsSelectId(checkIndex >= 0 ? checkIndex : 0);
                 }
               }}
               onTouchEnd={(e) => {
@@ -518,7 +518,7 @@ function Placeholder(props) {
                   const checkIndex = props.xyPosition.findIndex(
                     (data) => data.Id === props.data.Id
                   );
-                  props.setIsSelectId(checkIndex || 0);
+                  props.setIsSelectId(checkIndex >= 0 ? checkIndex : 0);
                 }
               }}
               style={{

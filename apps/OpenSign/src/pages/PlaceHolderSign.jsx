@@ -1052,7 +1052,7 @@ function PlaceHolderSign() {
     try {
       const docCls = new Parse.Object("contracts_Document");
       docCls.id = documentId;
-      if (signerPos?.length > 0) {
+      if (Array.isArray(signerPos)) {
         docCls.set("Placeholders", signerPos);
       }
       docCls.set("Signers", signers);
@@ -1749,7 +1749,7 @@ function PlaceHolderSign() {
     const index = signersdata.findIndex((x) => x.Id === Id);
     if (index === signersdata.length - 1) {
       setUniqueId(updateSigner[updateSigner.length - 1]?.Id || "");
-      setIsSelectId(index - 1 || 0);
+      setIsSelectId(index - 1 >= 0 ? index - 1 : 0);
     } else {
       setUniqueId(updateSigner[index]?.Id || "");
       setIsSelectId(index);

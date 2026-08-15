@@ -728,7 +728,7 @@ function PdfRequestFiles(
                 (x) => x.Role === "prefill"
               );
               //condition to embed prefill widgets details in pdf in public signing flow
-              if (prefillDetails && props.templateId) {
+              if (prefillDetails) {
                 const prefillwidgets = prefillDetails?.placeHolder;
                 const pdfDoc = await PDFDocument.load(pdfArrBuffer);
                 const pdfbase64 = await embedWidgetsToDoc(

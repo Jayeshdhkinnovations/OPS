@@ -7,23 +7,15 @@ const Validate = () => {
   const [isUserValid, setIsUserValid] = useState(true);
   useEffect(() => {
     (async () => {
-      if (localStorage.getItem("accesstoken")) {
+      const token = localStorage.getItem("accesstoken");
+      if (token) {
         try {
-          const userDetails = JSON.parse(
-            localStorage.getItem(
-              `Parse/${localStorage.getItem("parseAppId")}/currentUser`
-            )
-          );
-          // Use the session token to validate the user
-          const userQuery = new Parse.Query(Parse.User);
-          const user = await userQuery.get(userDetails?.objectId, {
-            sessionToken: localStorage.getItem("accesstoken")
-          });
-          if (user) {
-            setIsUserValid(true);
-          } else {
-            setIsUserValid(false);
-          }
+          // Validates the token directly against the server instead of a
+          // localStorage-cached user id keyed by parseAppId - that cache can
+          // be stale/missing across tenants and incorrectly report a valid
+          // session as expired.
+          await Parse.User.become(token);
+          setIsUserValid(true);
         } catch (error) {
           // Session token is invalid or there was an error
           setIsUserValid(false);

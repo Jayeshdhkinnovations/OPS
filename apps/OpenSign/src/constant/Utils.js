@@ -2640,7 +2640,7 @@ export const contactBook = async (objectId) => {
     const result = axiosRes?.data?.results;
     return result;
   } catch (error) {
-    console.error("contracts_Contactbook error", err);
+    console.error("contracts_Contactbook error", error);
     return "Error: Something went wrong!";
   }
 };
