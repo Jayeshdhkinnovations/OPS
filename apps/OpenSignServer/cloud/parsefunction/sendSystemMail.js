@@ -7,7 +7,17 @@ async function sendMailProvider(req) {
   const extUserId = req.params?.extUserId || '';
   // Points at our own address: this previously sent recipients to
   // complaints@opensignlabs.com, i.e. reported our senders to OpenSign.
-  const reportMsg = `<p style="font-size: 13px; color:grey; text-align: center;">If you think this email is inappropriate or spam, you may report it to <a href="mailto:notification@toowix.com?subject=Spam%20report%20for%20user%20ID%20${extUserId}">notification@toowix.com</a>.</p>`;
+  //
+  // Appended after the caller's html (below), which for the branded
+  // templates in emailTemplates.js means after their closing </body> - so
+  // this sits outside anything baseTemplate() itself can style. class="email-bg"
+  // reuses that same template's dark-mode override (defined once in its
+  // <style> block but matched document-wide by class, regardless of where
+  // in the markup this paragraph ends up), so it isn't left as a stray white
+  // strip once everything above it correctly goes dark. Callers whose html
+  // has no such class/style block just see an inert, unused class - inline
+  // background stays the only thing that matters for them.
+  const reportMsg = `<p class="email-bg" style="background:#FFFFFF;font-size: 13px; color:grey; text-align: center;">If you think this email is inappropriate or spam, you may report it to <a href="mailto:notification@toowix.com?subject=Spam%20report%20for%20user%20ID%20${extUserId}">notification@toowix.com</a>.</p>`;
 
   const mailgunApiKey = process.env.MAILGUN_API_KEY;
   let transporterSMTP;
