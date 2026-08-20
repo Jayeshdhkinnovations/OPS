@@ -50,12 +50,23 @@ function ForgotPassword() {
       if (state.email) {
         const username = state.email;
         try {
-          // Not Parse.User.requestPasswordReset: this page runs on the
-          // shared login origin, whose database holds no accounts - every
+          // Force root before calling, the same way Login.jsx's handleLogin
+          // does before its own attempt. This page reads whatever baseUrl
+          // was last stored, which can still be a tenant mount left over
+          // from a previous session (e.g. .../app/italy/) - calling
+          // requestpasswordreset against that tenant's own container instead
+          // of root sends it into a cross-tenant lookup that can never
+          // resolve there (getCompanyHost only has routes on the root
+          // process), so the request silently found nothing and no email
+          // went out - while the exact same email address worked fine for
+          // anyone whose stored baseUrl still happened to be root. Not
+          // Parse.User.requestPasswordReset: this page runs on the shared
+          // login origin, whose root database holds no accounts - every
           // user lives in their own company's database. That call therefore
           // found nobody and silently sent nothing. This cloud function
           // locates the company owning the address and has that company's
           // server send the mail, so the reset link points at the right one.
+          Parse.serverURL = `${window.location.origin}/app/`;
           await Parse.Cloud.run("requestpasswordreset", { email: username });
           // Confirm inside the card rather than via a toast that vanishes -
           // the user needs to know to go and check their inbox.

@@ -49,6 +49,27 @@ export default async function requestPasswordReset(request) {
   // addresses exist would let anyone enumerate the user base.
   if (!email || !process.env.SUPERADMIN_MONGODB_URI) return {};
 
+  // This function is meant to run on the root instance, which is what the
+  // frontend now always points at before calling it - but a stale
+  // tenant-scoped Parse.serverURL from an older client build (or any other
+  // future caller) could still land here inside a company container.
+  // getCompanyHost() below reads multiTenant.js's companyRoutes map, which
+  // is only ever populated on the root process - a company container's own
+  // copy is always empty, so every company would silently fail the "no
+  // running container" check and no mail would go out, even for the exact
+  // account this container itself owns. Skip the pointless cross-tenant
+  // scan entirely in that case and just ask this container's own Parse
+  // Server to send the reset - the same call postToCompany() below would
+  // have made over HTTP, just direct since we already are that company.
+  if (process.env.COMPANY_MODE === 'true') {
+    try {
+      await Parse.User.requestPasswordReset(email);
+    } catch (err) {
+      console.log(`requestpasswordreset (company mode) failed: ${err.message}`);
+    }
+    return {};
+  }
+
   let client;
   try {
     client = new MongoClient(process.env.SUPERADMIN_MONGODB_URI);
