@@ -45,6 +45,16 @@ function Login() {
     loading: false,
     thirdpartyLoader: false,
   });
+  // Three-state auth lifecycle for the very first render, distinct from
+  // `state.loading` (which also drives the Sign In/Verify button spinner
+  // during an actual form submission - reusing it here would make the whole
+  // page vanish mid-submit too). Starts true only when there is a token to
+  // check, so a genuinely logged-out visitor never sees a checking phase at
+  // all. Flipped false exactly once, in checkUserExt below, after session
+  // restoration has fully resolved one way or the other - never on a timer.
+  const [checkingSession, setCheckingSession] = useState(
+    () => !!localStorage.getItem("accesstoken")
+  );
   const [userDetails, setUserDetails] = useState({
     Company: "",
     Destination: ""
@@ -118,7 +128,18 @@ function Login() {
     dispatch(fetchAppInfo());
     if (localStorage.getItem("accesstoken")) {
       setState({ ...state, loading: true });
-      GetLoginData();
+      // GetLoginData already handles every outcome internally (navigates
+      // away on success, clears the token and resets state.loading on
+      // failure) - awaiting it here only adds the one thing it doesn't do
+      // itself: telling this component the checking phase is over, whichever
+      // way it went, so the login form can finally be considered for render.
+      try {
+        await GetLoginData();
+      } finally {
+        setCheckingSession(false);
+      }
+    } else {
+      setCheckingSession(false);
     }
   };
   const handleChange = (event) => {
@@ -668,6 +689,14 @@ function Login() {
   return errMsg ? (
     <div className="h-screen flex justify-center text-center items-center p-4 text-gray-500 text-base">
       {errMsg}
+    </div>
+  ) : checkingSession ? (
+    // Existing app-level loader (same markup as App.jsx's own AppLoader) -
+    // shown in place of the login form for as long as a stored token is
+    // still being validated, so a valid session never flashes the login
+    // page before the dashboard redirect lands.
+    <div className="flex justify-center items-center h-[100vh]">
+      <Loader />
     </div>
   ) : (
     <>
