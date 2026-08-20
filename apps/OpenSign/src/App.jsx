@@ -156,7 +156,7 @@ function App() {
               />
             </Route>
             <Route path="/success" element={<Lazy Page={DocSuccessPage} />} />
-            <Route path="/emailbuilder" element={<EmailBuilder />} />
+            <Route path="/emailbuilder" element={<Lazy Page={EmailBuilder} />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </BrowserRouter>
