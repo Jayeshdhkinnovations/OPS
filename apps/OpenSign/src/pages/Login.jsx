@@ -691,18 +691,14 @@ function Login() {
       {errMsg}
     </div>
   ) : checkingSession ? (
-    // Same Loader asset used everywhere else in the app (including the
-    // state.loading overlay just below) - shown in place of the login form
-    // for as long as a stored token is still being validated, so a valid
-    // session never flashes the login page before the dashboard redirect
-    // lands. Darker backdrop and a larger mark than that overlay: this one
-    // has nothing else on screen to sit on top of, so it needs to stand on
-    // its own rather than just dim content that's still visible behind it.
-    <div
-      aria-live="assertive"
-      className="fixed w-full h-full flex justify-center items-center bg-black bg-opacity-70 z-50"
-    >
-      <div className="scale-150">
+    // Same Loader asset used everywhere else in the app - shown in place of
+    // the login form for as long as a stored token is still being
+    // validated, so a valid session never flashes the login page before the
+    // dashboard redirect lands. No backdrop change here, just the mark
+    // itself darkened (grayscale + reduced brightness) so it reads clearly
+    // against the plain page background instead of looking washed out.
+    <div className="flex justify-center items-center h-[100vh]">
+      <div className="scale-150 grayscale brightness-50">
         <Loader />
       </div>
     </div>
