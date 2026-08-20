@@ -157,6 +157,24 @@ function Login() {
       localStorage.setItem("appLogo", appInfo.applogo);
       const _user = await Parse.Cloud.run("loginuser", { email, password });
       if (_user && _user.error === "tenant_redirect" && _user.subdomain) {
+        // A retry attempt is already running against the company instance
+        // the first redirect pointed at - it has no business redirecting
+        // again. Recursing here regardless of `isRetry` is what turned a
+        // backend bug (a company container mis-detecting itself as root and
+        // handing back tenant_redirect pointing at itself) into an infinite
+        // loginuser loop instead of a single failed attempt. That backend
+        // bug is now fixed, so this should never trigger in practice - it's
+        // the terminating condition that keeps a future regression from
+        // becoming a silent infinite loop again instead of a visible error.
+        if (isRetry) {
+          console.error(
+            "loginuser returned tenant_redirect again on retry - not recursing",
+            _user.subdomain
+          );
+          setState({ ...state, loading: false });
+          showToast("danger", t("something-went-wrong-mssg"));
+          return;
+        }
         // Automatically route to the company-specific backend path.
         // Strip any existing /app or /app/<tenant> suffix first - matching
         // only a trailing /app meant a second redirect compounded into

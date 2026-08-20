@@ -47,6 +47,22 @@ export default async function loginUser(request) {
       throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'user not found.');
     } catch (err) {
       // 2. If login fails, check if we are on the root instance and if this email belongs to a dynamic company
+      //
+      // Path-sniffing alone is not enough to tell root and company apart:
+      // companyProxy (multiTenant.js) strips the /<slug> prefix before
+      // forwarding to a company's own container, and that container's own
+      // x-original-path middleware (index.js) then regenerates the header
+      // from ITS OWN view of the already-stripped path - so it reads
+      // "/app/functions/loginuser" inside a company container too, making
+      // isRootInstance true there as well. A company container would then
+      // run this same cross-tenant lookup on every failed login, find that
+      // it owns the email itself (that's what makes it the right redirect
+      // target in the first place), and hand back tenant_redirect pointing
+      // at itself - which the frontend's retry-once flow sends right back
+      // here, forever. COMPANY_MODE is the one signal that can't be spoofed
+      // by proxying: it's an env var fixed at container creation
+      // (multiTenant.js companyEnv), not reconstructed per-request.
+      const isCompanyMode = process.env.COMPANY_MODE === 'true';
       const originalPath = request.headers ? request.headers['x-original-path'] : '';
       const isRootInstance =
         !originalPath ||
@@ -57,10 +73,11 @@ export default async function loginUser(request) {
       console.log('DEBUG LOGIN REDIRECT:', {
         originalPath,
         isRootInstance,
+        isCompanyMode,
         hasUri: !!process.env.SUPERADMIN_MONGODB_URI,
         username,
       });
-      if (isRootInstance && process.env.SUPERADMIN_MONGODB_URI) {
+      if (!isCompanyMode && isRootInstance && process.env.SUPERADMIN_MONGODB_URI) {
         let client;
         try {
           client = new MongoClient(process.env.SUPERADMIN_MONGODB_URI);

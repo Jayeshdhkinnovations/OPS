@@ -4,10 +4,19 @@ import { appName } from '../../Utils.js';
 export default async function GetLogoByDomain(request) {
   const domain = request.params.domain;
   try {
+    // See the matching comment in loginUser.js: path-sniffing alone reads as
+    // "root" inside a company container too, since companyProxy strips the
+    // slug before forwarding. COMPANY_MODE is the reliable signal.
+    const isCompanyMode = process.env.COMPANY_MODE === 'true';
     const originalPath = request.headers ? request.headers['x-original-path'] : '';
-    const isRootInstance = !originalPath || originalPath.startsWith('/app/functions') || originalPath.startsWith('/app/login') || originalPath === '/app' || originalPath === '/app/';
+    const isRootInstance =
+      !originalPath ||
+      originalPath.startsWith('/app/functions') ||
+      originalPath.startsWith('/app/login') ||
+      originalPath === '/app' ||
+      originalPath === '/app/';
 
-    if (isRootInstance) {
+    if (!isCompanyMode && isRootInstance) {
       return {
         logo: '',
         appname: appName,
