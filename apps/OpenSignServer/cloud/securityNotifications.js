@@ -65,17 +65,27 @@ export function clientInfo(request) {
 // that me?" is answerable from a city, not from 103.21.44.9. Resolved via a
 // free lookup, with a short timeout: this runs inside a fire-and-forget send,
 // so a slow or dead geo service must not hold the email up.
+//
+// ipapi.co was the original provider here, but its free tier is shared
+// across all 8 company containers on this one server's outbound IP and was
+// returning 429 RateLimited on every call - silently swallowed by the
+// `if (!res.ok) return ''` below, which the email then showed as "Unknown"
+// on every single login regardless of who was signing in. ipwho.is has no
+// published low daily cap and needs no API key, so it's a drop-in swap; the
+// response shape differs (`success` boolean instead of relying on `.ok`,
+// but the same `city`/`region` fields), not just a URL change.
 async function locationFor(ip) {
   if (!ip || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.|::1)/.test(ip)) return '';
   try {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 2500);
-    const res = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, {
+    const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`, {
       signal: ctl.signal,
     });
     clearTimeout(timer);
     if (!res.ok) return '';
     const j = await res.json();
+    if (!j.success) return '';
     return [j.city, j.region].filter(Boolean).join(', ');
   } catch {
     return '';
