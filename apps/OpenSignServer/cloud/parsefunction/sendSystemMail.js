@@ -17,7 +17,13 @@ async function sendMailProvider(req) {
   // strip once everything above it correctly goes dark. Callers whose html
   // has no such class/style block just see an inert, unused class - inline
   // background stays the only thing that matters for them.
-  const reportMsg = `<p class="email-bg" style="background:#FFFFFF;font-size: 13px; color:grey; text-align: center;">If you think this email is inappropriate or spam, you may report it to <a href="mailto:notification@toowix.com?subject=Spam%20report%20for%20user%20ID%20${extUserId}">notification@toowix.com</a>.</p>`;
+  //
+  // margin:0 + padding (instead of the default UA <p> margin) so the fill
+  // itself covers the full box - a margin is transparent by definition, so
+  // the default top/bottom margin here left two thin gaps showing whatever
+  // sits behind this paragraph (the unstyled canvas outside </body>) rather
+  // than this element's own background.
+  const reportMsg = `<p class="email-bg" style="background:#FFFFFF;margin:0;padding:16px 0;font-size: 13px; color:grey; text-align: center;">If you think this email is inappropriate or spam, you may report it to <a href="mailto:notification@toowix.com?subject=Spam%20report%20for%20user%20ID%20${extUserId}">notification@toowix.com</a>.</p>`;
 
   const mailgunApiKey = process.env.MAILGUN_API_KEY;
   let transporterSMTP;
