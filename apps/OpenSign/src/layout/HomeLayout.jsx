@@ -175,7 +175,9 @@ const HomeLayout = () => {
       </header>
       {isLoader ? (
         <div className="flex h-[100vh] justify-center items-center">
-          <Loader />
+          <div className="grayscale brightness-50">
+            <Loader />
+          </div>
         </div>
       ) : (
         <>

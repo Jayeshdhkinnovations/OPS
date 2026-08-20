@@ -6,7 +6,9 @@ const LazyPage = ({ Page }) => {
     <Suspense
       fallback={
         <div className="flex justify-center items-center h-[100vh]">
-          <Loader />
+          <div className="grayscale brightness-50">
+            <Loader />
+          </div>
         </div>
       }
     >
