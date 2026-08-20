@@ -120,8 +120,9 @@ export function baseTemplate({
   [data-ogsc] .logo-light { display:none !important; }
   [data-ogsc] .logo-dark { display:block !important; }
 </style>
+<body class="email-bg" style="margin:0;padding:0;background:#FFFFFF;">
 <div class="email-bg" style="background:#FFFFFF;padding:40px 20px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;margin:0 auto;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-bg" style="background:#FFFFFF;max-width:440px;margin:0 auto;">
     <tr>
       <td class="email-card" style="background:#FFFFFF;">
         <table role="presentation" cellpadding="0" cellspacing="0">
@@ -146,7 +147,8 @@ export function baseTemplate({
       </td>
     </tr>
   </table>
-</div>`.trim();
+</div>
+</body>`.trim();
 }
 
 // Formats a timestamp for humans in IST, the operating timezone for these
