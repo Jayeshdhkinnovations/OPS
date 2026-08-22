@@ -4214,7 +4214,7 @@ function _removeWidgetAnnotations(pdfDoc) {
 
 export const mailTemplate = (param) => {
   const appName = "SignToowix";
-  const logo = `<div style='padding:10px'><img src='https://qikinnovation.ams3.digitaloceanspaces.com/logo.png' height='50' /></div>`;
+  const logo = `<div style='padding:10px'><img src='${window.location.origin}/static/js/assets/images/email-logo.png' height='50' /></div>`;
 
   const subject = `${param.senderName} has requested you to sign "${param.title}"`;
   const body =
