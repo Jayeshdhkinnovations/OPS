@@ -107,7 +107,10 @@ export default async function GenerateCertificate(docDetails) {
   page.drawImage(pngImage, {
     x: 30,
     y: 790,
-    width: 100,
+    // Matches this logo's own aspect ratio (2500x600 -> 100x25 stretched it
+    // slightly, but a wider-aspect replacement would visibly squash at that
+    // box) - height fixed, width computed from the source image instead.
+    width: 25 * (pngImage.width / pngImage.height),
     height: 25,
   });
 

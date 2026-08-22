@@ -90,7 +90,7 @@ function ResetPassword() {
                 </div>
                 <div>
                   <span className="text-lg font-bold tracking-tight text-white block leading-none">
-                    OpenSign
+                    SignToowix
                   </span>
                   <span className="text-[10px] text-white/80 font-medium mt-1 block">
                     Secure Digital Document Platform
@@ -135,7 +135,7 @@ function ResetPassword() {
                 </div>
                 <div>
                   <span className="text-lg font-bold tracking-tight text-gray-800">
-                    OpenSign
+                    SignToowix
                   </span>
                 </div>
               </div>

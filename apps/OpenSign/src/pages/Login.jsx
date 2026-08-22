@@ -28,7 +28,7 @@ import GoogleSignupModal from "../components/GoogleSignupModal";
 
 function Login() {
   const appName =
-    "OpenSign™";
+    "SignToowix";
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const authNavigate = useAuthNavigate();

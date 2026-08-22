@@ -128,7 +128,7 @@ const sharedParts = {
         emailAdapter: {
           module: 'parse-server-api-mail-adapter',
           options: {
-            // SignToowix, not `appName` ("OpenSign™") - these are the
+            // SignToowix, not `appName` ("SignToowix") - these are the
             // platform's own account emails, not document-signing mail.
             sender: BRAND_NAME + ' <' + mailsender + '>',
             templates: {

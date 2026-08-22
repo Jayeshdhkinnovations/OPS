@@ -3,7 +3,7 @@ import { TEditorConfiguration } from "../../documents/editor/core";
 const getCompletionEmail = (
 ): TEditorConfiguration => {
   const appName =
-    "OpenSign™";
+    "SignToowix";
 
   const logoBlock =
         {

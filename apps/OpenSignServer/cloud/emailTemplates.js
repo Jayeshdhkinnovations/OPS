@@ -1,7 +1,7 @@
 // Every transactional email the platform sends is built from the one layout
 // below, so brand changes happen in a single place instead of being copied
 // into each call site. Deliberately not the shared `appName` constant from
-// Utils.js (that's "OpenSign™" and feeds the document-signing emails) - these
+// Utils.js (that's "SignToowix" and feeds the document-signing emails) - these
 // are the SignToowix platform notifications.
 //
 // Design intent: plain and editorial, not a gradient-heavy "template

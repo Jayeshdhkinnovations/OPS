@@ -207,7 +207,7 @@ function Opensigndrive() {
       }
       if (!docId) {
         setFolderName([
-          { name: t("OpenSign-drive", { appName: drivename }), objectId: "" }
+          { name: t("SignToowix-drive", { appName: drivename }), objectId: "" }
         ]);
       }
     } catch (e) {

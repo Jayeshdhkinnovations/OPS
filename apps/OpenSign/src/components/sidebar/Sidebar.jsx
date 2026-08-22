@@ -138,12 +138,12 @@ const Sidebar = () => {
       </div>
       <nav
         className="op-menu op-menu-sm"
-        aria-label="OpenSign Sidebar Navigation"
+        aria-label="SignToowix Sidebar Navigation"
       >
         <ul
           className="text-sm"
           role="menubar"
-          aria-label="OpenSign Sidebar Navigation"
+          aria-label="SignToowix Sidebar Navigation"
         >
           {menuList.map((item) =>
             !item.children ? (

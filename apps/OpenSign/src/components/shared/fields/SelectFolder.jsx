@@ -7,8 +7,8 @@ import { useTranslation } from "react-i18next";
 
 const SelectFolder = ({ required, onSuccess, folderCls, isReset }) => {
   const appName =
-    "OpenSign™";
-  const drivename = appName === "OpenSign™" ? "OpenSign™" : "";
+    "SignToowix";
+  const drivename = appName === "SignToowix" ? "SignToowix" : "";
   const { t } = useTranslation();
   const [isOpen, SetIsOpen] = useState(false);
   const [clickFolder, setClickFolder] = useState("");
@@ -193,7 +193,7 @@ const SelectFolder = ({ required, onSuccess, folderCls, isReset }) => {
               <p>
                 {selectFolder && selectFolder.Name
                   ? selectFolder.Name
-                  : t("OpenSign-drive", { appName: drivename })}
+                  : t("SignToowix-drive", { appName: drivename })}
               </p>
               <div className="text-sm">
                 <i
@@ -224,7 +224,7 @@ const SelectFolder = ({ required, onSuccess, folderCls, isReset }) => {
               title={`${drivename} Drive`}
               onClick={(e) => removeTabListItem(e)}
             >
-              {t("OpenSign-drive", { appName: drivename })} /{" "}
+              {t("SignToowix-drive", { appName: drivename })} /{" "}
             </span>
             {tabList &&
               tabList.map((tab, i) => (

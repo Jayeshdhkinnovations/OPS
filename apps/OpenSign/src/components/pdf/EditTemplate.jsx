@@ -31,7 +31,7 @@ const EditTemplate = ({
   isAddYourSelfCheckbox,
 }) => {
   const appName =
-    "OpenSign™";
+    "SignToowix";
   const { t } = useTranslation();
   const inputFileRef = useRef(null);
   const [formData, setFormData] = useState({

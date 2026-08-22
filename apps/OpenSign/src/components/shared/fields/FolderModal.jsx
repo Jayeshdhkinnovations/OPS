@@ -7,8 +7,8 @@ import { useTranslation } from "react-i18next";
 const FolderModal = (props) => {
   const { t } = useTranslation();
   const appName =
-    "OpenSign™";
-  const drivename = appName === "OpenSign™" ? "OpenSign™" : "";
+    "SignToowix";
+  const drivename = appName === "SignToowix" ? "SignToowix" : "";
   const [clickFolder, setClickFolder] = useState("");
   const [folderList, setFolderList] = useState([]);
   const [tabList, setTabList] = useState([]);
@@ -159,7 +159,7 @@ const FolderModal = (props) => {
               title={`${drivename} Drive`}
               onClick={(e) => removeTabListItem(e)}
             >
-              {t("OpenSign-drive", { appName: drivename })} /{" "}
+              {t("SignToowix-drive", { appName: drivename })} /{" "}
             </span>
             {tabList &&
               tabList.map((tab, i) => (
