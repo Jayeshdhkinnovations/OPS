@@ -100,7 +100,7 @@
       "Manage templates": "Manage templates",
       "Embedding": "Embedding"
     },
-    "OpenSign™ Drive": "SignToowix Drive",
+    "OpenSign™ Drive": "{{appName}} Drive",
     "Reports": "Reports",
     "Documents": "Documents",
     "Documents-Children": {
@@ -178,8 +178,6 @@
     "Title": "Title",
     "Email": "Email",
     "Phone": "Phone",
-    "Storage": "Storage",
-    "Signed": "Signed",
     "File": "File",
     "Owner": "Owner",
     "Signers": "Signers",
@@ -802,6 +800,7 @@
   "quota-mail-info": "To maintain service quality and prevent spam, OpenSign allows up to 15 emails per month on the free plan. Upgrade now for unlimited email sending.",
   "quota-mail-reset": "Your signature request email credits will be reset on",
   "quota-mail": "You've reached your limit of 15 signature request emails for this month. Upgrade now to continue sending emails directly.",
+  "quota-mail-limit-reached": "You've reached your monthly limit of 15 email credits. Please upgrade your plan to continue sending emails directly.\nYour email credits will reset on {{resetDate}}",
   "quota-mail-tip": "Tip: You can still sign <1>unlimited documents</1> by manually sharing the signing request link.",
   "quota-mail-head": "Quota reached",
   "unauthorized-modal": "You don't have permission to perform this action, please contact {{adminEmail}}.",
@@ -1612,5 +1611,7 @@
   "access-code-warning": "This access code cannot be changed or retrieved once the document is sent out.",
   "copy-access-code": "Copy access code",
   "access-code-upgrade-msg": "Access codes are available on paid plans only. Upgrade your plan to add access codes for recipients.",
+  "show-access-code": "Show access code",
+  "hide-access-code": "Hide access code",
   "already-copied-to-clipboard": "Already copied to clipboard"
 }

@@ -798,6 +798,7 @@
   "quota-mail-info": "Pour maintenir la qualité du service et prévenir le spam, OpenSign permet jusqu'à 15 e-mails par mois avec le plan gratuit. Passez à l'offre supérieure pour un envoi illimité d'e-mails.",
   "quota-mail-reset": "Les crédits de votre email de demande de signature seront réinitialisés le",
   "quota-mail": "Vous avez atteint votre limite de 15 e-mails de demande de signature pour ce mois. Mettez à niveau maintenant pour continuer à envoyer des e-mails directement.",
+  "quota-mail-limit-reached": "Vous avez atteint votre limite mensuelle de 15 crédits e-mail. Veuillez mettre à niveau votre forfait pour continuer à envoyer des e-mails directement.\nVos crédits e-mail seront réinitialisés le {{resetDate}}.",
   "quota-mail-tip": "Astuce: Vous pouvez toujours signer un nombre <1>illimité de documents</1> en partageant manuellement le lien de demande de signature.",
   "quota-mail-head": "Quota atteint",
   "unauthorized-modal": "Vous n'êtes pas autorisé à effectuer cette action, veuillez contacter {{adminEmail}}.",
@@ -1611,5 +1612,7 @@
   "access-code-warning": "Ce code d'accès ne peut pas être modifié ou récupéré une fois le document envoyé.",
   "copy-access-code": "Copier le code d'accès",
   "access-code-upgrade-msg": "Les codes d'accès sont disponibles uniquement dans les forfaits payants. Améliorez votre forfait pour ajouter des codes d'accès aux destinataires.",
+  "show-access-code": "Afficher le code d’accès",
+  "hide-access-code": "Masquer le code d’accès",
   "already-copied-to-clipboard": "Déjà copié dans le presse-papiers"
 }
