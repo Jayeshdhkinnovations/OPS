@@ -29,6 +29,29 @@ export default async function requestCompanyNameChange(request) {
   if (!request.user) {
     throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, 'You must be signed in.');
   }
+
+  // Strictly "contracts_Admin" only - same UserRole convention and exact-
+  // equality style already used for the delete-account gate in
+  // UserProfile.jsx (isAdmin = extendUser?.[0]?.UserRole === "contracts_Admin").
+  // contracts_OrgAdmin is a different role and must NOT pass this check, so
+  // this cannot be a startsWith/includes/generic "is some kind of admin"
+  // test - it has to be the same exact string. Looked up server-side from
+  // the authenticated session rather than trusting anything the client
+  // could pass in, since request.params is caller-controlled.
+  const requesterQuery = new Parse.Query('contracts_Users');
+  requesterQuery.equalTo('UserId', {
+    __type: 'Pointer',
+    className: '_User',
+    objectId: request.user.id,
+  });
+  const requester = await requesterQuery.first({ useMasterKey: true });
+  if (!requester || requester.get('UserRole') !== 'contracts_Admin') {
+    throw new Parse.Error(
+      Parse.Error.OPERATION_FORBIDDEN,
+      'Only Admin users can request a company name change.'
+    );
+  }
+
   const slug = ownSlug();
   if (!slug) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, 'Could not determine company.');

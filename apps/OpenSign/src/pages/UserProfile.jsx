@@ -180,6 +180,14 @@ function UserProfile() {
   // goes to a Super Admin for approval instead of an inline save.
   const handleRequestCompanyNameChange = async () => {
     if (!newCompanyName.trim()) return;
+    // The pencil button that opens this modal is already hidden for anyone
+    // but contracts_Admin, but the real enforcement is the backend's own
+    // check in requestCompanyNameChange.js - this is just a second, cheap
+    // guard against this handler ever firing for a role it shouldn't.
+    if (extendUser?.[0]?.UserRole !== "contracts_Admin") {
+      setCompanyChangeError("Only Admin users can request a company name change.");
+      return;
+    }
     setCompanyChangeLoading(true);
     setCompanyChangeError("");
     try {
@@ -504,18 +512,25 @@ function UserProfile() {
                 <span className="font-semibold">{t("company")}:</span>{" "}
                 <span className="flex items-center gap-2">
                   <span>{extendUser?.[0]?.Company}</span>
-                  <button
-                    type="button"
-                    title="Request a company name change"
-                    onClick={() => {
-                      setNewCompanyName(extendUser?.[0]?.Company || "");
-                      setCompanyChangeError("");
-                      setCompanyChangeModal(true);
-                    }}
-                    className="text-gray-400 hover:text-[#0B3D73] transition-colors"
-                  >
-                    <i className="fa-light fa-pen text-xs" />
-                  </button>
+                  {/* Strictly "contracts_Admin" - same convention/exact-equality
+                      style as the delete-account isAdmin check above. OrgAdmin is
+                      a different role and must not see this; the real enforcement
+                      is server-side in requestCompanyNameChange.js, this is just
+                      hiding the entry point for everyone who'd be rejected anyway. */}
+                  {extendUser?.[0]?.UserRole === "contracts_Admin" && (
+                    <button
+                      type="button"
+                      title="Request a company name change"
+                      onClick={() => {
+                        setNewCompanyName(extendUser?.[0]?.Company || "");
+                        setCompanyChangeError("");
+                        setCompanyChangeModal(true);
+                      }}
+                      className="text-gray-400 hover:text-[#0B3D73] transition-colors"
+                    >
+                      <i className="fa-light fa-pen text-xs" />
+                    </button>
+                  )}
                 </span>
               </li>
               <li
