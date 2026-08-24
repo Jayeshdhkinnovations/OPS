@@ -179,7 +179,23 @@ app.use((req, res, next) => (isFileRoute(req) ? next() : jsonParser(req, res, ne
 app.use((req, res, next) => (isFileRoute(req) ? next() : urlencodedParser(req, res, next)));
 app.use(function (req, res, next) {
   req.headers['x-real-ip'] = getUserIP(req);
-  const publicUrl = 'https://' + req?.get('host');
+  // req.get('host') reflects THIS container's own view of the request - for
+  // a company container reached through the root's proxy, that is not the
+  // real public host at all. companyProxy() in multiTenant.js explicitly
+  // rewrites the Host header to the internal container:port it forwards to
+  // (e.g. opensign-creatfxstudio:8081), so any link built from the old
+  // 'https://' + req.get('host') (a signer's "review and sign" URL, a
+  // decline notice, a batch-doc callback) pointed at an address that only
+  // resolves inside the Docker network and was completely unreachable from
+  // outside it. Prefer the browser's own Origin header first - untouched by
+  // the proxy hop (companyProxy forwards it unchanged via ...req.headers),
+  // and correct even for a tenant's own custom domain if they have one, same
+  // preference createBatchDocs.js already uses for this reason. Then this
+  // container's own PUBLIC_ORIGIN, reliably set per company via
+  // multiTenant.js's companyEnv() regardless of proxying. req.get('host') is
+  // now only a last-resort fallback for the rare request with neither.
+  const publicUrl =
+    req.headers.origin || process.env.PUBLIC_ORIGIN || 'https://' + req?.get('host');
   req.headers['public_url'] = publicUrl;
   req.headers['x-original-path'] = req.originalUrl || req.url;
   next();
