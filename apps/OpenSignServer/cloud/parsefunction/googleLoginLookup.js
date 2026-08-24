@@ -77,6 +77,32 @@ export default async function googleLoginLookup(request) {
       return { status: 'known', subdomain: candidates[0].subdomain };
     }
 
+    // Not found among active companies - before treating this as a brand
+    // new signup, check whether the account exists in a suspended company
+    // (same fallback loginUser.js already does for the password flow).
+    // Without this, a suspended user's Google sign-in silently fell through
+    // to "new account" and showed them the signup form.
+    const suspended = await db
+      .collection('Company')
+      .find({ status: 'suspended' }, { projection: { subdomain: 1, databaseName: 1 } })
+      .toArray();
+    for (const company of suspended) {
+      if (!company.databaseName) continue;
+      const companyDb = client.db(company.databaseName);
+      let match = await companyDb
+        .collection('_User')
+        .findOne({ GoogleUid: googleId }, { projection: { _id: 1 } });
+      if (!match && emailVerified) {
+        match = await companyDb.collection('_User').findOne({ email }, { projection: { _id: 1 } });
+      }
+      if (match) {
+        console.log(
+          `GOOGLE LOGIN LOOKUP: "${email}" belongs to suspended company ${company.databaseName}`
+        );
+        return { status: 'suspended' };
+      }
+    }
+
     // No linked account anywhere - either they've never signed up, or
     // they're mid-approval. Neither case grants any real access, so
     // Firebase's own copy of this sign-in is removed rather than left
