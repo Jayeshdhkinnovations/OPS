@@ -14,7 +14,7 @@ import { appInfo } from "./appinfo";
 import { saveAs } from "file-saver";
 import printModule from "print-js";
 import fontkit from "@pdf-lib/fontkit";
-import { SCALE_STEPS, themeColor } from "./const";
+import { SCALE_STEPS } from "./const";
 import { format, toZonedTime } from "date-fns-tz";
 import i18n from "../i18n";
 import {
@@ -4223,33 +4223,108 @@ function _removeWidgetAnnotations(pdfDoc) {
   }
 }
 
+// Mirrors the branded shell in apps/OpenSignServer/cloud/emailTemplates.js -
+// this one has to be a self-contained duplicate (not an import) because it
+// runs in the browser, not Node, but the visual result must match exactly.
+const escMail = (value) =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+  );
+
 export const mailTemplate = (param) => {
   const appName = "SignToowix";
-  const logo = `<div style='padding:10px'><img src='${window.location.origin}/static/js/assets/images/email-logo.png' height='50' /></div>`;
+  const origin = window.location.origin;
+  const NAVY = "#1B4F91";
+  const INK = "#1A1A1A";
+  const MUTED = "#6B7280";
+  const FAINT = "#9CA3AF";
+  const HAIRLINE = "#E5E7EB";
 
   const subject = `${param.senderName} has requested you to sign "${param.title}"`;
-  const body =
-    "<html><head><meta http-equiv='Content-Type' content='text/html;charset=UTF-8' /></head><body><div style='background-color:#f5f5f5;padding:20px'><div style='background:white;padding-bottom:20px'>" +
-    logo +
-    `<div style='padding:2px;font-family:system-ui;background-color:${themeColor}'><p style='font-size:20px;font-weight:400;color:white;padding-left:20px'>Digital Signature Request</p></div><div><p style='padding:20px;font-size:14px;margin-bottom:10px'>` +
-    param.senderName +
-    " has requested you to review and sign <strong>" +
-    param.title +
-    "</strong>.</p><div style='padding: 5px 0px 5px 25px;display:flex;flex-direction:row;justify-content:space-around'><table><tr><td style='font-weight:bold;font-family:sans-serif;font-size:15px'>Sender</td><td></td><td style='color:#626363;font-weight:bold'>" +
-    param.senderMail +
-    "</td></tr><tr><td style='font-weight:bold;font-family:sans-serif;font-size:15px'>Organization</td><td></td><td style='color:#626363;font-weight:bold'> " +
-    param.organization +
-    "</td></tr><tr><td style='font-weight:bold;font-family:sans-serif;font-size:15px'>Expires on</td><td></td><td style='color:#626363;font-weight:bold'>" +
-    param.localExpireDate +
-    "</td></tr><tr><td style='font-weight:bold;font-family:sans-serif;font-size:15px'>Note</td><td></td><td style='color:#626363;font-weight:bold'>" +
-    param.note +
-    "</td></tr><tr><td></td><td></td></tr></table></div> <div style='margin-left:70px'><a target=_blank href=" +
-    param.signingUrl +
-    "><button style='padding:12px;background-color:#d46b0f;color:white;border:0px;font-weight:bold;margin-top:30px'>Sign here</button></a></div><div style='display:flex;justify-content:center;margin-top:10px'></div></div></div><div><p> This is an automated email from " +
-    appName +
-    ". For any queries regarding this email, please contact the sender " +
-    param.senderMail +
-    " directly.</p></div></div></body></html> ";
+
+  const detailRow = (label, value) =>
+    value
+      ? `<tr>
+        <td style="padding:5px 0;font:400 13px/1.5 -apple-system,'Segoe UI',Arial,sans-serif;color:${FAINT};white-space:nowrap;vertical-align:top;">${escMail(label)}</td>
+        <td style="padding:5px 0 5px 20px;font:600 13px/1.5 -apple-system,'Segoe UI',Arial,sans-serif;color:${INK};text-align:right;">${escMail(value)}</td>
+      </tr>`
+      : "";
+
+  const body = `
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-scheme" content="light dark">
+<style>
+  @media (prefers-color-scheme: dark) {
+    .email-bg { background:#0B0F19 !important; }
+    .email-card { background:#0B0F19 !important; }
+    .email-ink { color:#F3F4F6 !important; }
+    .email-muted { color:#9CA3AF !important; }
+    .email-hairline { border-color:#232838 !important; }
+    .logo-light { display:none !important; }
+    .logo-dark { display:block !important; }
+  }
+  [data-ogsc] .email-bg { background:#0B0F19 !important; }
+  [data-ogsc] .email-card { background:#0B0F19 !important; }
+  [data-ogsc] .email-ink { color:#F3F4F6 !important; }
+  [data-ogsc] .email-muted { color:#9CA3AF !important; }
+  [data-ogsc] .email-hairline { border-color:#232838 !important; }
+  [data-ogsc] .logo-light { display:none !important; }
+  [data-ogsc] .logo-dark { display:block !important; }
+</style>
+<body class="email-bg" style="margin:0;padding:0;background:#FFFFFF;">
+<div class="email-bg" style="background:#FFFFFF;padding:40px 20px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-bg" style="background:#FFFFFF;max-width:440px;margin:0 auto;">
+    <tr>
+      <td class="email-card" style="background:#FFFFFF;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="vertical-align:middle;"><span style="display:inline-block;">
+    <img src="${origin}/static/js/assets/images/email-logo.png" width="87" height="32" alt="${appName}" class="logo-light" style="display:block;border:0;background:transparent;" />
+    <img src="${origin}/static/js/assets/images/logo-dark.png" width="87" height="32" alt="${appName}" class="logo-dark" style="display:none;border:0;background:transparent;" />
+  </span></td>
+          </tr>
+        </table>
+
+        <div class="email-hairline" style="height:1px;background:${HAIRLINE};margin:22px 0 26px;"></div>
+
+        <div class="email-ink" style="color:${INK};font-size:18px;font-weight:700;line-height:1.4;">Digital signature request</div>
+        <div class="email-muted" style="color:${MUTED};font-size:14px;line-height:1.65;margin-top:10px;">${escMail(param.senderName)} has requested you to review and sign <strong>${escMail(param.title)}</strong>.</div>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;">
+          ${detailRow("Sender", param.senderMail)}
+          ${detailRow("Organization", param.organization)}
+          ${detailRow("Expires on", param.localExpireDate)}
+          ${detailRow("Note", param.note)}
+        </table>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:24px 0 4px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background:${NAVY};border-radius:8px;">
+                    <a href="${escMail(param.signingUrl)}" style="display:inline-block;padding:12px 26px;font:600 14px/1 -apple-system,'Segoe UI',Arial,sans-serif;color:#FFFFFF;text-decoration:none;border-radius:8px;">Sign here</a>
+                  </td>
+                </tr>
+              </table>
+              <div style="margin-top:14px;font:400 12px/1.6 -apple-system,'Segoe UI',Arial,sans-serif;color:${FAINT};word-break:break-all;">
+                Or copy this link: <span style="color:${NAVY};">${escMail(param.signingUrl)}</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <div class="email-hairline" style="height:1px;background:${HAIRLINE};margin:30px 0 16px;"></div>
+        <div class="email-muted" style="color:${FAINT};font-size:12px;line-height:1.6;">
+          This is an automated email from ${appName}. For any queries regarding this email, please contact the sender ${escMail(param.senderMail)} directly.
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>`.trim();
+
   return { subject, body };
 };
 
