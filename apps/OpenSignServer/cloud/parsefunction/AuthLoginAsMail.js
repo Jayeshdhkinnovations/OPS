@@ -24,7 +24,13 @@ async function loginAsEmail(email) {
   const user = await query.first({ useMasterKey: true });
   if (!user) return null;
 
-  const response = await axios.post(`${cloudServerUrl}/loginAs`, null, {
+  // No `data` argument (not even null) - axios would otherwise serialize
+  // that as the literal 4-byte body "null", which Express's strict JSON
+  // parser rejects outright before this ever reaches the /loginAs route.
+  // Matches the working call shape in googleLogin.js.
+  const response = await axios({
+    method: 'POST',
+    url: `${cloudServerUrl}/loginAs`,
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
       'X-Parse-Application-Id': serverAppId,
