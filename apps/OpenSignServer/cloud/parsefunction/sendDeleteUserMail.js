@@ -1,4 +1,5 @@
 import { appName, smtpenable } from '../../Utils.js';
+import { baseTemplate, esc } from '../emailTemplates.js';
 
 export const errHtml = err => {
   return `<html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8" /><title>Reset Password</title></head>
@@ -30,7 +31,7 @@ const sendDeleteUserMail = async req => {
 
     const result = await mainQuery.first({ useMasterKey: true });
     const username = result.get('Email')?.toLowerCase()?.replace(/\s/g, '');
-    const name = result?.get('Name') ? `<b>${result?.get('Name')}</b>` : '';
+    const name = result?.get('Name') || '';
     const isAdmin = result?.get('UserRole') === 'contracts_Admin';
     if (!isAdmin) {
       throw new Parse.Error(
@@ -49,50 +50,14 @@ const sendDeleteUserMail = async req => {
       recipient: username,
       subject: `Account Deletion Request for ${username} – ${app}`,
       text: `Account Deletion Request for ${username} – ${app}`,
-      html: `<html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Account Deletion Request - ${app}</title>
-</head>
-<body style="margin:0; padding:0; font-family:Arial, sans-serif; background-color:#f4f4f4; color:#333;">
-    <div
-        style="max-width:600px; margin:50px auto; padding:30px; background-color:#ffffff; border:1px solid #e0e0e0; border-radius:8px;">
-        <h2 style="color:#d9534f;">Request to Delete Your Account</h2>
-        <p style="font-size:16px; line-height:1.5;">
-            Hello ${name},
-        </p>
-        <p style="font-size:16px; line-height:1.5;">
-            We have received a request to permanently delete your <b>${app}</b> account associated with <b>${username}</b>.
-        </p>
-        <p style="font-size:16px; line-height:1.5;">
-            If you did not make this request, please ignore this email. Otherwise, click the button below to proceed
-            with the deletion.
-        </p>
-        <p style="text-align:center; margin:30px 0;">
-            <a href="${deleteUrl}"
-                style="background-color:#d9534f; color:#ffffff; padding:12px 24px; border-radius:5px; text-decoration:none; font-size:16px;">
-                Confirm Account Deletion
-            </a>
-        </p>
-        <p style="font-size:16px; line-height:1.5;">
-            If the button above doesn't work, please copy and open the following link with your browser.
-        </p> 
-        <p style="font-size:16px; text-align:center; margin:0px 0px 30px 0px;">
-          <a href="${deleteUrl}">${deleteUrl}</a>
-        </p>
-        <p style="font-size:14px; color:#777;">
-            Note: This action is irreversible and all your data will be permanently removed from our systems.
-        </p>
-        <hr style="margin:30px 0; border:none; border-top:1px solid #eee;">
-        <p style="font-size:12px; color:#999;">
-            If you have any questions or need assistance, please contact our support team.
-        </p>
-        <p style="font-size:12px; color:#999;">
-            &copy; ${new Date().getFullYear()} ${app}. All rights reserved.
-        </p>
-    </div>
-</body>
-</html>`,
+      html: baseTemplate({
+        heading: 'Request to delete your account',
+        intro: `Hello ${esc(name) || 'there'}, we have received a request to permanently delete your <strong>${esc(app)}</strong> account associated with <strong>${esc(username)}</strong>.`,
+        bodyHtml: `<div class="email-muted" style="color:#6B7280;font-size:14px;line-height:1.65;margin-top:10px;">If you did not make this request, please ignore this email. Otherwise, click below to proceed with the deletion.</div>`,
+        ctaLabel: 'Confirm account deletion',
+        ctaUrl: deleteUrl,
+        footnote: `This action is irreversible and all your data will be permanently removed from our systems. If you have any questions or need assistance, please contact our support team.<br/><br/>&copy; ${new Date().getFullYear()} ${esc(app)}. All rights reserved.`,
+      }),
     });
     return 'mail sent.';
   } catch (err) {

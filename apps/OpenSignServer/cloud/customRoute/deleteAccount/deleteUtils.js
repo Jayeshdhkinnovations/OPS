@@ -1,4 +1,5 @@
 import { appName } from '../../../Utils.js';
+import { baseTemplate, esc } from '../../emailTemplates.js';
 import sendSystemMail from '../../parsefunction/sendSystemMail.js';
 
 // Constants (adjust to your preference)
@@ -14,47 +15,18 @@ export function generateOtp(len = OTP_LENGTH) {
 }
 
 export async function sendDeleteOtpEmail(extUser, otp) {
-  const _extUser = extUser && JSON.parse(JSON.stringify(extUser));
+  const codeBlock = `<div style="margin:22px 0;padding:16px 0;text-align:center;background:#F9FAFB;border-radius:8px;font:700 28px/1 -apple-system,'Segoe UI',Arial,sans-serif;color:#1A1A1A;letter-spacing:8px;">${esc(otp)}</div>`;
   const params = {
     extUserId: extUser.id,
     from: appName,
     recipient: extUser?.get('Email'),
     subject: 'OTP for Deletion account request',
-    html: `
-<html lang="en">
-  <body style="margin:0;padding:0;background:#f6f7fb;font-family:Arial,Helvetica,sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7fb;">
-      <tr>
-        <td align="center" style="padding:24px;">
-          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e9ecf1;border-radius:8px;padding:20px;">
-            <tr>
-              <td align="left" style="font-size:16px;color:#0f172a;">
-                <div style="font-weight:bold;margin-bottom:8px;">${appName}</div>
-                <div style="font-size:18px;margin:0 0 12px 0;">Your verification code</div>
-                <div style="display:inline-block;border:1px solid #e9ecf1;border-radius:6px;background:#f8fafc;padding:10px 14px;margin-bottom:10px;">
-                  <span style="font-family:Consolas,'Courier New',monospace;font-size:24px;letter-spacing:6px;color:#0f172a;">${otp}</span>
-                </div>
-                <p style="margin:8px 0 0 0;font-size:13px;color:#475569;">
-                  This code expires in <strong>${OTP_EXPIRES_MIN}</strong> minutes.
-                </p>
-
-                <hr style="border:none;border-top:1px solid #e9ecf1;margin:18px 0;">
-                <p style="margin:0;font-size:12px;color:#64748b;">
-                  If you didn’t request this code, you can ignore this email.
-                </p>
-              </td>
-            </tr>
-          </table>
-
-          <div style="font-size:11px;color:#94a3b8;margin-top:12px;">
-            &copy; ${new Date().getFullYear()} ${appName}. All rights reserved.
-          </div>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>
-`,
+    html: baseTemplate({
+      heading: 'Your verification code',
+      intro: 'Use this code to confirm your account deletion request.',
+      bodyHtml: codeBlock,
+      footnote: `This code expires in ${OTP_EXPIRES_MIN} minutes. If you didn't request this code, you can ignore this email.`,
+    }),
   };
   return sendSystemMail({ params });
 }

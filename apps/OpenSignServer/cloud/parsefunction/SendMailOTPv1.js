@@ -1,4 +1,5 @@
 import { appName, smtpenable, updateMailCount } from '../../Utils.js';
+import { baseTemplate, esc } from '../emailTemplates.js';
 import { createOtpChallenge, OTP_MAX_ATTEMPTS } from './OtpSecurity.js';
 import { normalizeEmail } from './SigningSecurity.js';
 
@@ -74,12 +75,18 @@ export default async function sendMailOTPv1(request) {
 
   const mailsender = smtpenable ? process.env.SMTP_USER_EMAIL : process.env.MAILGUN_SENDER;
   try {
+    const codeBlock = `<div style="margin:22px 0;padding:16px 0;text-align:center;background:#F9FAFB;border-radius:8px;font:700 28px/1 -apple-system,'Segoe UI',Arial,sans-serif;color:#1A1A1A;letter-spacing:8px;">${esc(challenge.code)}</div>`;
     await Parse.Cloud.sendEmail({
       sender: `${appName} <${mailsender}>`,
       recipient: email,
       subject: `Your ${appName} verification code`,
       text: `Your verification code is ${challenge.code}. It expires in 10 minutes.`,
-      html: `<html><head><meta http-equiv='Content-Type' content='text/html;charset=UTF-8' /></head><body><div style='background-color:#f5f5f5;padding:20px'><div style='background-color:white;'><div style='padding:2px;font-family:system-ui;background-color:#47a3ad;'><p style='font-size:20px;font-weight:400;color:white;padding-left:20px;'>Verification code</p></div><div style='padding:20px;'><p style='font-family:system-ui;font-size:14px;'>Your code for this document is:</p><p style='font-weight:bolder;color:blue;font-size:45px;margin:20px;'>${challenge.code}</p><p style='font-family:system-ui;font-size:12px;'>This code expires in 10 minutes and can only be used for this document.</p></div></div></div></body></html>`,
+      html: baseTemplate({
+        heading: 'Verification code',
+        intro: 'Your code for this document is:',
+        bodyHtml: codeBlock,
+        footnote: 'This code expires in 10 minutes and can only be used for this document.',
+      }),
     });
     if (document?.ExtUserPtr?.objectId) updateMailCount(document.ExtUserPtr.objectId);
   } catch (error) {

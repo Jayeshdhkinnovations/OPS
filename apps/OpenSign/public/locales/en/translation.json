@@ -396,6 +396,7 @@
   "validate-alert-mssg": " The input does not meet the criteria set by the regular expression.",
   "otp-verification": "OTP verification",
   "enter-otp": "Enter OTP",
+  "otp-expires-10-min": "Expires in 10 minutes",
   "verify": "Verify",
   "verify-email-1": "Verify email",
   "resend": "Resend",

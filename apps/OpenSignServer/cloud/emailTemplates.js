@@ -27,7 +27,7 @@ const HAIRLINE = '#E5E7EB';
 const LOGO_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
 const LOGO_URL_DARK = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/logo-dark.png`;
 
-function esc(value) {
+export function esc(value) {
   return String(value ?? '').replace(
     /[&<>"']/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]

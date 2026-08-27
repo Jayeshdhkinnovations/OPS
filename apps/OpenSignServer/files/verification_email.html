@@ -1,16 +1,55 @@
-<html>
+<style>
+  @media (prefers-color-scheme: dark) {
+    .email-bg { background:#0B0F19 !important; }
+    .email-card { background:#0B0F19 !important; }
+    .email-ink { color:#F3F4F6 !important; }
+    .email-muted { color:#9CA3AF !important; }
+    .email-hairline { border-color:#232838 !important; }
+    .logo-light { display:none !important; }
+    .logo-dark { display:block !important; }
+  }
+</style>
+<div class="email-bg" style="background:#FFFFFF;padding:40px 20px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:440px;margin:0 auto;">
+    <tr>
+      <td class="email-card" style="background:#FFFFFF;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="vertical-align:middle;">
+  <span style="display:inline-block;">
+    <img src="https://sign.toowix.com/static/js/assets/images/email-logo-light.png" width="87" height="32" alt="SignToowix" class="logo-light" style="display:block;border:0;background:transparent;" />
+    <img src="https://sign.toowix.com/static/js/assets/images/email-logo-dark.png" width="87" height="32" alt="SignToowix" class="logo-dark" style="display:none;border:0;background:transparent;" />
+  </span></td>
+          </tr>
+        </table>
 
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-</head>
+        <div class="email-hairline" style="height:1px;background:#E5E7EB;margin:22px 0 26px;"></div>
 
-<body style="text-align: center;">
-    <p style="font-weight: bolder; font-size: large;">Welcome!</p>
-    <p>Click the button below to verify your email address:</p>
-    <br />
-    <p><a href="{{{link}}}" style="background-color: lightskyblue; cursor: pointer; border-radius: 5px; padding: 10px; border-style: solid; border-width: 2px; text-decoration: none; font-weight: bolder; color:blue">Verify email</a></p>
-    <br />
-    <p>{{appName}}</p>
-</body>
+        <div class="email-ink" style="color:#1A1A1A;font-size:18px;font-weight:700;line-height:1.4;">Verify your email address</div>
+        <div class="email-muted" style="color:#6B7280;font-size:14px;line-height:1.65;margin-top:10px;">Welcome! Click below to verify your email address and finish setting up your {{appName}} account.</div>
 
-</html>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="padding:24px 0 4px;">
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="background:#1B4F91;border-radius:8px;">
+              <a href="{{{link}}}" style="display:inline-block;padding:12px 26px;font:600 14px/1 -apple-system,'Segoe UI',Arial,sans-serif;color:#FFFFFF;text-decoration:none;border-radius:8px;">Verify email</a>
+            </td>
+          </tr>
+        </table>
+        <div style="margin-top:14px;font:400 12px/1.6 -apple-system,'Segoe UI',Arial,sans-serif;color:#9CA3AF;word-break:break-all;">
+          Or copy this link: <span style="color:#1B4F91;">{{{link}}}</span>
+        </div>
+      </td>
+    </tr></table>
+
+        <div class="email-hairline" style="height:1px;background:#E5E7EB;margin:30px 0 16px;"></div>
+        <div class="email-muted" style="color:#9CA3AF;font-size:12px;line-height:1.6;">
+          Sent by {{appName}}. If you didn't create this account, you can safely ignore this email.
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
