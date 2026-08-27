@@ -44,6 +44,60 @@ function shortHash(input) {
   return hash.toString(36).toUpperCase().padStart(6, '0').slice(0, 6);
 }
 
+// Resolves an IP to the city it signed from and the IANA timezone that was
+// actually local to the signer at that moment - reusing the same provider
+// and private-IP/timeout guards as securityNotifications.js's locationFor
+// (ipapi.co's free tier was previously rate-limited across every tenant
+// container sharing this server's outbound IP; ipwho.is replaced it there
+// and needs no API key). A dead/slow geo lookup must never fail certificate
+// generation, so every error path here resolves to an empty result instead
+// of throwing.
+async function resolveIpGeo(ip) {
+  if (!ip || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.|::1)/.test(ip)) {
+    return { city: '', region: '', timezoneId: '', timezoneAbbr: '' };
+  }
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 2500);
+    const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`, { signal: ctl.signal });
+    clearTimeout(timer);
+    if (!res.ok) return { city: '', region: '', timezoneId: '', timezoneAbbr: '' };
+    const j = await res.json();
+    if (!j.success) return { city: '', region: '', timezoneId: '', timezoneAbbr: '' };
+    return {
+      city: j.city || '',
+      region: j.region || '',
+      timezoneId: j.timezone?.id || '',
+      timezoneAbbr: j.timezone?.abbr || '',
+    };
+  } catch {
+    return { city: '', region: '', timezoneId: '', timezoneAbbr: '' };
+  }
+}
+
+// Resolves geo/timezone for every distinct signing IP in one pass (a 3-signer
+// document behind the same office network shouldn't trigger 3 lookups), and
+// annotates each participant in place with `location`, `timezoneId`, and
+// `timezoneAbbr`. Falls back to the sender's own timezone when a
+// participant's IP can't be resolved, so a signed time is never left
+// unlabeled.
+async function annotateParticipantGeo(participants, fallbackTimezone) {
+  const uniqueIps = [...new Set(participants.map(p => p.ipAddress).filter(Boolean))];
+  const geoEntries = await Promise.all(
+    uniqueIps.map(async ip => [ip, await resolveIpGeo(ip)])
+  );
+  const geoByIp = new Map(geoEntries);
+  for (const p of participants) {
+    const geo = geoByIp.get(p.ipAddress) || {};
+    // City only ("Mumbai", not "Mumbai, Maharashtra") - keeps the column
+    // short enough to never need the ellipsis fallback, and region is
+    // redundant once the city is named.
+    p.location = geo.city || geo.region || '';
+    p.timezoneId = geo.timezoneId || fallbackTimezone;
+    p.timezoneAbbr = geo.timezoneAbbr || '';
+  }
+}
+
 function initialsOf(name) {
   const parts = String(name || '?')
     .trim()
@@ -353,6 +407,12 @@ export default async function GenerateCertificate(docDetails) {
           ]
         : [];
 
+  // Each participant's signed/viewed time must read correctly in the place
+  // they actually were, not in the sender's timezone - a Mumbai sender and a
+  // London signer are ~5.5 hours apart, and rendering both against the
+  // sender's zone would print the wrong local time for the London signer.
+  await annotateParticipantGeo(participants, timezone);
+
   // Flat chronological event list for the "Event History" table - built
   // from the same AuditTrail data the old layout already used, just
   // reshaped into one row per event instead of one block per signer.
@@ -360,18 +420,21 @@ export default async function GenerateCertificate(docDetails) {
     { label: 'Document created', ts: toTs(createdAt), when: shortTime(createdAtLabel) },
   ];
   for (const p of participants) {
+    const participantTz = p.timezoneId || timezone;
     if (p.ViewedOn) {
+      const time = shortTime(formatDateStr(p.ViewedOn, DateFormat, participantTz, Is12Hr));
       events.push({
         label: `${p.Name || 'Signer'} viewed document`,
         ts: toTs(p.ViewedOn),
-        when: shortTime(formatDateStr(p.ViewedOn, DateFormat, timezone, Is12Hr)),
+        when: p.timezoneAbbr ? `${time} ${p.timezoneAbbr}` : time,
       });
     }
     if (p.SignedOn) {
+      const time = shortTime(formatDateStr(p.SignedOn, DateFormat, participantTz, Is12Hr));
       events.push({
         label: `${p.Name || 'Signer'} signed document`,
         ts: toTs(p.SignedOn),
-        when: shortTime(formatDateStr(p.SignedOn, DateFormat, timezone, Is12Hr)),
+        when: p.timezoneAbbr ? `${time} ${p.timezoneAbbr}` : time,
       });
     }
   }
@@ -728,8 +791,8 @@ export default async function GenerateCertificate(docDetails) {
     { key: 'name', label: 'Name & Email', width: 184 },
     { key: 'role', label: 'Role', width: 44 },
     { key: 'status', label: 'Status', width: 68 },
-    { key: 'signedAt', label: 'Signed At', width: 68 },
-    { key: 'ip', label: 'IP Address', width: 64 },
+    { key: 'signedAt', label: 'Signed At', width: 78 },
+    { key: 'location', label: 'Location', width: 64 },
   ];
   const fixedColsWidth = colSpecs.reduce((sum, c) => sum + c.width, 0);
   const authHeaderMinW = fontBold.widthOfTextAtSize('Authentication', 8) + CELL_PAD * 2;
@@ -907,9 +970,12 @@ export default async function GenerateCertificate(docDetails) {
     }
 
     const signedAtCol = colByKey.signedAt;
-    const signedLabel = p?.SignedOn
-      ? shortTime(formatDateStr(p.SignedOn, DateFormat, timezone, Is12Hr))
-      : '—';
+    const signedTz = p.timezoneId || timezone;
+    let signedLabel = '—';
+    if (p?.SignedOn) {
+      const time = shortTime(formatDateStr(p.SignedOn, DateFormat, signedTz, Is12Hr));
+      signedLabel = p.timezoneAbbr ? `${time} ${p.timezoneAbbr}` : time;
+    }
     const signedFit = fitSingleLine(signedLabel, font, 7.5, signedAtCol.width - CELL_PAD * 2, 6.5);
     page.drawText(signedFit.text, {
       x: signedAtCol.x + CELL_PAD,
@@ -919,12 +985,18 @@ export default async function GenerateCertificate(docDetails) {
       color: gray,
     });
 
-    const ipCol = colByKey.ip;
-    const ipFit = fitSingleLine(p?.ipAddress || '', font, 7.5, ipCol.width - CELL_PAD * 2, 6.5);
-    page.drawText(ipFit.text, {
-      x: ipCol.x + CELL_PAD,
+    const locationCol = colByKey.location;
+    const locationFit = fitSingleLine(
+      p?.location || '—',
+      font,
+      7.5,
+      locationCol.width - CELL_PAD * 2,
+      6.5
+    );
+    page.drawText(locationFit.text, {
+      x: locationCol.x + CELL_PAD,
       y: rowMidBaseline,
-      size: ipFit.size,
+      size: locationFit.size,
       font,
       color: gray,
     });

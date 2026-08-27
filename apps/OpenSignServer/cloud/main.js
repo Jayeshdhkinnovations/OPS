@@ -78,6 +78,7 @@ import triggerEvent from './parsefunction/triggerEvent.js';
 import setWidgetPreferences from './parsefunction/setWidgetPreferences.js';
 import createDocumentFromApp from './parsefunction/createDocumentFromApp.js';
 import verifyCertificateEvidence from './parsefunction/verifyCertificateEvidence.js';
+import resolveIpGeo from './parsefunction/resolveIpGeo.js';
 
 export default function registerCloudCode() {
   // This afterSave function triggers after an object is added or updated in the specified class, allowing for post-processing logic.
@@ -167,4 +168,5 @@ export default function registerCloudCode() {
   Parse.Cloud.define('setwidgetpreferences', setWidgetPreferences);
   Parse.Cloud.define('createdocumentfromapp', createDocumentFromApp);
   Parse.Cloud.define('verifycertificateevidence', verifyCertificateEvidence);
+  Parse.Cloud.define('resolveipgeo', resolveIpGeo);
 }

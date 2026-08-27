@@ -16,6 +16,51 @@ try {
   console.error("Invalid VITE_SIGNATURE_TRUST_ANCHORS configuration:", error);
 }
 
+// One card per actual human participant (name/email/location/IP), pulled
+// from the document's protected verification-evidence manifest - not the
+// certificate DN, which only describes the platform's own self-signed
+// identity and is identical for every document regardless of who signed it.
+function participantsFromEvidence(evidence) {
+  return Array.isArray(evidence?.participants) ? evidence.participants : [];
+}
+
+async function addSignerGeoResults(results) {
+  const allIps = [
+    ...new Set(
+      results.flatMap((result) =>
+        participantsFromEvidence(result.verificationEvidence)
+          .map((p) => p?.ipAddress)
+          .filter(Boolean)
+      )
+    )
+  ];
+  if (!allIps.length) return results.map((result) => ({ ...result, signerList: [] }));
+  let geoByIp = {};
+  try {
+    geoByIp = (await Parse.Cloud.run("resolveipgeo", { ips: allIps })) || {};
+  } catch {
+    // A dead/slow geo lookup must not block showing the rest of the
+    // verification result - the location/IP fields just stay empty.
+  }
+  return results.map((result) => {
+    const participants = participantsFromEvidence(result.verificationEvidence);
+    const signerList = participants.map((p, i) => {
+      const geo = p?.ipAddress ? geoByIp[p.ipAddress] : null;
+      return {
+        key: p?.participantId || `${i}`,
+        name: p?.name || "Unknown signer",
+        email: p?.email || "",
+        signedAt: p?.signedAt || "",
+        ip: p?.ipAddress || "",
+        country: geo?.countryCode || geo?.country || "",
+        state: geo?.region || "",
+        locality: geo?.city || ""
+      };
+    });
+    return { ...result, signerList };
+  });
+}
+
 async function addRevocationResult(result) {
   const urls = result.certificateServiceUrls || {};
   if (!result.certificateDer || !result.issuerCertificateDer) return result;
@@ -195,9 +240,10 @@ const VerifyDocument = () => {
       if (signatureInfo.error) {
         setVerificationResult(signatureInfo.error);
       } else if (signatureInfo.results && signatureInfo.results.length > 0) {
-        const enrichedResults = await Promise.all(
+        const revocationEnriched = await Promise.all(
           signatureInfo.results.map(addRevocationResult)
         );
+        const enrichedResults = await addSignerGeoResults(revocationEnriched);
         setDetailedResults(enrichedResults);
         const coreChecksPass = enrichedResults.every(
           (result) =>
@@ -366,12 +412,12 @@ const VerifyDocument = () => {
             {detailedResults.length > 0 && (
               <div className="w-full space-y-6">
                 {detailedResults.map((res, index) => {
-                  const signerInfo = parseCertificateInfo(
-                    res.certificateSubject
-                  );
-                  const issuerInfo = parseCertificateInfo(
-                    res.certificateIssuer
-                  );
+                  // Issuer Details stays the certificate's own static
+                  // identity (it's a self-signed platform certificate, not a
+                  // person, so it has no location). Signer Information is
+                  // rendered separately below as a per-participant list.
+                  const issuerInfo = parseCertificateInfo(res.certificateIssuer);
+                  const signerList = res.signerList || [];
                   const overallIsAcceptable =
                     res.overallStatus === CHECK_STATUS.PASS ||
                     res.overallStatus === CHECK_STATUS.WARNING;
@@ -580,8 +626,10 @@ const VerifyDocument = () => {
                         </div>
                       </div>
 
-                      {/* Signer Information Section */}
-                      {Object.keys(signerInfo).length > 0 && (
+                      {/* Signer Information Section - one card per actual
+                          participant, not the certificate DN (see note above
+                          the signerList/issuerInfo declaration). */}
+                      {signerList.length > 0 && (
                         <div className="border-b border-gray-100">
                           <button
                             onClick={() => toggleSection(index, "signer")}
@@ -614,24 +662,41 @@ const VerifyDocument = () => {
                             </div>
                           </button>
                           {!collapsedSections[`${index}-signer`] && (
-                            <div className="px-6 pb-6">
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {Object.entries(signerInfo).map(
-                                  ([label, value]) => (
-                                    <div
-                                      key={label}
-                                      className="bg-gray-50 rounded-lg p-4"
-                                    >
-                                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                                        {label}
-                                      </span>
-                                      <p className="mt-1 text-sm font-mono text-gray-900 break-all">
-                                        {value}
-                                      </p>
-                                    </div>
-                                  )
-                                )}
-                              </div>
+                            <div className="px-6 pb-6 space-y-4">
+                              {signerList.map((signer, signerIdx) => (
+                                <div
+                                  key={signer.key}
+                                  className="border border-gray-200 rounded-lg p-4"
+                                >
+                                  <p className="text-sm font-semibold text-gray-900 mb-3">
+                                    {signerIdx + 1}. {signer.name}
+                                    {signer.email ? ` <${signer.email}>` : ""}
+                                  </p>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {[
+                                      ["Country", signer.country],
+                                      ["State", signer.state],
+                                      ["Locality", signer.locality],
+                                      ["IP Address", signer.ip],
+                                      ["Signed At", signer.signedAt]
+                                    ]
+                                      .filter(([, value]) => value)
+                                      .map(([label, value]) => (
+                                        <div
+                                          key={label}
+                                          className="bg-gray-50 rounded-lg p-4"
+                                        >
+                                          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                            {label}
+                                          </span>
+                                          <p className="mt-1 text-sm font-mono text-gray-900 break-all">
+                                            {value}
+                                          </p>
+                                        </div>
+                                      ))}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>
