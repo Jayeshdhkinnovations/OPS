@@ -24,17 +24,29 @@ function participantsFromEvidence(evidence) {
   return Array.isArray(evidence?.participants) ? evidence.participants : [];
 }
 
+function toGeoFields(geo) {
+  if (!geo) return null;
+  return {
+    ip: geo.ip || "",
+    country: geo.countryCode || geo.country || "",
+    state: geo.region || "",
+    locality: geo.city || ""
+  };
+}
+
 async function addSignerGeoResults(results) {
-  const allIps = [
-    ...new Set(
-      results.flatMap((result) =>
-        participantsFromEvidence(result.verificationEvidence)
-          .map((p) => p?.ipAddress)
-          .filter(Boolean)
-      )
-    )
-  ];
-  if (!allIps.length) return results.map((result) => ({ ...result, signerList: [] }));
+  const originIps = results
+    .map((result) => result.verificationEvidence?.document?.originIp)
+    .filter(Boolean);
+  const participantIps = results.flatMap((result) =>
+    participantsFromEvidence(result.verificationEvidence)
+      .map((p) => p?.ipAddress)
+      .filter(Boolean)
+  );
+  const allIps = [...new Set([...originIps, ...participantIps])];
+  if (!allIps.length) {
+    return results.map((result) => ({ ...result, signerList: [], issuerGeo: null }));
+  }
   let geoByIp = {};
   try {
     geoByIp = (await Parse.Cloud.run("resolveipgeo", { ips: allIps })) || {};
@@ -57,7 +69,11 @@ async function addSignerGeoResults(results) {
         locality: geo?.city || ""
       };
     });
-    return { ...result, signerList };
+    const originIp = result.verificationEvidence?.document?.originIp || "";
+    const issuerGeo = originIp
+      ? toGeoFields({ ip: originIp, ...geoByIp[originIp] })
+      : null;
+    return { ...result, signerList, issuerGeo };
   });
 }
 
@@ -416,7 +432,21 @@ const VerifyDocument = () => {
                   // identity (it's a self-signed platform certificate, not a
                   // person, so it has no location). Signer Information is
                   // rendered separately below as a per-participant list.
-                  const issuerInfo = parseCertificateInfo(res.certificateIssuer);
+                  // Issuer Details' Country/State/Locality are overridden
+                  // with where the document was actually initiated/sent
+                  // from (res.issuerGeo, resolved from OriginIp - the
+                  // creator's IP captured at document-creation time), not
+                  // the certificate's own static org address. Organization/
+                  // Common Name/Email still describe the certificate itself.
+                  const issuerInfo = {
+                    ...parseCertificateInfo(res.certificateIssuer),
+                    ...(res.issuerGeo?.country ? { Country: res.issuerGeo.country } : {}),
+                    ...(res.issuerGeo?.state ? { State: res.issuerGeo.state } : {}),
+                    ...(res.issuerGeo?.locality
+                      ? { Locality: res.issuerGeo.locality }
+                      : {}),
+                    ...(res.issuerGeo?.ip ? { "IP Address": res.issuerGeo.ip } : {})
+                  };
                   const signerList = res.signerList || [];
                   const overallIsAcceptable =
                     res.overallStatus === CHECK_STATUS.PASS ||

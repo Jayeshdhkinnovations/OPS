@@ -122,6 +122,10 @@ export function buildVerificationEvidence({ document, auditTrail, completedAt })
       verificationUrl: publicOrigin
         ? `${publicOrigin}/verify-document?certId=${encodeURIComponent(certificateId)}`
         : '',
+      // Captured at document-creation time (createDocumentFromApp.js) - the
+      // IP of whoever initiated/sent the document, not a participant's.
+      // Surfaced on the verify-document page's Issuer Details.
+      originIp: document?.OriginIp || '',
     },
     signingArchitecture: 'single_platform_signature',
     revisionPolicy: { type: 'DocMDP', permission: 1 },

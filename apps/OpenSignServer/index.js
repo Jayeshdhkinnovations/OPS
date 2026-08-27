@@ -270,6 +270,10 @@ const defaultServerConfig = {
   auth: sharedParts.auth,
   push: { queueOptions: { disablePushWorker: true } },
   ...(sharedParts.emailAdapter ? { emailAdapter: sharedParts.emailAdapter } : {}),
+  // Reset-password links never expired before this (Parse Server's default
+  // is "never"). Scoped to only the reset-password token - no other
+  // passwordPolicy behavior (complexity rules, reuse, etc.) is enabled.
+  passwordPolicy: { resetTokenValidityDuration: 3600 },
 };
 const defaultServer = new ParseServer(defaultServerConfig);
 await defaultServer.start();

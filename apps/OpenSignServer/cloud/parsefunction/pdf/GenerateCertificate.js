@@ -306,7 +306,17 @@ function drawSectionHeading(page, { x, text, y, width, font, color, lineColor })
 }
 
 export default async function GenerateCertificate(docDetails) {
-  const timezone = docDetails?.ExtUserPtr?.Timezone || '';
+  // Most senders never set a Timezone preference, which left every date on
+  // the certificate rendered as raw UTC ("GMT Z") and the Timezone row
+  // showing "n/a". Fall back to resolving it from OriginIp - the sender's
+  // IP, already captured at document-creation time in
+  // createDocumentFromApp.js - using the same lookup already used for
+  // participants below.
+  let timezone = docDetails?.ExtUserPtr?.Timezone || '';
+  if (!timezone && docDetails?.OriginIp) {
+    const senderGeo = await resolveIpGeo(docDetails.OriginIp);
+    timezone = senderGeo.timezoneId || '';
+  }
   const Is12Hr = docDetails?.ExtUserPtr?.Is12HourTime || false;
   const DateFormat = docDetails?.ExtUserPtr?.DateFormat || 'MM/DD/YYYY';
   const pdfDoc = await PDFDocument.create();
