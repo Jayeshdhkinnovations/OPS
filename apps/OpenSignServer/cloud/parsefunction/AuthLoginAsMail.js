@@ -1,98 +1,96 @@
 import axios from 'axios';
 import { cloudServerUrl, serverAppId } from '../../Utils.js';
-async function AuthLoginAsMail(request) {
+import { OTP_MAX_ATTEMPTS, verifyOtpChallenge } from './OtpSecurity.js';
+import { normalizeEmail } from './SigningSecurity.js';
+import { createSignerAuthGrant } from './SignerAuthGrant.js';
+
+const INVALID_OTP = 'Invalid Otp';
+
+async function signerStillMatches(docId, contactId, email) {
+  const query = new Parse.Query('contracts_Document');
+  query.equalTo('objectId', docId);
+  query.include('Signers');
+  query.notEqualTo('IsArchive', true);
+  query.notEqualTo('IsDeclined', true);
+  const document = await query.first({ useMasterKey: true });
+  if (!document || document.get('IsCompleted')) return false;
+  const signer = (document.toJSON().Signers || []).find(item => item?.objectId === contactId);
+  return Boolean(signer && normalizeEmail(signer.Email) === email);
+}
+
+async function loginAsEmail(email) {
+  const query = new Parse.Query(Parse.User);
+  query.equalTo('email', email);
+  const user = await query.first({ useMasterKey: true });
+  if (!user) return null;
+
+  const response = await axios.post(`${cloudServerUrl}/loginAs`, null, {
+    headers: {
+      'Content-Type': 'application/json;charset=utf-8',
+      'X-Parse-Application-Id': serverAppId,
+      'X-Parse-Master-Key': process.env.MASTER_KEY,
+    },
+    params: { userId: user.id },
+  });
+  return response.data || null;
+}
+
+export default async function AuthLoginAsMail(request) {
+  const email = normalizeEmail(request.params.email);
+  const code = String(request.params.otp || '').trim();
+  const docId = request.params.docId;
+  const contactId = request.params.contactId;
+  if (!email || !/^\d{6}$/.test(code) || !docId || !contactId) return INVALID_OTP;
+
   try {
-    //function for login user using user objectId without touching user's password
-    const serverUrl = cloudServerUrl; //process.env.SERVER_URL;
-    const APPID = serverAppId;
-    const masterKEY = process.env.MASTER_KEY;
+    const query = new Parse.Query('defaultdata_Otp');
+    query.equalTo('Email', email);
+    query.equalTo('DocId', docId);
+    query.equalTo('ContactId', contactId);
+    const record = await query.first({ useMasterKey: true });
+    if (!record) return INVALID_OTP;
 
-    let otpN = request.params.otp;
-    let otp = parseInt(otpN);
-    let email = request.params.email;
-
-    let message;
-    //checking otp is correct or not which already save in defaultdata_Otp class
-    const checkOtp = new Parse.Query('defaultdata_Otp');
-    checkOtp.equalTo('Email', email);
-    const res = await checkOtp.first({ useMasterKey: true });
-
-    if (res !== undefined) {
-      let resOtp = res.get('OTP');
-
-      if (resOtp === otp) {
-        var result = await getToken(request);
-        if (result && !result?.emailVerified) {
-          const userQuery = new Parse.Query(Parse.User);
-          const user = await userQuery.get(result?.objectId, {
-            sessionToken: result.sessionToken,
-          });
-          // Update the emailVerified field to true
-          user.set('emailVerified', true);
-          // Save the user object
-          const res = await user.save(null, { useMasterKey: true });
-          if (res) {
-            return result;
-          } else {
-            reject('user not found!');
-          }
-        } else {
-          return result;
-        }
-
-        async function getToken(request) {
-          return new Promise(function (resolve, reject) {
-            var query = new Parse.Query(Parse.User);
-            query.equalTo('email', email);
-            query
-              .first({ useMasterKey: true })
-              .then(user => {
-                //call loginAs function to use login method passing user objectId as a userId
-
-                const url = `${serverUrl}/loginAs`;
-                axios({
-                  method: 'POST',
-                  url: url,
-                  headers: {
-                    'Content-Type': 'application/json;charset=utf-8',
-                    'X-Parse-Application-Id': APPID,
-                    'X-Parse-Master-Key': masterKEY,
-                  },
-                  params: {
-                    userId: user.id,
-                  },
-                })
-                  .then(function (res) {
-                    // console.log(res.data)
-                    if (res.data) {
-                      resolve(res.data);
-                    } else {
-                      reject('user not found!');
-                    }
-                  })
-                  .catch(err => {
-                    reject('user not found!');
-                  });
-
-                // user couldn't find lets sign up!
-              })
-              .catch(() => {
-                reject('user not found!');
-              });
-          });
-        }
-      } else {
-        message = `Invalid Otp`;
-        return message;
-      }
-    } else {
-      message = 'user not found!';
-      return message;
+    const attempts = Number(record.get('Attempts') || 0);
+    const maxAttempts = Number(record.get('MaxAttempts') || OTP_MAX_ATTEMPTS);
+    const expiresAt = record.get('ExpiresAt');
+    if (!expiresAt || new Date(expiresAt).getTime() <= Date.now() || attempts >= maxAttempts) {
+      await record.destroy({ useMasterKey: true }).catch(() => {});
+      return INVALID_OTP;
     }
-  } catch (err) {
-    console.log('err in Auth');
-    console.log(err);
-    return 'Result not found';
+
+    const valid = verifyOtpChallenge({
+      storedHash: record.get('OTPHash'),
+      code,
+      salt: record.get('Salt'),
+      email,
+      docId,
+      contactId,
+    });
+    if (!valid) {
+      record.set('Attempts', attempts + 1);
+      await record.save(null, { useMasterKey: true });
+      return INVALID_OTP;
+    }
+
+    if (!(await signerStillMatches(docId, contactId, email))) {
+      await record.destroy({ useMasterKey: true }).catch(() => {});
+      return INVALID_OTP;
+    }
+
+    // Destroy before issuing the session so this challenge is strictly single-use.
+    await record.destroy({ useMasterKey: true });
+    const result = await loginAsEmail(email);
+    if (!result) return 'user not found!';
+    await createSignerAuthGrant({
+      userId: result.objectId,
+      sessionToken: result.sessionToken,
+      email,
+      docId,
+      contactId,
+    });
+    return result;
+  } catch (error) {
+    console.error('OTP authentication failed:', error?.message || 'unknown error');
+    return INVALID_OTP;
   }
 }
-export default AuthLoginAsMail;

@@ -438,7 +438,8 @@ function PdfRequestFiles(
                     "Content-Type": "application/json",
                     "X-Parse-Application-Id":
                       localStorage.getItem("parseAppId"),
-                    sessiontoken: localStorage.getItem("accesstoken")
+                    "X-Parse-Session-Token":
+                      localStorage.getItem("accesstoken")
                   }
                 }
               );
@@ -781,7 +782,9 @@ function PdfRequestFiles(
                   contactId,
                   objectId,
                   widgets,
-                  "Signed"
+                  "Signed",
+                  Number(pdfDetails?.[0]?.SigningRevision || 0),
+                  pdfDetails?.[0]?.SigningRevisionToken || ""
                 );
                 if (resSign && resSign.status === "success") {
                   dispatch(setTypedSignFont("Fasthand"));

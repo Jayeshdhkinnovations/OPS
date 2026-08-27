@@ -1,13 +1,46 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { PDFDocument, PDFName, PDFSignature, PDFRef, PDFDict } from "pdf-lib"; // Updated import
-import * as asn1js from "asn1js";
+import Parse from "parse";
 import {
-  Certificate,
-  ContentInfo,
-  SignedData,
-  IssuerAndSerialNumber
-} from "pkijs";
+  CHECK_STATUS,
+  parseTrustedCertificates,
+  verifyPdfSignatures
+} from "../utils/pdfSignatureVerification.mjs";
+
+let configuredTrustAnchors = [];
+try {
+  configuredTrustAnchors = parseTrustedCertificates(
+    import.meta.env.VITE_SIGNATURE_TRUST_ANCHORS || ""
+  );
+} catch (error) {
+  console.error("Invalid VITE_SIGNATURE_TRUST_ANCHORS configuration:", error);
+}
+
+async function addRevocationResult(result) {
+  const urls = result.certificateServiceUrls || {};
+  if (!result.certificateDer || !result.issuerCertificateDer) return result;
+  for (const [mode, candidates] of [
+    ["ocsp", urls.ocsp || []],
+    ["crl", urls.crl || []]
+  ]) {
+    for (const url of candidates) {
+      try {
+        const response = await Parse.Cloud.run("verifycertificateevidence", {
+          mode,
+          url,
+          certificateDer: result.certificateDer,
+          issuerCertificateDer: result.issuerCertificateDer
+        });
+        if (["good", "revoked", "malformed"].includes(response?.status)) {
+          return { ...result, revocationStatus: response.status };
+        }
+      } catch {
+        // Try the next certificate-advertised responder or CRL endpoint.
+      }
+    }
+  }
+  return result;
+}
 
 const VerifyDocument = () => {
   const { t } = useTranslation();
@@ -142,418 +175,6 @@ const VerifyDocument = () => {
     }
   };
 
-  const parseSignature = async (pdfDoc) => {
-    const signatureFields = pdfDoc
-      .getForm()
-      .getFields()
-      .filter((field) => field instanceof PDFSignature); // Updated filter logic
-    if (!signatureFields.length) {
-      return { error: t("no-signature-found") };
-    }
-
-    const results = [];
-
-    for (const field of signatureFields) {
-      try {
-        if (!field.acroField || !field.acroField.dict) {
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("error-processing-signature"),
-            errorDetails: t("missing-acrofield-dict"),
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked"),
-            isCertificateDateValid: false,
-            calculatedDocumentHash: t("not-available"),
-            messageDigestInSignature: t("not-available"),
-            hashComparisonResult: t("not-performed"),
-            authenticatedAttributesSignatureResult: t("not-performed")
-          });
-          continue;
-        }
-
-        // New logic to determine the actual signature dictionary
-        const fieldDict = field.acroField.dict;
-        const vEntry = fieldDict.get(PDFName.of("V"));
-        let actualSignatureDict = null;
-
-        if (vEntry) {
-          if (vEntry instanceof PDFRef) {
-            const lookedUp = pdfDoc.context.lookup(vEntry);
-            if (lookedUp instanceof PDFDict) {
-              actualSignatureDict = lookedUp;
-            }
-          } else if (vEntry instanceof PDFDict) {
-            actualSignatureDict = vEntry;
-          }
-        }
-
-        // Use actualSignatureDict if found, otherwise behavior might be problematic (as per existing logic)
-        // If actualSignatureDict is null, subsequent checks for byteRangeObject etc. will fail,
-        // leading to an error message for this signature, which is acceptable.
-        const signatureDict = actualSignatureDict;
-
-        // Check if signatureDict is null (meaning actualSignatureDict was not resolved)
-        // and push an error if it is, before trying to get ByteRange or Contents.
-        if (!signatureDict) {
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("error-processing-signature"),
-            errorDetails: t("signature-dictionary-not-found-or-invalid"), // New error message
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked"),
-            isCertificateDateValid: false,
-            calculatedDocumentHash: t("not-available"),
-            messageDigestInSignature: t("not-available"),
-            hashComparisonResult: t("not-performed"),
-            authenticatedAttributesSignatureResult: t("not-performed")
-          });
-          continue;
-        }
-
-        const byteRangeObject = signatureDict.get(PDFName.of("ByteRange"));
-        let byteRange; // Will be assigned after validation
-
-        // Comprehensive validation for byteRangeObject and its contents
-        if (
-          !byteRangeObject ||
-          !byteRangeObject.array ||
-          !Array.isArray(byteRangeObject.array) ||
-          byteRangeObject.array.length === 0 ||
-          byteRangeObject.array.length % 2 !== 0
-        ) {
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("error-processing-signature"),
-            errorDetails: t("missing-or-invalid-byterange"),
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked"),
-            isCertificateDateValid: false,
-            calculatedDocumentHash: t("not-available"),
-            messageDigestInSignature: t("not-available"),
-            hashComparisonResult: t("not-performed"),
-            authenticatedAttributesSignatureResult: t("not-performed")
-          });
-          continue;
-        }
-
-        const byteRangeNumbers = [];
-        let byteRangeIsValid = true;
-        for (const pdfObject of byteRangeObject.array) {
-          if (!pdfObject || typeof pdfObject.asNumber !== "function") {
-            byteRangeIsValid = false;
-            break;
-          }
-          const num = pdfObject.asNumber();
-          if (!Number.isFinite(num)) {
-            // Checks for NaN, Infinity, -Infinity
-            byteRangeIsValid = false;
-            break;
-          }
-          byteRangeNumbers.push(num);
-        }
-
-        if (!byteRangeIsValid) {
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("error-processing-signature"),
-            errorDetails: t("missing-or-invalid-byterange"), // Or a more specific error like "ByteRange contains non-numeric values"
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked"),
-            isCertificateDateValid: false,
-            calculatedDocumentHash: t("not-available"),
-            messageDigestInSignature: t("not-available"),
-            hashComparisonResult: t("not-performed"),
-            authenticatedAttributesSignatureResult: t("not-performed")
-          });
-          continue;
-        }
-        byteRange = byteRangeNumbers; // Assign the validated numbers to byteRange
-
-        const contentsObject = signatureDict.get(PDFName.of("Contents"));
-        if (!contentsObject || typeof contentsObject.asString !== "function") {
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("error-processing-signature"),
-            errorDetails: t("missing-or-invalid-contents"),
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked"),
-            isCertificateDateValid: false,
-            calculatedDocumentHash: t("not-available"),
-            messageDigestInSignature: t("not-available"),
-            hashComparisonResult: t("not-performed"),
-            authenticatedAttributesSignatureResult: t("not-performed")
-          });
-          continue;
-        }
-        const contents = contentsObject.asString();
-
-        // The old basic check can be removed now as the more specific checks above cover these cases.
-        // if (!byteRange || !contents) { ... }
-
-        // Calculate totalSignedLength for accurate buffer initialization
-        let totalSignedLength = 0;
-        for (let i = 1; i < byteRange.length; i += 2) {
-          totalSignedLength += byteRange[i];
-        }
-
-        if (totalSignedLength <= 0) {
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("error-processing-signature"),
-            errorDetails: t("missing-or-invalid-byterange"), // totalSignedLength being non-positive implies invalid ByteRange
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked"),
-            isCertificateDateValid: false,
-            calculatedDocumentHash: t("not-available"),
-            messageDigestInSignature: t("not-available"),
-            hashComparisonResult: t("not-performed"),
-            authenticatedAttributesSignatureResult: t("not-performed")
-          });
-          continue;
-        }
-        const pdfSignedDataBytes = new Uint8Array(totalSignedLength);
-        let offset = 0;
-        let reconstructionFailed = false;
-
-        for (let i = 0; i < byteRange.length; i += 2) {
-          const start = byteRange[i];
-          const length = byteRange[i + 1];
-
-          if (
-            start < 0 ||
-            length <= 0 ||
-            start + length > fileBuffer.byteLength
-          ) {
-            reconstructionFailed = true;
-            break;
-          }
-          pdfSignedDataBytes.set(
-            new Uint8Array(fileBuffer.slice(start, start + length)),
-            offset
-          );
-          offset += length;
-        }
-
-        if (reconstructionFailed) {
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("error-processing-signature"),
-            errorDetails: t("missing-or-invalid-byterange"), // Error during reconstruction due to invalid segment
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked"),
-            isCertificateDateValid: false,
-            calculatedDocumentHash: t("not-available"),
-            messageDigestInSignature: t("not-available"),
-            hashComparisonResult: t("not-performed"),
-            authenticatedAttributesSignatureResult: t("not-performed")
-          });
-          continue;
-        }
-
-        // Remove leading/trailing null bytes from hex if present from PDF content
-        const pkcs7Hex = contents.trim();
-
-        if (!pkcs7Hex) {
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("signature-invalid-basic"),
-            errorDetails: t("missing-signature-contents"), // New i18n key
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked")
-          });
-          continue;
-        }
-
-        // Convert hex string to ArrayBuffer
-        let cmsContentBuffer;
-        try {
-          cmsContentBuffer = new Uint8Array(
-            pkcs7Hex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
-          ).buffer;
-        } catch (hexError) {
-          // console.error('Error converting hex string to ArrayBuffer:', hexError); // Removed
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("signature-invalid-basic"),
-            errorDetails: t("invalid-signature-hex-format"), // New i18n key
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked")
-          });
-          continue;
-        }
-
-        // Parse the CMS ContentInfo
-        const asn1 = asn1js.fromBER(cmsContentBuffer);
-        if (asn1.offset === -1) {
-          // console.error('Error parsing ASN.1 from signature data'); // Removed
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("signature-invalid-basic"),
-            errorDetails: "ASN.1 parsing error from signature data.",
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked")
-          });
-          continue;
-        }
-
-        const cmsContentInfo = new ContentInfo({ schema: asn1.result });
-        if (
-          String(cmsContentInfo.contentType).trim() !==
-          String(ContentInfo.SIGNED_DATA).trim()
-        ) {
-          // console.error('Not a SignedData content type. Actual type:', cmsContentInfo.contentType, 'Expected:', ContentInfo.SIGNED_DATA); // Removed
-          results.push({
-            name: field.getName() || t("unnamed-signature-field"),
-            status: t("signature-invalid-basic"),
-            errorDetails: t("unsupported-signature-format-not-signeddata"), // New i18n key
-            signerInfo: t("signer-info-not-available"),
-            certificateSubject: "",
-            certificateIssuer: "",
-            certificateValidity: t("cert-validity-not-checked")
-          });
-          continue;
-        }
-
-        const signedData = new SignedData({ schema: cmsContentInfo.content });
-
-        let signerInfoText = t("signer-info-not-available");
-        let certSubject = "";
-        let certIssuer = "";
-        let certValidity = t("cert-validity-not-checked");
-        let isValid = false;
-
-        if (signedData.signerInfos && signedData.signerInfos.length > 0) {
-          const signerInfo = signedData.signerInfos[0];
-
-          if (signedData.certificates && signedData.certificates.length > 0) {
-            let signerCertificate = null;
-            for (const cert of signedData.certificates) {
-              if (cert instanceof Certificate) {
-                const issuerAndSerialNumber = signerInfo.sid;
-                if (issuerAndSerialNumber instanceof IssuerAndSerialNumber) {
-                  let certMatch = true;
-                  if (
-                    cert.issuer.typesAndValues.length ===
-                    issuerAndSerialNumber.issuer.typesAndValues.length
-                  ) {
-                    for (
-                      let i = 0;
-                      i < cert.issuer.typesAndValues.length;
-                      i++
-                    ) {
-                      if (
-                        cert.issuer.typesAndValues[i].type !==
-                          issuerAndSerialNumber.issuer.typesAndValues[i].type ||
-                        cert.issuer.typesAndValues[i].value.valueBlock.value !==
-                          issuerAndSerialNumber.issuer.typesAndValues[i].value
-                            .valueBlock.value
-                      ) {
-                        certMatch = false;
-                        break;
-                      }
-                    }
-                  } else {
-                    certMatch = false;
-                  }
-
-                  if (
-                    certMatch &&
-                    cert.serialNumber.valueBlock.valueHexView.join("") ===
-                      issuerAndSerialNumber.serialNumber.valueBlock.valueHexView.join(
-                        ""
-                      )
-                  ) {
-                    signerCertificate = cert;
-                    break;
-                  }
-                }
-              }
-            }
-
-            if (signerCertificate) {
-              certSubject = signerCertificate.subject.typesAndValues
-                .map((tv) => `${tv.type}=${tv.value.valueBlock.value}`)
-                .join(", ");
-              certIssuer = signerCertificate.issuer.typesAndValues
-                .map((tv) => `${tv.type}=${tv.value.valueBlock.value}`)
-                .join(", ");
-              signerInfoText = `${t("signer")}: ${certSubject}, ${t("issuer")}: ${certIssuer}`;
-
-              const notBefore = signerCertificate.notBefore.value;
-              const notAfter = signerCertificate.notAfter.value;
-              const currentDate = new Date();
-              certValidity = `${t("valid-from")} ${notBefore.toLocaleDateString()} ${t("to")} ${notAfter.toLocaleDateString()}`;
-              if (currentDate < notBefore || currentDate > notAfter) {
-                certValidity += ` (${t("expired-or-not-yet-valid")})`;
-                isValid = false; // Explicitly false if expired
-              } else {
-                certValidity += ` (${t("valid")})`;
-                isValid = true;
-              }
-            } else {
-              signerInfoText = t("signer-certificate-not-found"); // New i18n key
-            }
-          } else {
-            signerInfoText = t("no-certificates-in-signature"); // New i18n key
-          }
-        } else {
-          signerInfoText = t("no-signer-info-in-pkcs7"); // Re-use existing key, or make new one
-        }
-
-        results.push({
-          name: field.getName() || t("unnamed-signature-field"),
-          status: isValid
-            ? t("signature-valid-basic")
-            : t("signature-invalid-basic"),
-          signerInfo: signerInfoText,
-          certificateSubject: certSubject,
-          certificateIssuer: certIssuer,
-          certificateValidity: certValidity,
-          errorDetails:
-            !isValid && signerInfoText === t("signer-info-not-available")
-              ? t("could-not-parse-signer-info")
-              : undefined // New i18n key
-        });
-      } catch (e) {
-        console.error(
-          "Error processing signature field with pkijs:",
-          field.getName(),
-          e
-        );
-        results.push({
-          name: field.getName() || t("unnamed-signature-field"),
-          status: t("error-processing-signature"),
-          errorDetails: e.message,
-          signerInfo: t("signer-info-not-available"),
-          certificateSubject: "",
-          certificateIssuer: "",
-          certificateValidity: t("cert-validity-not-checked")
-        });
-      }
-    }
-    return { results };
-  };
-
   const handleVerifyDocument = async () => {
     // Removed jsrsasignStatus check
 
@@ -567,25 +188,34 @@ const VerifyDocument = () => {
     setDetailedResults([]);
 
     try {
-      // Removed window.KJUR and window.X509 check
-
-      const pdfDoc = await PDFDocument.load(fileBuffer, {
-        ignoreEncryption: true
+      const signatureInfo = await verifyPdfSignatures(fileBuffer, {
+        trustedCertificates: configuredTrustAnchors
       });
-      const signatureInfo = await parseSignature(pdfDoc);
 
       if (signatureInfo.error) {
         setVerificationResult(signatureInfo.error);
       } else if (signatureInfo.results && signatureInfo.results.length > 0) {
-        setDetailedResults(signatureInfo.results);
-        // Overall status can be determined by checking if all signatures are valid
-        const allValid = signatureInfo.results.every(
-          (res) => res.status === t("signature-valid-basic")
+        const enrichedResults = await Promise.all(
+          signatureInfo.results.map(addRevocationResult)
+        );
+        setDetailedResults(enrichedResults);
+        const coreChecksPass = enrichedResults.every(
+          (result) =>
+            result.documentIntegrityStatus === CHECK_STATUS.PASS &&
+            result.cryptographicSignatureStatus === CHECK_STATUS.PASS
+        );
+        const certificateDatesValid = enrichedResults.every(
+          (result) => result.certificateStatus === CHECK_STATUS.PASS
+        );
+        const certificateChainsTrusted = enrichedResults.every(
+          (result) => result.certificateTrustStatus === "trusted"
         );
         setVerificationResult(
-          allValid
-            ? t("all-signatures-verified-convincing")
-            : t("some-signatures-invalid-basic")
+          !coreChecksPass
+            ? t("some-signatures-invalid-basic")
+            : certificateDatesValid && certificateChainsTrusted
+              ? t("all-signatures-verified-convincing")
+              : "Document integrity and cryptographic signatures verified. Review the certificate date or trust warning below."
         );
       } else {
         setVerificationResult(t("no-signatures-processed")); // Should be caught by no-signature-found earlier
@@ -703,29 +333,33 @@ const VerifyDocument = () => {
             <h2 className="text-2xl font-bold mb-4 text-base-content text-center">
               {t("verification-status")}
             </h2>
-            {verificationResult ===
-              "Document Verified: All signatures have been successfully validated." && (
-              <div className="flex flex-col items-center my-4">
-                <svg
-                  className="checkmark"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 52 52"
-                >
-                  <circle
-                    className="checkmark__circle"
-                    cx="26"
-                    cy="26"
-                    r="25"
-                    fill="none"
-                  />
-                  <path
-                    className="checkmark__check"
-                    fill="none"
-                    d="M14.1 27.2l7.1 7.2 16.7-16.8"
-                  />
-                </svg>
-              </div>
-            )}
+            {detailedResults.length > 0 &&
+              detailedResults.every(
+                (result) =>
+                  result.documentIntegrityStatus === CHECK_STATUS.PASS &&
+                  result.cryptographicSignatureStatus === CHECK_STATUS.PASS
+              ) && (
+                <div className="flex flex-col items-center my-4">
+                  <svg
+                    className="checkmark"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 52 52"
+                  >
+                    <circle
+                      className="checkmark__circle"
+                      cx="26"
+                      cy="26"
+                      r="25"
+                      fill="none"
+                    />
+                    <path
+                      className="checkmark__check"
+                      fill="none"
+                      d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                    />
+                  </svg>
+                </div>
+              )}
             <p className="text-lg text-base-content mb-4 text-center">
               {verificationResult}
             </p>
@@ -738,6 +372,99 @@ const VerifyDocument = () => {
                   const issuerInfo = parseCertificateInfo(
                     res.certificateIssuer
                   );
+                  const overallIsAcceptable =
+                    res.overallStatus === CHECK_STATUS.PASS ||
+                    res.overallStatus === CHECK_STATUS.WARNING;
+                  const verificationChecks = [
+                    {
+                      label: "Document Integrity",
+                      status: res.documentIntegrityStatus,
+                      detail:
+                        res.documentIntegrityStatus === CHECK_STATUS.PASS
+                          ? "The signed document bytes match the protected SHA digest."
+                          : "The signed content changed or unsigned data was appended."
+                    },
+                    {
+                      label: "Cryptographic Signature",
+                      status: res.cryptographicSignatureStatus,
+                      detail:
+                        res.cryptographicSignatureStatus === CHECK_STATUS.PASS
+                          ? "The CMS signature verifies with the embedded certificate."
+                          : "The CMS signature could not be cryptographically verified."
+                    },
+                    {
+                      label: "Certificate Status",
+                      status: res.certificateStatus,
+                      detail:
+                        res.certificateStatus === CHECK_STATUS.PASS
+                          ? "The certificate is within its validity period."
+                          : res.certificateStatus === "expired"
+                            ? "The certificate is expired; document integrity is reported separately."
+                            : res.certificateStatus === "not_yet_valid"
+                              ? "The certificate is not yet valid."
+                              : "The certificate validity could not be determined."
+                    },
+                    {
+                      label: "Certificate Trust",
+                      status: res.certificateTrustStatus,
+                      detail:
+                        res.certificateTrustDetail ||
+                        "The certificate trust chain could not be determined."
+                    },
+                    {
+                      label: "Revocation",
+                      status: res.revocationStatus,
+                      detail:
+                        res.revocationStatus === "good"
+                          ? "The issuing authority reports that the certificate is not revoked."
+                          : "No validated OCSP or CRL result is embedded in this document."
+                    },
+                    {
+                      label: "Trusted Timestamp",
+                      status: res.trustedTimestampStatus,
+                      detail:
+                        res.trustedTimestampStatus === "trusted"
+                          ? "A valid RFC 3161 timestamp protects the signing time."
+                          : "No validated RFC 3161 timestamp token is available."
+                    },
+                    {
+                      label: "Signer Authentication",
+                      status: res.signerAuthenticationStatus,
+                      detail:
+                        res.signerAuthenticationStatus === "verified"
+                          ? "All participants have protected authentication evidence."
+                          : res.signerAuthenticationStatus ===
+                              "partially_verified"
+                            ? "Participant email-link evidence is protected, but it is not strong identity proof."
+                            : "Protected participant authentication evidence is unavailable or inconsistent."
+                    },
+                    {
+                      label: "Audit Trail Integrity",
+                      status: res.auditTrailIntegrityStatus,
+                      detail:
+                        res.auditTrailIntegrityStatus === CHECK_STATUS.PASS
+                          ? "The signed audit manifest and event hash chain are intact."
+                          : "The protected audit manifest is unavailable or does not validate."
+                    },
+                    {
+                      label: "Revision Permissions",
+                      status: res.revisionPermissionsStatus,
+                      detail:
+                        res.revisionPermissionsStatus === "permitted"
+                          ? "The final platform signature covers the whole file under DocMDP permission 1."
+                          : res.revisionPermissionsStatus === "not_applicable"
+                            ? "This legacy signature does not declare DocMDP permissions."
+                            : "The PDF contains an unauthorized or indeterminate later revision."
+                    },
+                    {
+                      label: "Protected Identifiers",
+                      status: res.identifierProtectionStatus,
+                      detail:
+                        res.identifierProtectionStatus === CHECK_STATUS.PASS
+                          ? "Document, transaction and certificate identifiers are protected by the signed manifest."
+                          : "Protected transaction identifiers are unavailable or inconsistent."
+                    }
+                  ];
 
                   return (
                     <div
@@ -776,7 +503,7 @@ const VerifyDocument = () => {
                             </span>
                             <div className="mt-1 flex items-center space-x-2">
                               <span
-                                className={`text-lg ${isSuccessStatus(res.status) ? "text-green-600" : "text-red-600"}`}
+                                className={`text-lg ${overallIsAcceptable ? "text-green-600" : "text-red-600"}`}
                               >
                                 {isSuccessStatus(res.status) ? "✅" : "❌"}
                               </span>
@@ -785,6 +512,71 @@ const VerifyDocument = () => {
                               </span>
                             </div>
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Independent Phase 1 verification results */}
+                      <div className="p-6 border-b border-gray-100">
+                        <h5 className="text-lg font-semibold text-gray-900 mb-4">
+                          Verification Checks
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {verificationChecks.map((check) => {
+                            const passed =
+                              check.status === CHECK_STATUS.PASS ||
+                              check.status === "trusted";
+                            const warning =
+                              check.status === CHECK_STATUS.WARNING ||
+                              check.status === "expired" ||
+                              check.status === "not_yet_valid" ||
+                              check.status === "self_signed" ||
+                              check.status === "chain_valid_untrusted_root" ||
+                              check.status === "unavailable" ||
+                              check.status === "partially_verified" ||
+                              check.status === "not_applicable" ||
+                              check.status === CHECK_STATUS.UNKNOWN;
+                            const semanticPass = [
+                              "good",
+                              "verified",
+                              "permitted"
+                            ].includes(check.status);
+                            return (
+                              <div
+                                key={check.label}
+                                className={`rounded-lg border p-4 ${
+                                  passed || semanticPass
+                                    ? "border-green-200 bg-green-50"
+                                    : warning
+                                      ? "border-amber-200 bg-amber-50"
+                                      : "border-red-200 bg-red-50"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="font-semibold text-gray-900">
+                                    {check.label}
+                                  </span>
+                                  <span
+                                    className={`text-xs font-bold uppercase ${
+                                      passed || semanticPass
+                                        ? "text-green-700"
+                                        : warning
+                                          ? "text-amber-700"
+                                          : "text-red-700"
+                                    }`}
+                                  >
+                                    {passed || semanticPass
+                                      ? "Pass"
+                                      : warning
+                                        ? check.status.replaceAll("_", " ")
+                                        : "Fail"}
+                                  </span>
+                                </div>
+                                <p className="mt-2 text-sm text-gray-700">
+                                  {check.detail}
+                                </p>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
 

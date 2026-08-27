@@ -29,6 +29,7 @@ export const Placeholder = ({
   subFilter = SUBFILTER_ADOBE_PKCS7_DETACHED,
   widgetRect = [0, 0, 0, 0],
   appName,
+  certificationPermission = 1,
 }) => {
   if (!pdfDoc && !pdfPage) {
     throw new SignPdfError('PDFDoc or PDFPage must be set.', SignPdfError.TYPE_INPUT);
@@ -46,6 +47,17 @@ export const Placeholder = ({
   const placeholder = PDFHexString.of(String.fromCharCode(0).repeat(signatureLength));
 
   const appBuild = appName ? { App: { Name: appName } } : {};
+  const transformReference = doc.context.obj({
+    Type: 'SigRef',
+    TransformMethod: 'DocMDP',
+    TransformParams: {
+      Type: 'TransformParams',
+      P: certificationPermission,
+      V: '1.2',
+    },
+    DigestMethod: 'SHA256',
+  });
+
   const signatureDict = doc.context.obj({
     Type: 'Sig',
     Filter: 'Adobe.PPKLite',
@@ -61,12 +73,14 @@ export const Placeholder = ({
       Filter: { Name: 'Adobe.PPKLite' },
       ...appBuild,
     },
+    Reference: [transformReference],
   });
 
   const signatureBuffer = new Uint8Array(signatureDict.sizeInBytes());
   signatureDict.copyBytesInto(signatureBuffer, 0);
   const signatureObj = PDFInvalidObject.of(signatureBuffer);
   const signatureDictRef = doc.context.register(signatureObj);
+  doc.catalog.set(PDFName.of('Perms'), doc.context.obj({ DocMDP: signatureDictRef }));
 
   const rect = PDFArray.withContext(doc.context);
   widgetRect.forEach(c => rect.push(PDFNumber.of(c)));

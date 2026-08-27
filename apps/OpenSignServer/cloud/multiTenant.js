@@ -72,6 +72,12 @@ function companyEnv(slug, databaseName) {
     'SMTP_PASS',
     'PFX_BASE64',
     'PASS_PHRASE',
+    'OTP_PEPPER',
+    'TSA_URL',
+    'TSA_TRUST_ANCHORS',
+    'TSA_FAIL_CLOSED',
+    'ALLOW_REPOSITORY_PFX_FOR_DEVELOPMENT',
+    'DEVELOPMENT_PFX_PASSPHRASE',
     'USE_LOCAL',
   ];
   const args = [];

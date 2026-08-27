@@ -3,10 +3,13 @@ import { P12Signer } from '@signpdf/signer-p12';
 import { pdflibAddPlaceholder } from '@signpdf/placeholder-pdf-lib';
 import { PDFDocument } from 'pdf-lib';
 import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import dotenv from 'dotenv';
 import GenerateCertificate from './pdf/GenerateCertificate.js';
 import { getSecureUrl } from '../../Utils.js';
 import { parseUploadFile } from '../../utils/fileUtils.js';
+import { resolveSigningCertificate } from './pdf/SigningCertificate.js';
+import { requireDocumentParticipant } from './SigningSecurity.js';
 dotenv.config({ quiet: true });
 const eSignName = 'SignToowix';
 const eSigncontact = 'notification@toowix.com';
@@ -44,43 +47,20 @@ export default async function generateCertificatebydocId(req) {
   if (!docId) {
     throw new Parse.Error(Parse.Error.INVALID_QUERY, 'please provide parameter.');
   }
-  let P12Buffer;
-  let passphrase = process.env.PASS_PHRASE || 'opensign';
-  const pfxFile = process.env.PFX_BASE64;
-  if (pfxFile) {
-    try {
-      P12Buffer = Buffer.from(pfxFile, 'base64');
-      new P12Signer(P12Buffer, { passphrase: passphrase || null });
-    } catch (err) {
-      console.log(
-        'Provided PFX_BASE64 in generateCertificate is invalid. Falling back to default keystore_681.pfx:',
-        err.message
-      );
-      P12Buffer = null;
-    }
-  }
-
-  if (!P12Buffer) {
-    try {
-      P12Buffer = fs.readFileSync('./keystore_681.pfx');
-      passphrase = 'opensign';
-    } catch (err) {
-      throw new Parse.Error(
-        Parse.Error.VALIDATION_ERROR,
-        'Digital signing certificate is not configured and default keystore_681.pfx could not be read.'
-      );
-    }
-  }
-  const certificatePath = `./exports/certificate_${docId}.pdf`;
+  const certificatePath = `./exports/certificate_${docId}_${randomUUID()}.pdf`;
   try {
     const getDocument = new Parse.Query('contracts_Document');
     getDocument.include(
       'ExtUserPtr,Signers,AuditTrail.UserPtr,Placeholders,ExtUserPtr.TenantId,ExtUserPtr.UserId'
     );
     const docRes = await getDocument.get(docId, { useMasterKey: true });
+    const _docRes = JSON.parse(JSON.stringify(docRes));
+    requireDocumentParticipant(req, _docRes);
 
     if (docRes && docRes?.get('IsCompleted') && !docRes?.get('CertificateUrl')) {
-      const _docRes = JSON.parse(JSON.stringify(docRes));
+      const signingCertificate = resolveSigningCertificate({
+        tenantPfx: _docRes?.ExtUserPtr?.TenantId?.PfxFile,
+      });
       const filteredaudit = _docRes?.AuditTrail?.filter(x => x?.UserPtr?.objectId);
       // Create a reversed copy of the array and find the last object with 'signedOn'
       const lastObj = [...filteredaudit].reverse().find(obj => obj.hasOwnProperty('SignedOn'));
@@ -88,7 +68,9 @@ export default async function generateCertificatebydocId(req) {
       const doc = { ..._docRes, completedAt: completedAt };
       const certificate = await GenerateCertificate(doc);
       const certificatePdf = await PDFDocument.load(certificate);
-      const p12 = new P12Signer(P12Buffer, { passphrase: process.env.PASS_PHRASE || null });
+      const p12 = new P12Signer(signingCertificate.buffer, {
+        passphrase: signingCertificate.passphrase || null,
+      });
       //  `pdflibAddPlaceholder` is used to add code of only digital sign in certificate
       pdflibAddPlaceholder({
         pdfDoc: certificatePdf,

@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import axios from 'axios';
 import { PDFDocument } from 'pdf-lib';
 import {
@@ -20,12 +20,22 @@ import { P12Signer } from '@signpdf/signer-p12';
 import { buildDownloadFilename, parseUploadFile } from '../../../utils/fileUtils.js';
 import sendMailWithAttachment from '../sendMailWithAttachment.js';
 import sendSystemMail from '../sendSystemMail.js';
+import { resolveSigningCertificate } from './SigningCertificate.js';
+import {
+  addTimestampEvidence,
+  buildVerificationEvidence,
+  embedVerificationEvidence,
+  mergeSignedAuditEvent,
+} from './VerificationEvidence.js';
+import { parseDerCertificate, requestRfc3161Timestamp } from './ExternalCertificateValidation.js';
 import {
   COMPLETION_ACTIVITIES,
   findPlaceholderIndex,
   findPendingPriorSigner,
   isCompletionRelevant,
 } from '../../../utils/workflowUtils.js';
+import { requireSigningActor, validateSigningRevision } from '../SigningSecurity.js';
+import { consumeSignerAuthGrant } from '../SignerAuthGrant.js';
 
 // Audit-trail activities that count toward document completion. The free
 // build only counts 'Signed'; EE additionally counts 'Approved'.
@@ -47,6 +57,26 @@ const headers = {
   'X-Parse-Application-Id': APPID,
   'X-Parse-Master-Key': masterKEY,
 };
+
+// Each company is served by one backend process. Serializing a document's
+// signing requests here prevents two stale browser revisions from completing
+// concurrently in that process. SigningRevision remains the persistent guard.
+const documentSigningLocks = new Map();
+
+async function acquireDocumentSigningLock(docId) {
+  const previous = documentSigningLocks.get(docId) || Promise.resolve();
+  let releaseGate;
+  const gate = new Promise(resolve => {
+    releaseGate = resolve;
+  });
+  const current = previous.then(() => gate);
+  documentSigningLocks.set(docId, current);
+  await previous;
+  return () => {
+    releaseGate();
+    if (documentSigningLocks.get(docId) === current) documentSigningLocks.delete(docId);
+  };
+}
 
 function generateDocumentHash(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
@@ -89,7 +119,12 @@ async function updateDoc(
   className,
   sign,
   documentHash,
-  activity
+  activity,
+  signedOn,
+  preparedAuditTrail,
+  verificationEvidence,
+  signingRevision,
+  signingRevisionToken
 ) {
   try {
     const UserPtr = { __type: 'Pointer', className: className, objectId: userId };
@@ -99,23 +134,21 @@ async function updateDoc(
       SignedUrl: url,
       Activity: auditActivity,
       ipAddress: ipAddress,
-      SignedOn: new Date(),
+      SignedOn: signedOn || new Date(),
       Signature: sign,
+      Authentication: data?.IsEnableOTP
+        ? {
+            method: 'email_otp',
+            result: 'authenticated_email_match',
+            verifiedAt: signedOn || new Date(),
+          }
+        : {
+            method: 'account_session',
+            result: 'authenticated_email_match',
+            verifiedAt: signedOn || new Date(),
+          },
     };
-    let updateAuditTrail;
-    if (data.AuditTrail && data.AuditTrail.length > 0) {
-      const AuditTrail = JSON.parse(JSON.stringify(data.AuditTrail));
-      const existingIndex = AuditTrail.findIndex(
-        entry => entry.UserPtr.objectId === userId && entry.Activity !== 'Created'
-      );
-      existingIndex !== -1
-        ? (AuditTrail[existingIndex] = { ...AuditTrail[existingIndex], ...obj })
-        : AuditTrail.push(obj);
-
-      updateAuditTrail = AuditTrail;
-    } else {
-      updateAuditTrail = [obj];
-    }
+    const updateAuditTrail = preparedAuditTrail || mergeSignedAuditEvent(data, obj);
 
     // Count both Signed and Approved entries; only signer/approver
     // placeholders count toward completion (viewers and prefill excluded).
@@ -130,9 +163,22 @@ async function updateDoc(
     } else {
       isCompleted = true;
     }
-    const body = { SignedUrl: url, AuditTrail: updateAuditTrail, IsCompleted: isCompleted };
+    const body = {
+      SignedUrl: url,
+      AuditTrail: updateAuditTrail,
+      IsCompleted: isCompleted,
+      SigningRevision: signingRevision,
+      SigningRevisionToken: signingRevisionToken,
+    };
     if (documentHash && isCompleted) {
       body.DocumentHash = documentHash;
+    }
+    if (verificationEvidence && isCompleted) {
+      body.VerificationEvidenceRoot = verificationEvidence.auditRoot;
+      body.VerificationManifestHash = verificationEvidence.manifestHash;
+      body.TransactionId = verificationEvidence.document.transactionId;
+      body.CertificateId = verificationEvidence.document.certificateId;
+      body.completedAt = verificationEvidence.document.completionTime;
     }
     const signedRes = await axios.put(`${docUrl}/${docId}`, body, { headers });
     return {
@@ -140,6 +186,9 @@ async function updateDoc(
       message: 'success',
       AuditTrail: updateAuditTrail,
       DocumentHash: documentHash && isCompleted ? documentHash : undefined,
+      VerificationEvidence: verificationEvidence && isCompleted ? verificationEvidence : undefined,
+      SigningRevision: signingRevision,
+      SigningRevisionToken: signingRevisionToken,
     };
   } catch (err) {
     console.log('update doc err ', err);
@@ -304,11 +353,18 @@ async function sendCompletedMail(obj) {
 }
 
 // `sendMailsaveCertifcate` is used send completion mail and update complete status of document
-async function sendMailsaveCertifcate(doc, pfx, isCustomMail, mailProvider, filename) {
+async function sendMailsaveCertifcate(
+  doc,
+  signingCertificate,
+  isCustomMail,
+  mailProvider,
+  filename
+) {
   const certificate = await GenerateCertificate(doc);
   const certificatePdf = await PDFDocument.load(certificate);
-  const P12Buffer = fs.readFileSync(pfx.name);
-  const p12 = new P12Signer(P12Buffer, { passphrase: pfx.passphrase || null });
+  const p12 = new P12Signer(signingCertificate.buffer, {
+    passphrase: signingCertificate.passphrase || null,
+  });
   //  `pdflibAddPlaceholder` is used to add code of only digitial sign in certificate
   pdflibAddPlaceholder({
     pdfDoc: certificatePdf,
@@ -338,7 +394,6 @@ async function sendMailsaveCertifcate(doc, pfx, isCustomMail, mailProvider, file
     sendCompletedMail({ isCustomMail, doc, mailProvider, filename });
   }
   saveFileUsage(CertificateBuffer.length, file.imageUrl, doc?.CreatedBy?.objectId);
-  unlinkFile(pfx.name);
   return file.imageUrl;
 }
 
@@ -356,7 +411,7 @@ async function sendMailsaveCertifcate(doc, pfx, isCustomMail, mailProvider, file
  * @param {string} [options.Signature] - Signature (for audit trail)
  * @returns {Promise<Buffer>} merged PDF Buffer
  */
-async function processPdf(_resDoc, PdfBuffer, reason) {
+async function processPdf(_resDoc, PdfBuffer, reason, verificationEvidence) {
   // No CC merge; operate directly on the original PDF
   const pdfDoc = await PDFDocument.load(PdfBuffer);
   const form = pdfDoc.getForm();
@@ -364,6 +419,7 @@ async function processPdf(_resDoc, PdfBuffer, reason) {
   form.updateFieldAppearances();
   // Flattens the form, converting all form fields into non-editable, static content
   form.flatten();
+  if (verificationEvidence) embedVerificationEvidence(pdfDoc, verificationEvidence);
   Placeholder({
     pdfDoc: pdfDoc,
     reason: `Digitally signed by ${eSignName} for ${reason}`,
@@ -383,9 +439,10 @@ async function processPdf(_resDoc, PdfBuffer, reason) {
  */
 async function PDF(req) {
   const docId = req.params.docId;
-  const randomNumber = Math.floor(Math.random() * 5000);
-  const pfxname = `keystore_${randomNumber}.pfx`;
+  const requestId = randomUUID();
+  let releaseDocumentLock;
   try {
+    releaseDocumentLock = await acquireDocumentSigningLock(docId);
     const userIP = req.headers['x-real-ip']; // client IPaddress
     const reqUserId = req.params.userId;
     const isCustomMail = req.params.isCustomCompletionMail || false;
@@ -404,13 +461,9 @@ async function PDF(req) {
       throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, 'Document not found.');
     }
     const IsEnableOTP = resDoc?.get('IsEnableOTP') || false;
-    // if `IsEnableOTP` is false then we don't have to check authentication
-    if (IsEnableOTP) {
-      if (!req?.user) {
-        throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, 'User is not authenticated.');
-      }
-    }
     const _resDoc = resDoc?.toJSON();
+
+    const { currentRevision } = validateSigningRevision(_resDoc, req.params);
     let signUser;
     let className;
     // `reqUserId` is send throught pdfrequest signing flow
@@ -424,6 +477,20 @@ async function PDF(req) {
     } else {
       className = 'contracts_Users';
       signUser = _resDoc.ExtUserPtr;
+    }
+    signUser = requireSigningActor(req, _resDoc, reqUserId);
+    if (IsEnableOTP) await consumeSignerAuthGrant(req, docId, signUser.objectId);
+    if (
+      (_resDoc.AuditTrail || []).some(
+        event =>
+          event?.UserPtr?.objectId === signUser.objectId &&
+          COMPLETION_ACTIVITIES.includes(event?.Activity)
+      )
+    ) {
+      throw new Parse.Error(
+        Parse.Error.OPERATION_FORBIDDEN,
+        'This signer has already completed the document.'
+      );
     }
     // Strict-order gating: when both `SendinOrder` and `SendInOrderStrict`
     // are enabled the document creator wants the signing flow locked to a
@@ -451,61 +518,32 @@ async function PDF(req) {
     if (req.params.pdfFile) {
       //  `PdfBuffer` used to create buffer from pdf file
       let PdfBuffer = Buffer.from(req.params.pdfFile, 'base64');
-      let P12Buffer;
-      let passphrase = process.env.PASS_PHRASE || 'opensign';
-      let pfxFile = process.env.PFX_BASE64;
-      if (
-        _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64 &&
-        _resDoc.ExtUserPtr.TenantId.PfxFile.base64.length > 500
-      ) {
-        pfxFile = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.base64;
-        passphrase = _resDoc?.ExtUserPtr?.TenantId?.PfxFile?.password;
+      let signingCertificate;
+      try {
+        signingCertificate = resolveSigningCertificate({
+          tenantPfx: _resDoc?.ExtUserPtr?.TenantId?.PfxFile,
+        });
+      } catch (err) {
+        throw new Parse.Error(
+          Parse.Error.VALIDATION_ERROR,
+          `Digital signing certificate validation failed: ${err.message}`
+        );
       }
-
-      if (pfxFile) {
-        try {
-          P12Buffer = Buffer.from(pfxFile, 'base64');
-          // P12Signer's constructor does not actually parse the keystore, so
-          // a corrupt certificate passed this check and only failed later,
-          // inside the signing call, as "Too few bytes to read ASN.1 value" -
-          // long after the fallback below had been skipped. Every signature
-          // that completed a document therefore failed. Parsing it here means
-          // a bad certificate is caught while falling back is still possible.
-          const forge = (await import('node-forge')).default;
-          const asn1 = forge.asn1.fromDer(forge.util.createBuffer(P12Buffer.toString('binary')));
-          forge.pkcs12.pkcs12FromAsn1(asn1, false, passphrase || 'opensign');
-          new P12Signer(P12Buffer, { passphrase: passphrase || null });
-        } catch (err) {
-          console.log(
-            'Provided PFX_BASE64 is invalid or corrupted. Falling back to default keystore_681.pfx:',
-            err.message
-          );
-          P12Buffer = null;
-        }
-      }
-
-      if (!P12Buffer) {
-        try {
-          P12Buffer = fs.readFileSync('./keystore_681.pfx');
-          passphrase = 'opensign';
-        } catch (err) {
-          throw new Parse.Error(
-            Parse.Error.VALIDATION_ERROR,
-            'Digital signing certificate is not configured and default keystore_681.pfx could not be read.'
-          );
-        }
-      }
-
-      const pfx = { name: pfxname, passphrase: passphrase };
-      fs.writeFileSync(pfxname, P12Buffer);
       const UserPtr = { __type: 'Pointer', className: className, objectId: signUser.objectId };
-      const obj = { UserPtr: UserPtr, SignedUrl: '', Activity: auditActivity, ipAddress: userIP };
-      let updateAuditTrail;
-      if (_resDoc.AuditTrail && _resDoc.AuditTrail.length > 0) {
-        updateAuditTrail = [..._resDoc.AuditTrail, obj];
-      } else {
-        updateAuditTrail = [obj];
-      }
+      const signedOn = new Date();
+      const authentication = IsEnableOTP
+        ? { method: 'email_otp', result: 'authenticated_email_match', verifiedAt: signedOn }
+        : { method: 'account_session', result: 'authenticated_email_match', verifiedAt: signedOn };
+      const obj = {
+        UserPtr,
+        SignedUrl: '',
+        Activity: auditActivity,
+        ipAddress: userIP,
+        SignedOn: signedOn,
+        Signature: sign,
+        Authentication: authentication,
+      };
+      const updateAuditTrail = mergeSignedAuditEvent(_resDoc, obj);
 
       // Both Signed and Approved entries count toward completion. Only
       // signer/approver placeholders are counted; viewers and prefill are
@@ -526,20 +564,47 @@ async function PDF(req) {
       // below regex is used to replace all word with "_" except A to Z, a to z, numbers
       const docName = _resDoc?.Name?.replace(/[^a-zA-Z0-9._-]/g, '_')?.toLowerCase();
       const filename = docName?.length > 100 ? docName?.slice(0, 100) : docName;
-      const name = `${filename}_${randomNumber}.pdf`;
+      const name = `${filename}_${requestId}.pdf`;
       let filePath = `./exports/${name}`;
       let signedFilePath = `./exports/signed_${name}`;
       let pdfSize = PdfBuffer.length;
       let documentHash;
+      let verificationEvidence;
       if (isCompleted) {
         const signersName = _resDoc.Signers?.map(x => x.Name + ' <' + x.Email + '>');
         const reason =
           signersName && signersName.length > 0
             ? signersName?.join(', ')
             : username + ' <' + userEmail + '>';
-        const p12Cert = new P12Signer(P12Buffer, { passphrase: passphrase || null });
+        const p12Cert = new P12Signer(signingCertificate.buffer, {
+          passphrase: signingCertificate.passphrase || null,
+        });
         signedFilePath = `./exports/signed_${name}`;
-        PdfBuffer = await processPdf(_resDoc, PdfBuffer, reason, UserPtr, userIP, sign);
+        verificationEvidence = buildVerificationEvidence({
+          document: _resDoc,
+          auditTrail: updateAuditTrail,
+          completedAt: signedOn,
+        });
+        if (process.env.TSA_URL) {
+          try {
+            const tsaTrustedCerts = process.env.TSA_TRUST_ANCHORS
+              ? JSON.parse(process.env.TSA_TRUST_ANCHORS).map(parseDerCertificate)
+              : [];
+            const timestamp = await requestRfc3161Timestamp({
+              url: process.env.TSA_URL,
+              data: Buffer.from(verificationEvidence.auditRoot, 'hex'),
+              trustedCerts: tsaTrustedCerts,
+            });
+            verificationEvidence = addTimestampEvidence(verificationEvidence, timestamp);
+          } catch (error) {
+            if (String(process.env.TSA_FAIL_CLOSED).toLowerCase() === 'true') throw error;
+            verificationEvidence = addTimestampEvidence(verificationEvidence, {
+              status: 'unavailable',
+              detail: error.message,
+            });
+          }
+        }
+        PdfBuffer = await processPdf(_resDoc, PdfBuffer, reason, verificationEvidence);
         //`new signPDF` create new instance of pdfBuffer and p12Buffer
         const OBJ = new SignPdf();
         // `signedDocs` is used to signpdf digitally
@@ -561,6 +626,8 @@ async function PDF(req) {
       const data = await uploadFile(`signed_${name}`, signedFilePath);
 
       if (data && data.imageUrl) {
+        const nextSigningRevision = currentRevision + 1;
+        const nextSigningRevisionToken = randomUUID();
         // `axios` is used to update signed pdf url in contracts_Document classes for given DocId
         const updatedDoc = await updateDoc(
           req.params.docId, //docId
@@ -571,7 +638,12 @@ async function PDF(req) {
           className, // className based on flow
           sign, // sign base64
           isCompleted ? documentHash : undefined,
-          auditActivity
+          auditActivity,
+          signedOn,
+          updateAuditTrail,
+          verificationEvidence,
+          nextSigningRevision,
+          nextSigningRevisionToken
         );
         sendNotifyMail(_resDoc, signUser, mailProvider, publicUrl);
         saveFileUsage(pdfSize, data.imageUrl, _resDoc?.CreatedBy?.objectId);
@@ -581,15 +653,29 @@ async function PDF(req) {
           if (hashForDoc) {
             doc.DocumentHash = hashForDoc;
           }
-          sendMailsaveCertifcate(doc, pfx, isCustomMail, mailProvider, `signed_${name}`);
-        } else {
-          unlinkFile(pfxname);
+          if (updatedDoc.VerificationEvidence) {
+            doc.completedAt = updatedDoc.VerificationEvidence.document.completionTime;
+            doc.TransactionId = updatedDoc.VerificationEvidence.document.transactionId;
+            doc.CertificateId = updatedDoc.VerificationEvidence.document.certificateId;
+          }
+          sendMailsaveCertifcate(
+            doc,
+            signingCertificate,
+            isCustomMail,
+            mailProvider,
+            `signed_${name}`
+          );
         }
         // below code is used to remove exported signed pdf file from exports folder
         unlinkFile(signedFilePath);
         // console.log(`New Signed PDF created called: ${filePath}`);
         if (updatedDoc.message === 'success') {
-          return { status: 'success', data: data.imageUrl };
+          return {
+            status: 'success',
+            data: data.imageUrl,
+            signingRevision: updatedDoc.SigningRevision,
+            signingRevisionToken: updatedDoc.SigningRevisionToken,
+          };
         } else {
           const error = new Error('Please provide required parameters!');
           error.code = 400; // Set the error code (e.g., 400 for bad request)
@@ -602,15 +688,24 @@ async function PDF(req) {
       throw error;
     }
   } catch (err) {
-    console.log('Err in signpdf', err);
-    const body = { DebugginLog: err?.message };
-    try {
-      await axios.put(`${docUrl}/${docId}`, body, { headers });
-    } catch (err) {
-      console.log('err in saving debugginglog', err);
+    const expectedRejection = [
+      Parse.Error.INVALID_SESSION_TOKEN,
+      Parse.Error.OPERATION_FORBIDDEN,
+    ].includes(err?.code);
+    if (expectedRejection) {
+      console.warn(`Rejected signing request for document ${docId}: ${err.message}`);
+    } else {
+      console.log('Err in signpdf', err);
+      const body = { DebugginLog: err?.message };
+      try {
+        await axios.put(`${docUrl}/${docId}`, body, { headers });
+      } catch (saveError) {
+        console.log('err in saving debugginglog', saveError);
+      }
     }
-    unlinkFile(pfxname);
     throw err;
+  } finally {
+    if (releaseDocumentLock) releaseDocumentLock();
   }
 }
 export default PDF;

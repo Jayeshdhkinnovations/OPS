@@ -144,26 +144,27 @@ function GuestLogin() {
             params
           );
           setContactId(linkContactRes?.contactId);
-          await navigateToDoc(checkSplit[0], linkContactRes?.contactId);
+          setIsLoading({ isLoad: false });
         } catch (err) {
           setIsLoading({ isLoad: false });
           console.log("Err in link ext contact", err);
         }
       } else {
         setContactId(checkSplit[2]);
-        await navigateToDoc(checkSplit[0], checkSplit[2]);
+        setIsLoading({ isLoad: false });
       }
     }
   };
 
   //send email OTP function
-  const SendOtp = async () => {
+  const SendOtp = async (targetContactId = contactId) => {
     setLoading(true);
     setEmail(email?.toLowerCase()?.replace(/\s/g, ""));
     try {
       const params = {
         email: email?.toLowerCase()?.replace(/\s/g, "")?.toString(),
         docId: documentId,
+        contactId: targetContactId,
       };
       const Otp = await Parse.Cloud.run("SendOTPMailV1", params);
       if (Otp) {
@@ -198,7 +199,9 @@ function GuestLogin() {
         };
         let body = {
           email: email?.toLowerCase()?.replace(/\s/g, ""),
-          otp: OTP
+          otp: OTP,
+          docId: documentId,
+          contactId: contactId
         };
         let user = await axios.post(url, body, { headers: headers });
         if (user.data.result === "Invalid Otp") {
@@ -258,14 +261,7 @@ function GuestLogin() {
           params
         );
         setContactId(linkContactRes.contactId);
-        const IsEnableOTP = await navigateToDoc(
-          documentId,
-          linkContactRes.contactId
-        );
-        if (!IsEnableOTP) {
-          setEnterOtp(true);
-          await SendOtp();
-        }
+        await SendOtp(linkContactRes.contactId);
       } catch (err) {
         setLoading(false);
         alert(t("something-went-wrong-mssg"));
@@ -310,7 +306,8 @@ function GuestLogin() {
                   onInput={(e) => e.target.setCustomValidity("")}
                   required
                   type="tel"
-                  pattern="[0-9]{4}"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
                   className="w-full op-input op-input-bordered op-input-sm focus:outline-none hover:border-base-content text-xs"
                   placeholder={t("otp-placeholder")}
                   value={OTP}

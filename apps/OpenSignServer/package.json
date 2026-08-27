@@ -15,6 +15,12 @@
     "prettier": "prettier --write '{cloud,spec}/{**/*,*}.js' 'index.js'",
     "start": "node index.js",
     "test": "mongodb-runner start && TESTING=true jasmine",
+    "test:signing-certificate": "node spec/signing-certificate-validation.mjs",
+    "test:phase2-security": "node spec/phase2-security.mjs",
+    "test:verification-audit-gaps": "node spec/verification-audit-gaps.mjs",
+    "test:three-signer-e2e": "node spec/e2e/three-signer-workflow.mjs",
+    "test:critical-signing-security": "node spec/critical-signing-security.mjs",
+    "test:expired-signed-document": "node spec/expired-signed-document.mjs",
     "watch": "nodemon index.js"
   },
   "dependencies": {
@@ -52,6 +58,7 @@
     "parse-server": "^8.6.84",
     "parse-server-api-mail-adapter": "^5.0.5",
     "pdf-lib": "^1.17.1",
+    "pkijs": "^3.4.0",
     "posthog-node": "^5.21.2",
     "qrcode": "^1.5.4",
     "rate-limiter-flexible": "^9.1.1",

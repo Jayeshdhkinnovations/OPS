@@ -909,7 +909,9 @@ export const signPdfFun = async (
   signerObjectId,
   objectId,
   widgets,
-  activity
+  activity,
+  expectedRevision = 0,
+  expectedRevisionToken = ""
 ) => {
   let isCustomCompletionMail = false;
   try {
@@ -961,7 +963,9 @@ export const signPdfFun = async (
       userId: signerObjectId,
       isCustomCompletionMail: isCustomCompletionMail,
       signature: suffixbase64,
-      activity: activity || "Signed"
+      activity: activity || "Signed",
+      expectedRevision,
+      expectedRevisionToken
     };
     const resSignPdf = await Parse.Cloud.run("signPdf", params);
     if (resSignPdf) {
@@ -2648,7 +2652,9 @@ export const contactBook = async (objectId) => {
 //function for getting document details from contract_Documents class
 export const contractDocument = async (documentId, include) => {
   const data = { docId: documentId, include: include };
-  const token = { sessionToken: localStorage.getItem("accesstoken") };
+  const token = {
+    "X-Parse-Session-Token": localStorage.getItem("accesstoken")
+  };
   const documentDeatils = await axios
     .post(`${localStorage.getItem("baseUrl")}functions/getDocument`, data, {
       headers: {
@@ -3137,7 +3143,7 @@ export const handleDownloadCertificate = async (
     try {
       const data = { docId: docId };
       const docDetails = await axios.post(`${baseUrl}/getDocument`, data, {
-        headers: { ...headers, sessionToken }
+        headers: { ...headers, "X-Parse-Session-Token": sessionToken }
       });
       const cert = docDetails?.data?.result?.CertificateUrl;
       if (cert) {
@@ -3148,7 +3154,12 @@ export const handleDownloadCertificate = async (
         const generateRes = await axios.post(
           `${baseUrl}/generatecertificate`,
           data,
-          { headers }
+          {
+            headers: {
+              ...headers,
+              "X-Parse-Session-Token": sessionToken
+            }
+          }
         );
         const certificate = generateRes?.data?.result?.CertificateUrl;
         if (certificate) {

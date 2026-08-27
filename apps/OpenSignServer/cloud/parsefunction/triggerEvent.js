@@ -1,38 +1,17 @@
-import axios from 'axios';
-import { cloudServerUrl, serverAppId } from '../../Utils.js';
+import { requireDocumentParticipant } from './SigningSecurity.js';
 
 export default async function triggerEvent(request) {
   const event = request.params.event;
   const body = request.params.body;
   const docId = body.objectId;
   const contactId = request.params.contactId;
-  const serverUrl = cloudServerUrl; //process.env.SERVER_URL;
-  const appId = serverAppId;
-  const sessiontoken = request.headers?.sessiontoken;
-
   try {
     const docQuery = new Parse.Query('contracts_Document');
-    docQuery.select(['Name', 'IsEnableOTP', 'SignedUrl', 'AuditTrail']);
+    docQuery.include('ExtUserPtr,Signers');
     const docRes = await docQuery.get(docId, { useMasterKey: true });
     const _docRes = docRes && docRes?.toJSON();
-    const isEnableOTP = docRes?.get('IsEnableOTP') || false;
     const ipAddress = request.headers['x-real-ip'] || '';
-
-    if (isEnableOTP) {
-      let userId;
-      if (sessiontoken) {
-        const userRes = await axios.get(serverUrl + '/users/me', {
-          headers: {
-            'X-Parse-Application-Id': appId,
-            'X-Parse-Session-Token': sessiontoken,
-          },
-        });
-        userId = userRes.data && userRes.data.objectId;
-      }
-      if (!userId) {
-        return { message: 'User not found!' };
-      }
-    }
+    requireDocumentParticipant(request, _docRes, contactId);
 
     if (event === 'viewed' && contactId) {
       const auditTrail = Array.isArray(_docRes.AuditTrail) ? _docRes.AuditTrail : [];

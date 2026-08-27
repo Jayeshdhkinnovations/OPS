@@ -24,8 +24,10 @@ COPY apps/OpenSign/ ./
 # so no absolute backend URL needs to be baked in at build time.
 ARG REACT_APP_SERVERURL=/app
 ARG REACT_APP_APPID=opensign
+ARG VITE_SIGNATURE_TRUST_ANCHORS=[]
 ENV REACT_APP_SERVERURL=$REACT_APP_SERVERURL
 ENV REACT_APP_APPID=$REACT_APP_APPID
+ENV VITE_SIGNATURE_TRUST_ANCHORS=$VITE_SIGNATURE_TRUST_ANCHORS
 # npm run build also fetches the latest release tag from GitHub - needs
 # network access during build, which the server has.
 RUN npm run build
