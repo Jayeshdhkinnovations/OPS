@@ -56,11 +56,11 @@ export const SaveFileSize = async (size, imageUrl, tenantId, userId) => {
   } catch (err) {
     console.log("err in save usage", err);
   }
-  saveDataFile(size, imageUrl, tenantPtr, UserPtr);
+  saveDataFile(serverUrl, size, imageUrl, tenantPtr, UserPtr);
 };
 
 //function for save fileUrl and file size in particular client db class partners_DataFiles
-const saveDataFile = async (size, imageUrl, tenantPtr, UserId) => {
+const saveDataFile = async (serverUrl, size, imageUrl, tenantPtr, UserId) => {
   const data = {
     FileUrl: imageUrl,
     FileSize: size,
