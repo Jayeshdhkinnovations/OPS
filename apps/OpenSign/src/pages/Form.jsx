@@ -240,13 +240,22 @@ const Forms = (props) => {
               return;
             }
           }
-        } else if (file.type.includes("image/")) {
+        } else if (
+          file.type.includes("image/") ||
+          /\.(jpe?g|png)$/i.test(file.name)
+        ) {
+          // file.type is unreliable across browsers/OSes (same class of bug
+          // as the .docx MIME check below) - some report an empty/generic
+          // type for otherwise-valid images, which silently dropped them
+          // before. Fall back to the filename extension, for both detecting
+          // the file as an image at all and for picking the right embedder.
+          const isPng =
+            file.type === "image/png" || /\.png$/i.test(file.name);
           const image = await toDataUrl(file);
           const pdfDoc = await PDFDocument.create();
-          const embed =
-            file.type === "image/png"
-              ? await pdfDoc.embedPng(image)
-              : await pdfDoc.embedJpg(image);
+          const embed = isPng
+            ? await pdfDoc.embedPng(image)
+            : await pdfDoc.embedJpg(image);
           const page = pdfDoc.addPage([embed.width, embed.height]);
           page.drawImage(embed, {
             x: 0,
@@ -865,7 +874,7 @@ const Forms = (props) => {
                     className="op-file-input op-file-input-bordered op-file-input-sm focus:outline-none hover:border-base-content w-full text-xs"
                     onChange={(e) => handleFileInput(e)}
                     ref={inputFileRef}
-                    accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg"
+                    accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,.pdf,.docx,.png,.jpg,.jpeg"
                     onInvalid={(e) =>
                       e.target.setCustomValidity(t("input-required"))
                     }

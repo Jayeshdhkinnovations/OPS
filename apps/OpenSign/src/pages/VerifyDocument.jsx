@@ -150,7 +150,13 @@ const VerifyDocument = () => {
     const parsed = {};
 
     // Find all OID patterns and their positions
-    const oidPattern = /(\d+\.\d+\.\d+\.\d+|\w+)=/g;
+    // Must match an OID of ANY length (2+ dot-separated segments), not just
+    // exactly 4 - the email OID (1.2.840.113549.1.9.1) has 7. Requiring
+    // exactly 4 made this match only the OID's tail ("113549.1.9.1="),
+    // leaving the skipped prefix ("1.2.840.") glued onto the previous
+    // field's value - that's what put "1.2.84" on the end of Common Name
+    // and showed the email field as the raw truncated OID "113549.1.9.1".
+    const oidPattern = /(\d+(?:\.\d+)+|\w+)=/g;
     const matches = [];
     let match;
 

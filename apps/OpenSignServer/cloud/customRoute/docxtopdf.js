@@ -95,11 +95,14 @@ export const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB hard limit at multer level
   fileFilter: (req, file, cb) => {
+    // Extension alone is the reliable signal here - browsers/OSes report a
+    // genuinely valid .docx under inconsistent MIME types (application/msword,
+    // application/zip, application/octet-stream, even ""), so requiring an
+    // exact MIME match on top of the extension rejected real .docx files
+    // depending on which browser/OS sent the request. LibreOffice itself
+    // validates the actual file content during conversion.
     const okExt = /\.docx$/i.test(file.originalname || '');
-    const okMime =
-      file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-      file.mimetype === 'application/octet-stream';
-    if (okExt && okMime) return cb(null, true);
+    if (okExt) return cb(null, true);
     cb(new Error('Only .docx files are supported'));
   },
 });
