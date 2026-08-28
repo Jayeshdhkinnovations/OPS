@@ -16,11 +16,32 @@
       body {
         margin: 0;
         min-height: 100vh;
+        /* 100dvh excludes mobile Safari's collapsible address-bar space,
+           which 100vh counts as part of the page - without it the card sat
+           high with dead space below instead of truly centered. */
+        min-height: 100dvh;
         display: flex;
+        align-items: center;
+        justify-content: center;
         background: #F7F8FC;
         font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
         padding: 16px;
+        overflow-y: auto;
       }
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+      .brand .mark {
+        width: 36px; height: 36px; border-radius: 12px;
+        background: #0B3D73; display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      }
+      .brand .mark span { color: #fff; font-weight: 700; font-size: 16px; }
+      .brand .name { font-size: 18px; font-weight: 700; color: #1f2937; letter-spacing: -.2px; }
       .card {
         margin: auto;
         width: 100%;
@@ -54,6 +75,10 @@
   </head>
   <body>
     <div class="card">
+      <div class="brand">
+        <div class="mark"><span>S</span></div>
+        <div class="name">SignToowix</div>
+      </div>
       <div class="icon">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="11" stroke="#C0392B" stroke-width="1.4"/>

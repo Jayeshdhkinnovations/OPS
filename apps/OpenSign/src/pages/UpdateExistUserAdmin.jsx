@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Loader from "../primitives/Loader";
 import Parse from "parse";
+import toowixLogo from "../assets/images/toowix-logo.png";
 import { NavLink, useNavigate } from "react-router";
 import Alert from "../primitives/Alert";
 import { useTranslation } from "react-i18next";
@@ -71,7 +72,7 @@ const UpdateExistUserAdmin = () => {
     }
   };
   return (
-    <div className="h-screen flex justify-center">
+    <div className="flex h-[100dvh] w-full justify-center items-center overflow-y-auto p-3 sm:h-auto sm:min-h-screen sm:overflow-visible sm:p-8">
       {isAlert.msg && <Alert type={isAlert.type}>{isAlert.msg}</Alert>}
       {loader ? (
         <div className="text-[grey] flex justify-center items-center text-lg md:text-2xl">
@@ -85,6 +86,14 @@ const UpdateExistUserAdmin = () => {
             </div>
           ) : (
             <div className="w-[95%] md:w-[500px]">
+              <div className="mb-4 flex items-center justify-center gap-2.5">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0B3D73]">
+                  <img src={toowixLogo} alt="SignToowix" className="h-6 w-6 object-contain" />
+                </div>
+                <span className="text-lg font-bold tracking-tight text-gray-800">
+                  SignToowix
+                </span>
+              </div>
               <form onSubmit={handleSubmit}>
                 <div className="w-full my-4 op-card bg-base-100 shadow-md outline outline-1 outline-slate-300/50 overflow-hidden">
                   {isSubmitLoading && (
