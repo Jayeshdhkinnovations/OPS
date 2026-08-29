@@ -52,6 +52,7 @@ import createBatchContact from './parsefunction/createBatchContact.js';
 import generateCertificatebydocId from './parsefunction/generateCertificatebydocId.js';
 import fileUpload from './parsefunction/fileUpload.js';
 import getUserListByOrg from './parsefunction/getUserListByOrg.js';
+import getDriveStorageBreakdown from './parsefunction/getDriveStorageBreakdown.js';
 import editContact from './parsefunction/editContact.js';
 import forwardDoc from './parsefunction/ForwardDoc.js';
 import saveAsTemplate from './parsefunction/saveAsTemplate.js';
@@ -143,6 +144,7 @@ export default function registerCloudCode() {
   Parse.Cloud.define('generatecertificate', generateCertificatebydocId);
   Parse.Cloud.define('fileupload', fileUpload);
   Parse.Cloud.define('getuserlistbyorg', getUserListByOrg);
+  Parse.Cloud.define('getdrivestoragebreakdown', getDriveStorageBreakdown);
   Parse.Cloud.define('editcontact', editContact);
   Parse.Cloud.define('forwarddoc', forwardDoc);
   Parse.Cloud.define('saveastemplate', saveAsTemplate);
