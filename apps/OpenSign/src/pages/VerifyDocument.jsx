@@ -34,6 +34,28 @@ function toGeoFields(geo) {
   };
 }
 
+// Renders the signing instant in the signer's OWN timezone (resolved from
+// their signing IP via resolveipgeo), not the viewer's browser timezone -
+// two people checking the same document in India and London should each
+// read "signed at" as it actually was for that signer, not for themselves.
+// Falls back to an explicit UTC label when no timezone could be resolved,
+// rather than silently defaulting to the viewer's zone (which would be
+// wrong, not just imprecise).
+function formatSignedAt(isoString, timezoneId) {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return isoString;
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: timezoneId || "UTC",
+      dateStyle: "medium",
+      timeStyle: "long"
+    }).format(date);
+  } catch {
+    return date.toISOString();
+  }
+}
+
 async function addSignerGeoResults(results) {
   const originIps = results
     .map((result) => result.verificationEvidence?.document?.originIp)
@@ -63,6 +85,7 @@ async function addSignerGeoResults(results) {
         name: p?.name || "Unknown signer",
         email: p?.email || "",
         signedAt: p?.signedAt || "",
+        timezoneId: geo?.timezoneId || "",
         ip: p?.ipAddress || "",
         country: geo?.countryCode || geo?.country || "",
         state: geo?.region || "",
@@ -706,7 +729,13 @@ const VerifyDocument = () => {
                                       ["State", signer.state],
                                       ["Locality", signer.locality],
                                       ["IP Address", signer.ip],
-                                      ["Signed At", signer.signedAt]
+                                      [
+                                        "Signed At",
+                                        formatSignedAt(
+                                          signer.signedAt,
+                                          signer.timezoneId
+                                        )
+                                      ]
                                     ]
                                       .filter(([, value]) => value)
                                       .map(([label, value]) => (
