@@ -368,7 +368,7 @@ function DriveBody(props) {
             </svg>
             <span className="text-[12px] font-medium">{data.Name}</span>
           </td>
-          <td>_</td>
+          <td>{formatDriveBytes(storageMap[data.objectId])}</td>
           <td>_</td>
           <td>{t("folder")}</td>
           <td>_</td>

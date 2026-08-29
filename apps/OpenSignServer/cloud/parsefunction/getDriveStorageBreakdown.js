@@ -62,6 +62,30 @@ export default async function getDriveStorageBreakdown(request) {
   const folderName = new Map(rows.filter(r => r.type === 'Folder').map(r => [r.objectId, r.name]));
   const totalBytes = rows.reduce((sum, r) => sum + r.sizeBytes, 0);
 
+  // Folders start at 0 (they have no file of their own) - roll every
+  // descendant's size up into its ancestor folders, memoized so a deep
+  // tree is still one pass rather than one query per level.
+  const childrenByFolder = new Map();
+  for (const r of rows) {
+    if (!childrenByFolder.has(r.folderId)) childrenByFolder.set(r.folderId, []);
+    childrenByFolder.get(r.folderId).push(r);
+  }
+  const folderTotal = new Map();
+  function computeFolderTotal(folderId) {
+    if (folderTotal.has(folderId)) return folderTotal.get(folderId);
+    const children = childrenByFolder.get(folderId) || [];
+    const total = children.reduce(
+      (sum, child) =>
+        sum + (child.type === 'Folder' ? computeFolderTotal(child.objectId) : child.sizeBytes),
+      0
+    );
+    folderTotal.set(folderId, total);
+    return total;
+  }
+  for (const r of rows) {
+    if (r.type === 'Folder') r.sizeBytes = computeFolderTotal(r.objectId);
+  }
+
   return {
     isAdmin,
     totalBytes,
