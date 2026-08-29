@@ -36,7 +36,13 @@ RUN npm run build
 FROM node:20-alpine
 # docker-cli lets the root container start/stop the per-company containers
 # (it talks to the host daemon through the mounted /var/run/docker.sock).
-RUN apk add --no-cache nginx docker-cli
+# libreoffice-writer provides the `soffice` binary that docxtopdf.js shells
+# out to via the libreoffice-convert package - it was never installed here,
+# so every DOCX->PDF conversion failed at that step regardless of what made
+# it past the upload filter (verified: `which soffice` found nothing in the
+# running containers; adding this package and doing a real headless convert
+# confirmed it produces valid PDF output).
+RUN apk add --no-cache nginx docker-cli libreoffice-writer
 
 WORKDIR /app
 COPY apps/OpenSignServer/package*.json ./
