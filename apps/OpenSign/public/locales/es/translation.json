@@ -1613,5 +1613,6 @@
   "access-code-upgrade-msg": "Los códigos de acceso solo están disponibles en planes de pago. Actualice su plan para agregar códigos de acceso a los destinatarios.",
   "show-access-code": "Mostrar código de acceso",
   "hide-access-code": "Ocultar código de acceso",
-  "already-copied-to-clipboard": "Ya copiado al portapapeles"
+  "already-copied-to-clipboard": "Ya copiado al portapapeles",
+  "image-error": "No se pudo procesar \"{{file}}\". Solo se admiten imágenes JPG, JPEG y PNG."
 }

@@ -240,31 +240,39 @@ const Forms = (props) => {
               return;
             }
           }
-        } else if (
-          file.type.includes("image/") ||
-          /\.(jpe?g|png)$/i.test(file.name)
-        ) {
-          // file.type is unreliable across browsers/OSes (same class of bug
-          // as the .docx MIME check below) - some report an empty/generic
-          // type for otherwise-valid images, which silently dropped them
-          // before. Fall back to the filename extension, for both detecting
-          // the file as an image at all and for picking the right embedder.
+        } else if (/\.(jpe?g|png)$/i.test(file.name)) {
+          // Extension is the only reliable signal here (same reasoning as the
+          // .docx check below) - but only for PNG vs JPEG *within* this
+          // branch. The branch itself must not be entered on the generic
+          // `file.type.includes("image/")` check alone: a GIF or WebP file
+          // reports a MIME like "image/gif"/"image/webp", which matched that
+          // check but isn't PNG, so it silently fell through to embedJpg() -
+          // a real JPEG decoder given non-JPEG bytes, which throws. Only PNG
+          // and JPEG are supported by this workflow; anything else should be
+          // rejected here, not misidentified as one of them.
           const isPng =
             file.type === "image/png" || /\.png$/i.test(file.name);
-          const image = await toDataUrl(file);
-          const pdfDoc = await PDFDocument.create();
-          const embed = isPng
-            ? await pdfDoc.embedPng(image)
-            : await pdfDoc.embedJpg(image);
-          const page = pdfDoc.addPage([embed.width, embed.height]);
-          page.drawImage(embed, {
-            x: 0,
-            y: 0,
-            width: embed.width,
-            height: embed.height
-          });
-          const bytes = await pdfDoc.save({ useObjectStreams: false });
-          pdfBuffers.push(bytes);
+          try {
+            const image = await toDataUrl(file);
+            const pdfDoc = await PDFDocument.create();
+            const embed = isPng
+              ? await pdfDoc.embedPng(image)
+              : await pdfDoc.embedJpg(image);
+            const page = pdfDoc.addPage([embed.width, embed.height]);
+            page.drawImage(embed, {
+              x: 0,
+              y: 0,
+              width: embed.width,
+              height: embed.height
+            });
+            const bytes = await pdfDoc.save({ useObjectStreams: false });
+            pdfBuffers.push(bytes);
+          } catch (err) {
+            console.error("Image to PDF conversion error: ", err);
+            removeFile(e);
+            alert(t("image-error", { file: file.name }));
+            return;
+          }
         } else if (
           file.type ===
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||

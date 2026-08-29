@@ -1612,5 +1612,6 @@
   "access-code-upgrade-msg": "Zugangscodes sind nur in kostenpflichtigen Tarifen verfügbar. Aktualisieren Sie Ihren Tarif, um Zugangscodes für Empfänger hinzuzufügen.",
   "show-access-code": "Zugangscode anzeigen",
   "hide-access-code": "Zugangscode ausblenden",
-  "already-copied-to-clipboard": "Bereits in die Zwischenablage kopiert"
+  "already-copied-to-clipboard": "Bereits in die Zwischenablage kopiert",
+  "image-error": "\"{{file}}\" konnte nicht verarbeitet werden. Nur JPG-, JPEG- und PNG-Bilder werden unterstützt."
 }

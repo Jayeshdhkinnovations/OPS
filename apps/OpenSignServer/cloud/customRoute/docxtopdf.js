@@ -122,13 +122,18 @@ export default async function docxtopdf(req, res) {
   const masterHeader = { ...parseAppKey, 'X-Parse-Master-Key': masterKey };
   const sessionHeader = { ...parseAppKey, 'X-Parse-Session-Token': req.headers['sessiontoken'] };
 
+  console.log('[DOCX2PDF] route reached');
+
   if (!req.file || !req.file.buffer) {
+    console.log('[DOCX2PDF] NO_FILE');
     return res.status(400).json({ error: 'No file uploaded.' });
   }
+  console.log(`[DOCX2PDF] file received=true size=${req.file.size ?? req.file.buffer.length}`);
 
   try {
     // ---- Auth: current user ----
     const userRes = await axios.get(`${serverUrl}/users/me`, { headers: sessionHeader });
+    console.log('[DOCX2PDF] auth passed');
     const uploadedSizeBytes = req.file.size ?? req.file.buffer.length;
 
     // ---- contracts_Users ----
@@ -141,13 +146,16 @@ export default async function docxtopdf(req, res) {
     );
 
     if (!resUser?.data?.results?.length) {
+      console.log('[DOCX2PDF] TENANT_NOT_FOUND (no contracts_Users record)');
       return res.status(403).json({ error: 'User not linked to tenant.' });
     }
 
     const tenantId = resUser.data.results[0]?.TenantId?.objectId;
     if (!tenantId) {
+      console.log('[DOCX2PDF] TENANT_NOT_FOUND (no TenantId on contracts_Users)');
       return res.status(403).json({ error: 'Tenant not found for user.' });
     }
+    console.log(`[DOCX2PDF] tenant=${tenantId}`);
 
     // ---- DOCX -> PDF conversion with concurrency control and timeout ----
     const fileName = `${generatePdfName(16)}.pdf`;
@@ -163,21 +171,30 @@ export default async function docxtopdf(req, res) {
       );
 
       const startTime = Date.now();
+      console.log('[DOCX2PDF] libreoffice started');
       try {
         const result = await withTimeout(
           convertLibre(req.file.buffer, '.pdf', undefined),
           timeoutMs,
           'DOCX->PDF'
         );
-        console.log(`[DOCX2PDF] Completed in ${Date.now() - startTime}ms`);
+        console.log(`[DOCX2PDF] libreoffice completed in ${Date.now() - startTime}ms`);
         return result;
       } catch (error) {
-        console.error(`[DOCX2PDF] Failed after ${Date.now() - startTime}ms:`, error.message);
+        console.error(
+          `[DOCX2PDF] CONVERSION_FAILED after ${Date.now() - startTime}ms:`,
+          error.message
+        );
         // Clean up on error
         await killStuckProcesses();
         throw error;
       }
     });
+
+    if (!pdfBuffer || !pdfBuffer.length) {
+      console.error('[DOCX2PDF] CONVERSION_FAILED: empty output buffer');
+      throw new Error('Conversion produced an empty file.');
+    }
 
     // ---- Upload PDF ----
     const activeFileAdapter = resUser.data.results[0]?.TenantId?.ActiveFileAdapter;
@@ -200,6 +217,7 @@ export default async function docxtopdf(req, res) {
       const fileRes = getSecureUrl(parsefile.data.url);
       fileUrl = fileRes.url;
     }
+    console.log('[DOCX2PDF] storage upload completed');
 
     return res.status(200).json({ message: 'success.', url: fileUrl });
   } catch (err) {

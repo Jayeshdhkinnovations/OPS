@@ -289,6 +289,20 @@ if (!isCompanyMode) {
   app.use(mountPath, companyProxy());
 }
 app.get('/app/health', (req, res) => res.status(200).json({ ok: true }));
+// The multi-tenant proxy forwards a company's request to its container with
+// the `/app` prefix intact (see companyProxy() in multiTenant.js: it rebuilds
+// the path as `/app${rest}`, not just `rest`) - so inside a company container,
+// a request originally sent to /app/<slug>/docxtopdf arrives here as plain
+// /app/docxtopdf. customRoute's own routes are defined without that prefix
+// (POST /docxtopdf), so they only ever matched a bare, non-tenant call.
+// Mounting customRoute here too, before Parse claims everything under
+// mountPath, is what makes /app/docxtopdf actually reach it instead of being
+// swallowed by Parse Server's own router (which has no route for it and was
+// answering with a 400 before ever reaching the DOCX/PDF handlers). None of
+// customRoute's routes overlap Parse's reserved paths (/functions, /classes,
+// /users, /files, ...), and it has no catch-all, so anything it doesn't
+// recognize falls through to Parse exactly as before.
+app.use(mountPath, customRoute);
 app.use(mountPath, defaultServer.app);
 
 // Internal-only endpoint: SuperAdminServer calls this the moment a new
