@@ -465,10 +465,20 @@ const VerifyDocument = () => {
                   // with where the document was actually initiated/sent
                   // from (res.issuerGeo, resolved from OriginIp - the
                   // creator's IP captured at document-creation time), not
-                  // the certificate's own static org address. Organization/
-                  // Common Name/Email still describe the certificate itself.
+                  // the certificate's own static org address. Organization
+                  // is likewise overridden with the actual sending company's
+                  // name - the shared platform signing certificate's own O=
+                  // is always "SignToowix" regardless of which tenant sent
+                  // the document, so left alone it named the platform
+                  // instead of the issuer. Common Name/Email still describe
+                  // the certificate itself.
+                  const issuerOrganization =
+                    res.verificationEvidence?.document?.organization;
                   const issuerInfo = {
                     ...parseCertificateInfo(res.certificateIssuer),
+                    ...(issuerOrganization
+                      ? { Organization: issuerOrganization }
+                      : {}),
                     ...(res.issuerGeo?.country ? { Country: res.issuerGeo.country } : {}),
                     ...(res.issuerGeo?.state ? { State: res.issuerGeo.state } : {}),
                     ...(res.issuerGeo?.locality

@@ -126,6 +126,12 @@ export function buildVerificationEvidence({ document, auditTrail, completedAt })
       // IP of whoever initiated/sent the document, not a participant's.
       // Surfaced on the verify-document page's Issuer Details.
       originIp: document?.OriginIp || '',
+      // The actual sending company's name, not the shared platform signing
+      // certificate's own static Organization field (that certificate signs
+      // every tenant's documents, so its O= is always "SignToowix" -
+      // meaningless as "who sent this"). Overrides Issuer Details'
+      // Organization on the verify-document page.
+      organization: document?.ExtUserPtr?.TenantId?.TenantName || '',
     },
     signingArchitecture: 'single_platform_signature',
     revisionPolicy: { type: 'DocMDP', permission: 1 },
