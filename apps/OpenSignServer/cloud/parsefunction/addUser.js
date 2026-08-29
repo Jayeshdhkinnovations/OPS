@@ -1,3 +1,11 @@
+import { findEmailInOtherCompanies, removeUserFromCompanyDb } from './crossCompanyEmail.js';
+
+function currentDatabaseName() {
+  const uri = String(process.env.MONGODB_URI || '');
+  const match = uri.match(/\/([^/?]+)(?:\?.*)?$/);
+  return match?.[1] || null;
+}
+
 export default async function addUser(request) {
   const { phone, name, password, organization, team, tenantId, timezone, role } = request.params;
   const email = request.params?.email?.toLowerCase()?.replace(/\s/g, '');
@@ -81,6 +89,21 @@ export default async function addUser(request) {
       const targetTeam = await teamQuery.get(team, { useMasterKey: true });
       if (targetTeam.get('OrganizationId')?.id !== targetOrgId) {
         throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, 'Unauthorized.');
+      }
+
+      // Each email may belong to only one company. If it already exists as
+      // a plain member elsewhere, that stale record is removed so this
+      // company can take over the email; if it is someone else's admin
+      // account, leave it untouched and block instead.
+      const conflict = await findEmailInOtherCompanies(email, currentDatabaseName());
+      if (conflict) {
+        if (conflict.role === 'admin') {
+          throw new Parse.Error(
+            Parse.Error.DUPLICATE_VALUE,
+            `This email is already part of company "${conflict.companyName}". Please delete that membership first, then try again.`
+          );
+        }
+        await removeUserFromCompanyDb(conflict.databaseName, conflict.contractsUserId);
       }
 
       const extUser = new Parse.Object('contracts_Users');

@@ -89,11 +89,15 @@ const Sidebar = () => {
   // Fetched once per mount from the same cloud function the Users page uses,
   // so the figure here and there can never disagree.
   const [storageUsed, setStorageUsed] = useState(null);
+  const [isOwnStorage, setIsOwnStorage] = useState(false);
   useEffect(() => {
     let cancelled = false;
     Parse.Cloud.run("gettenantusage")
       .then((res) => {
-        if (!cancelled) setStorageUsed(res?.usedStorage ?? 0);
+        if (!cancelled) {
+          setStorageUsed(res?.usedStorage ?? 0);
+          setIsOwnStorage(!!res?.isOwnStorage);
+        }
       })
       .catch(() => {
         // Usage is informational - a failure just leaves the dash showing.
@@ -171,7 +175,7 @@ const Sidebar = () => {
       {isOpen && (
         <div className="mt-auto border-t border-base-300 px-4 py-3">
           <div className="text-[11px] font-medium uppercase tracking-wide text-base-content opacity-60">
-            Storage used
+            {isOwnStorage ? "Your storage used" : "Storage used"}
           </div>
           <div className="mt-0.5 text-sm font-semibold text-base-content">
             {storageUsed === null ? "—" : formatStorageSize(storageUsed)}

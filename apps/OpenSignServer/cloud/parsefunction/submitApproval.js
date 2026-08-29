@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb';
 import sendSystemMail from './sendSystemMail.js';
 import { BRAND_NAME, approvalReceivedEmail, newApprovalRequestEmail } from '../emailTemplates.js';
+import { findEmailInOtherCompanies, removeUserFromCompanyDb } from './crossCompanyEmail.js';
 
 // Where the "review this" notification goes - overridable per-deploy, not
 // baked in, since the platform admin's own address can change.
@@ -62,6 +63,22 @@ export default async function submitApproval(request) {
         Parse.Error.DUPLICATE_VALUE,
         'An account with this email already exists - try logging in instead.'
       );
+    }
+
+    // Every real email may belong to only one company. A plain member
+    // record elsewhere is a stale conflict this registration can resolve on
+    // its own (delete it, this new company now owns the email); an admin
+    // record elsewhere cannot be silently touched, so this registration is
+    // blocked until that membership is removed by hand.
+    const conflict = await findEmailInOtherCompanies(email, null);
+    if (conflict) {
+      if (conflict.role === 'admin') {
+        throw new Parse.Error(
+          Parse.Error.DUPLICATE_VALUE,
+          `You are already part of company "${conflict.companyName}". Please delete that membership first, then try again.`
+        );
+      }
+      await removeUserFromCompanyDb(conflict.databaseName, conflict.contractsUserId);
     }
 
     // NOTE: password is stored as plain text here, temporarily, until a

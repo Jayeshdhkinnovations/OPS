@@ -5,7 +5,7 @@ import { sessionStatus } from "../redux/reducers/userReducer";
 import Parse from "parse";
 import ModalUi from "./ModalUi";
 
-const SessionExpiredModal = () => {
+const SessionExpiredModal = ({ message }) => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const SessionExpiredModal = () => {
   return (
     <ModalUi showHeader={false} isOpen={true} showClose={false}>
       <div className="flex flex-col justify-center items-center py-4 md:py-5 gap-5">
-        <p className="text-xl font-medium">{t("session-expired")}</p>
+        <p className="text-xl font-medium">{message || t("session-expired")}</p>
         <button onClick={handleLoginBtn} className="op-btn op-btn-neutral">
           {t("login")}
         </button>

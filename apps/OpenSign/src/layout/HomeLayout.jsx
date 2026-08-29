@@ -30,6 +30,7 @@ const HomeLayout = () => {
   const [tourStatusArr, setTourStatusArr] = useState([]);
   const [tourConfigs, setTourConfigs] = useState([]);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [disabledMessage, setDisabledMessage] = useState(null);
 
   useEffect(() => {
     const language = localStorage.getItem("i18nextLng");
@@ -65,6 +66,31 @@ const HomeLayout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // An admin can disable another user's account while that user is mid
+  // session; nothing pushes that change to an open tab, so this polls
+  // periodically and force-logs-out as soon as it notices, instead of
+  // waiting for the next full page reload to surface it.
+  useEffect(() => {
+    const checkDisabled = async () => {
+      if (!localStorage.getItem("accesstoken")) return;
+      try {
+        const extUser = await Parse.Cloud.run("getUserDetails");
+        const isDisabled = extUser?.get
+          ? extUser.get("IsDisabled") || false
+          : extUser?.IsDisabled || false;
+        if (isDisabled) {
+          setDisabledMessage(t("account-disabled-contact-admin"));
+          localStorage.removeItem("accesstoken");
+          dispatch(sessionStatus(false));
+        }
+      } catch {
+        // A transient failure here shouldn't force-logout a valid session.
+      }
+    };
+    const interval = setInterval(checkDisabled, 60000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (tourArr && tourArr.length > 0) {
@@ -218,7 +244,7 @@ const HomeLayout = () => {
       )}
     </div>
   ) : (
-    <SessionExpiredModal />
+    <SessionExpiredModal message={disabledMessage} />
   );
 };
 
