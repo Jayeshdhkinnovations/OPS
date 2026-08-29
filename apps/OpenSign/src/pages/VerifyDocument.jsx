@@ -502,14 +502,6 @@ const VerifyDocument = () => {
                           : "No validated OCSP or CRL result is embedded in this document."
                     },
                     {
-                      label: "Trusted Timestamp",
-                      status: res.trustedTimestampStatus,
-                      detail:
-                        res.trustedTimestampStatus === "trusted"
-                          ? "A valid RFC 3161 timestamp protects the signing time."
-                          : "No validated RFC 3161 timestamp token is available."
-                    },
-                    {
                       label: "Signer Authentication",
                       status: res.signerAuthenticationStatus,
                       detail:
