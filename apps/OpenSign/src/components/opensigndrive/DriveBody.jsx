@@ -12,8 +12,19 @@ import { handleDownloadPdf, isMobile } from "../../constant/Utils";
 import Parse from "parse";
 import { withSessionValidation } from "../../utils";
 
+// Bytes are unreadable in a table; show the largest unit that stays short.
+function formatDriveBytes(bytes) {
+  const n = Number(bytes) || 0;
+  if (!n) return "-";
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n / 1024).toFixed(0) + " KB";
+  if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
+  return (n / 1073741824).toFixed(2) + " GB";
+}
+
 function DriveBody(props) {
   const { t } = useTranslation();
+  const storageMap = props.storageMap || {};
   const [rename, setRename] = useState("");
   const [renameValue, setRenameValue] = useState("");
   const inputRef = useRef(null);
@@ -358,6 +369,7 @@ function DriveBody(props) {
             <span className="text-[12px] font-medium">{data.Name}</span>
           </td>
           <td>_</td>
+          <td>_</td>
           <td>{t("folder")}</td>
           <td>_</td>
           <td>_</td>
@@ -374,6 +386,7 @@ function DriveBody(props) {
             </svg>
             <span className="text-[12px] font-medium">{data.Name}</span>
           </td>
+          <td>{formatDriveBytes(storageMap[data.objectId])}</td>
           <td>{createddate}</td>
           <td>{t("pdf")}</td>
           <td>{t(`drive-document-status.${status}`)}</td>
@@ -603,6 +616,7 @@ function DriveBody(props) {
             <thead>
               <tr>
                 <th>{t("report-heading.Name")}</th>
+                <th>{t("report-heading.Storage")}</th>
                 <th>{t("report-heading.created-date")}</th>
                 <th>{t("report-heading.Type")}</th>
                 <th>{t("report-heading.Status")}</th>

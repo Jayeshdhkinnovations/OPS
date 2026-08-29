@@ -19,14 +19,6 @@ import { useTranslation } from "react-i18next";
 const DriveBody = lazyWithRetry(
   () => import("../components/opensigndrive/DriveBody")
 );
-function formatDriveBytes(bytes) {
-  const n = Number(bytes) || 0;
-  if (!n) return "0 B";
-  if (n < 1024) return n + " B";
-  if (n < 1048576) return (n / 1024).toFixed(0) + " KB";
-  if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
-  return (n / 1073741824).toFixed(2) + " GB";
-}
 const dropdowncss =
   "absolute right-0 py-2 text-[1rem] text-left bg-base-100 border-[1px] border-gray-300 min-w-1 rounded-[0.25rem] z-[800]";
 const AppLoader = () => {
@@ -73,9 +65,7 @@ function Opensigndrive() {
   const [showTourFirstTIme, setShowTourFirstTime] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [isStorageOpen, setIsStorageOpen] = useState(false);
-  const [storageBreakdown, setStorageBreakdown] = useState(null);
-  const [storageLoading, setStorageLoading] = useState(false);
+  const [storageMap, setStorageMap] = useState({});
   const debounceTimer = useRef(null);
   const orderName = {
     Ascending: "Ascending",
@@ -590,21 +580,19 @@ function Opensigndrive() {
     handleHighlightClick();
   };
 
-  const handleOpenStorage = async () => {
-    setIsStorageOpen(true);
-    setStorageLoading(true);
-    try {
-      const res = await Parse.Cloud.run("getdrivestoragebreakdown");
-      setStorageBreakdown(res);
-    } catch (e) {
-      setIsAlert({
-        isShow: true,
-        alertMessage: t("something-went-wrong-mssg")
+  useEffect(() => {
+    Parse.Cloud.run("getdrivestoragebreakdown")
+      .then((res) => {
+        const map = {};
+        (res?.files || []).forEach((f) => {
+          map[f.objectId] = f.sizeBytes;
+        });
+        setStorageMap(map);
+      })
+      .catch(() => {
+        // Storage column is informational - a failure just leaves it blank.
       });
-    } finally {
-      setStorageLoading(false);
-    }
-  };
+  }, []);
   return (
     <div className="bg-base-100 text-base-content rounded-box w-full shadow-md">
       <ModalUi
@@ -672,54 +660,6 @@ function Opensigndrive() {
               </div>
             </form>
           )}
-        </div>
-      </ModalUi>
-      <ModalUi
-        isOpen={isStorageOpen}
-        title={t("Storage")}
-        handleClose={() => setIsStorageOpen(false)}
-      >
-        <div className="h-full p-[20px] pt-[10px] pb-[15px] max-h-[70vh] overflow-y-auto">
-          {storageLoading ? (
-            <div className="h-[200px] flex justify-center items-center">
-              <Loader />
-            </div>
-          ) : storageBreakdown ? (
-            <>
-              <p className="mb-3 font-semibold text-base-content">
-                {storageBreakdown.isAdmin
-                  ? `${t("Total")}: ${formatDriveBytes(storageBreakdown.totalBytes)}`
-                  : `${t("Your storage used") || "Your storage used"}: ${formatDriveBytes(
-                      storageBreakdown.totalBytes
-                    )}`}
-              </p>
-              {storageBreakdown.files.filter((f) => f.type === "File").length === 0 ? (
-                <p className="text-base-content">{t("no-data")}</p>
-              ) : (
-                <table className="w-full text-[13px]">
-                  <thead>
-                    <tr className="text-left border-b border-gray-200">
-                      <th className="py-1 pr-2">{t("Name")}</th>
-                      <th className="py-1 pr-2">{t("Folder")}</th>
-                      <th className="py-1 text-right">{t("Storage")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {storageBreakdown.files
-                      .filter((f) => f.type === "File")
-                      .sort((a, b) => b.sizeBytes - a.sizeBytes)
-                      .map((f) => (
-                        <tr key={f.objectId} className="border-b border-gray-100">
-                          <td className="py-1 pr-2 truncate max-w-[220px]">{f.name}</td>
-                          <td className="py-1 pr-2 text-base-content opacity-70">{f.folderName}</td>
-                          <td className="py-1 text-right">{formatDriveBytes(f.sizeBytes)}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              )}
-            </>
-          ) : null}
         </div>
       </ModalUi>
       {isLoading.isLoad ? (
@@ -905,17 +845,6 @@ function Opensigndrive() {
                 ></i>
               </div>
               <div
-                className="cursor-pointer p-2 hover:bg-base-300 rounded-md hidden md:flex justify-center items-center"
-                title={t("Storage")}
-                onClick={handleOpenStorage}
-              >
-                <i
-                  className="fa-light fa-hard-drive text-[20px]"
-                  style={{ color: `${getThemeIconColor()}` }}
-                  aria-hidden="true"
-                ></i>
-              </div>
-              <div
                 id="folder-menu"
                 className={`${isOptions ? "dropdown show dropDownStyle" : "dropdown"} md:hidden`}
                 onClick={() => setIsOptions(!isOptions)}
@@ -1001,6 +930,7 @@ function Opensigndrive() {
                   setIsAlert={setIsAlert}
                   setSkip={setSkip}
                   sortingData={sortingData}
+                  storageMap={storageMap}
                 />
                 {/* sentinel */}
                 <div ref={bottomRef} className="h-1" />
