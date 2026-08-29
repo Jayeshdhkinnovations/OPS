@@ -470,12 +470,19 @@ const VerifyDocument = () => {
                   // name - the shared platform signing certificate's own O=
                   // is always "SignToowix" regardless of which tenant sent
                   // the document, so left alone it named the platform
-                  // instead of the issuer. Common Name/Email still describe
-                  // the certificate itself.
+                  // instead of the issuer. Common Name still describes the
+                  // certificate itself. Email Address is dropped entirely -
+                  // it's the shared platform certificate's own static
+                  // address (hello@toowix.com on every document), not
+                  // anything belonging to the actual issuer, so it's not
+                  // just wrong like Organization was, it's misleading with
+                  // no correct per-issuer value to substitute in its place.
                   const issuerOrganization =
                     res.verificationEvidence?.document?.organization;
+                  const { "Email Address": _issuerEmail, ...certificateInfo } =
+                    parseCertificateInfo(res.certificateIssuer);
                   const issuerInfo = {
-                    ...parseCertificateInfo(res.certificateIssuer),
+                    ...certificateInfo,
                     ...(issuerOrganization
                       ? { Organization: issuerOrganization }
                       : {}),
