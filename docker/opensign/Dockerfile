@@ -42,7 +42,20 @@ FROM node:20-alpine
 # it past the upload filter (verified: `which soffice` found nothing in the
 # running containers; adding this package and doing a real headless convert
 # confirmed it produces valid PDF output).
-RUN apk add --no-cache nginx docker-cli libreoffice-writer
+# libreoffice-writer alone has no fonts to render with - LibreOffice silently
+# fell back to its own internal OpenSymbol font for ALL text (confirmed:
+# inspecting a converted PDF's font resources showed literally
+# "BAAAAA+OpenSymbol", a bullets/dingbats font, not a text face), which is
+# why every DOCX conversion showed square/missing-glyph boxes instead of the
+# original text - broken at this stage, before pdf-lib or anything else
+# downstream ever touches the file. fontconfig plus metric-compatible
+# substitutes for the common Word theme fonts (Carlito~=Calibri,
+# Liberation~=Arial/Times/Courier), DejaVu for general accented-Latin
+# coverage, and Noto (+ its Devanagari set, for Hindi/Marathi documents) for
+# broader Unicode fixes this at the source.
+RUN apk add --no-cache nginx docker-cli libreoffice-writer \
+    fontconfig font-carlito font-liberation font-dejavu font-noto font-noto-devanagari \
+    && fc-cache -f
 
 WORKDIR /app
 COPY apps/OpenSignServer/package*.json ./
