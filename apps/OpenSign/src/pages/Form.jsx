@@ -278,8 +278,13 @@ const Forms = (props) => {
             setfileload(true);
             setpercentage(0);
             const config = {
+              // No manual content-type here: axios auto-generates
+              // "multipart/form-data; boundary=..." for a FormData body -
+              // hardcoding it without the boundary produced a Content-Type
+              // the server couldn't actually parse as multipart, which fell
+              // through to the JSON body-parser and crashed on the raw
+              // "------WebKitFormBoundary..." bytes.
               headers: {
-                "content-type": "multipart/form-data",
                 sessiontoken: Parse.User.current().getSessionToken()
               },
               signal: abortController.signal,

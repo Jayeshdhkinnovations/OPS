@@ -12,8 +12,17 @@ export const app = express();
 
 dotenv.config({ quiet: true });
 app.use(cors());
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// /docxtopdf and /decryptpdf are multipart file uploads handled by multer
+// below - never by these parsers. Without this exclusion, any request whose
+// Content-Type isn't a clean multipart boundary (e.g. a client sending
+// "multipart/form-data" without ";boundary=...") falls through to
+// express.json() and crashes trying to JSON.parse the raw multipart body.
+const isUploadRoute = req => req.path === '/docxtopdf' || req.path === '/decryptpdf';
+app.use((req, res, next) => (isUploadRoute(req) ? next() : express.json({ limit: '100mb' })(req, res, next)));
+app.use((req, res, next) =>
+  isUploadRoute(req) ? next() : express.urlencoded({ limit: '100mb', extended: true })(req, res, next)
+);
 
 app.post('/docxtopdf', docxUpload.single('file'), docxtopdf);
 app.post('/decryptpdf', decryptUpload.single('file'), decryptpdf);
