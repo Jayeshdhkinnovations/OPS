@@ -611,7 +611,7 @@ function DriveBody(props) {
   return (
     <>
       {props.isList ? (
-        <div className="container" style={{ overflowX: "auto" }}>
+        <div className="container-fluid px-0" style={{ overflowX: "auto" }}>
           <Table striped bordered hover>
             <thead>
               <tr>
