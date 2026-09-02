@@ -41,7 +41,14 @@ const FolderModal = (props) => {
 
       const res = await FolderQuery.find();
       if (res) {
-        const result = JSON.parse(JSON.stringify(res));
+        let result = JSON.parse(JSON.stringify(res));
+        // Never offer the item being moved as a destination - stepping
+        // inside it (or any of its subfolders) here would let a folder
+        // get moved into its own descendant, creating an unreachable
+        // circular nest (parent pointing into its own child).
+        if (result && props.excludeId) {
+          result = result.filter((item) => item.objectId !== props.excludeId);
+        }
         if (result) {
           setFolderList(result);
           setIsLoader(false);

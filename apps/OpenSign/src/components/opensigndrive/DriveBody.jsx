@@ -770,6 +770,7 @@ function DriveBody(props) {
           folderCls={"contracts_Document"}
           setIsOpenMoveModal={setIsOpenMoveModal}
           setPdfData={props.setPdfData}
+          excludeId={selectDoc?.Type === "Folder" ? selectDoc.objectId : null}
         />
       )}
       <ModalUi
