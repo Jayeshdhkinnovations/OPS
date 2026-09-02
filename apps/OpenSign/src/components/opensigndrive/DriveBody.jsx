@@ -418,6 +418,16 @@ function DriveBody(props) {
             <i
               onClick={(e) => {
                 e.stopPropagation();
+                handleMenuItemClick("Move", data);
+              }}
+              className="fa-light fa-file-export op-text-primary cursor-pointer"
+              aria-hidden="true"
+            ></i>
+          </td>
+          <td>
+            <i
+              onClick={(e) => {
+                e.stopPropagation();
                 handleMenuItemClick("Delete", data, data.Type);
               }}
               className="fa-light fa-trash op-text-primary cursor-pointer"
@@ -455,6 +465,16 @@ function DriveBody(props) {
                 handleMenuItemClick("Download", data);
               }}
               className="fa-light fa-download mr-[8px] op-text-primary cursor-pointer"
+              aria-hidden="true"
+            ></i>
+          </td>
+          <td>
+            <i
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMenuItemClick("Move", data);
+              }}
+              className="fa-light fa-file-export op-text-primary cursor-pointer"
               aria-hidden="true"
             ></i>
           </td>
@@ -720,6 +740,7 @@ function DriveBody(props) {
                 <th>{t("report-heading.Type")}</th>
                 <th>{t("report-heading.Status")}</th>
                 <th>{t("action")}</th>
+                <th>{t("context-menu.Move")}</th>
                 <th>{t("btnLabel.Delete")}</th>
               </tr>
             </thead>
