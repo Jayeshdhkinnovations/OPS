@@ -32,6 +32,8 @@ function DriveBody(props) {
   const [selectDoc, setSelectDoc] = useState();
   const [isDeleteDoc, setIsDeleteDoc] = useState({});
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
   const contextMenu = [
     { type: "Download", icon: "fa-light fa-arrow-down" },
     { type: "Rename", icon: "fa-light fa-font" },
@@ -205,11 +207,30 @@ function DriveBody(props) {
     setIsOpenMoveModal(true);
     setSelectDoc(docData);
   };
+  //drag-and-drop: pick up a row
+  const handleDragStart = (data) => {
+    setDraggedItem(data);
+  };
+  //drag-and-drop: drop a picked-up row onto a folder row to move it there
+  const handleDropOnFolder = (targetFolder) => {
+    setDragOverId(null);
+    if (
+      !draggedItem ||
+      draggedItem.objectId === targetFolder.objectId ||
+      draggedItem.Type === "Folder" // avoid nested-folder edge cases for now
+    ) {
+      setDraggedItem(null);
+      return;
+    }
+    handleMoveFolder({ ObjectId: targetFolder.objectId }, draggedItem);
+    setDraggedItem(null);
+  };
   //function for move document from one folder to another folder
-  const handleMoveFolder = withSessionValidation(async (selectFolderData) => {
-    const selecFolderId = selectDoc?.Folder?.objectId;
+  const handleMoveFolder = withSessionValidation(async (selectFolderData, movingDoc) => {
+    const sourceDoc = movingDoc || selectDoc;
+    const selecFolderId = sourceDoc?.Folder?.objectId;
     const moveFolderId = selectFolderData?.ObjectId;
-    let updateDocId = selectDoc?.objectId;
+    let updateDocId = sourceDoc?.objectId;
     let updateData;
     const checkExist = moveFolderId
       ? selecFolderId === moveFolderId
@@ -359,7 +380,25 @@ function DriveBody(props) {
 
     return listType === "table" ? (
       data.Type === "Folder" ? (
-        <tr onClick={() => handleOnclikFolder(data)}>
+        <tr
+          onClick={() => handleOnclikFolder(data)}
+          draggable
+          onDragStart={(e) => {
+            e.stopPropagation();
+            handleDragStart(data);
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (dragOverId !== data.objectId) setDragOverId(data.objectId);
+          }}
+          onDragLeave={() => setDragOverId(null)}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleDropOnFolder(data);
+          }}
+          className={dragOverId === data.objectId ? "op-drag-over-target" : ""}
+        >
           <td className="cursor-pointer flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -387,7 +426,14 @@ function DriveBody(props) {
           </td>
         </tr>
       ) : (
-        <tr onClick={() => checkPdfStatus(data)}>
+        <tr
+          onClick={() => checkPdfStatus(data)}
+          draggable
+          onDragStart={(e) => {
+            e.stopPropagation();
+            handleDragStart(data);
+          }}
+        >
           <td className="cursor-pointer flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
