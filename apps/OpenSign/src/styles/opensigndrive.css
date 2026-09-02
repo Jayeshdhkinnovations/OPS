@@ -8,6 +8,13 @@
   background-color: rgba(124, 58, 237, 0.08);
 }
 
+div.op-drag-over-target {
+  outline: 2px dashed var(--fallback-p, #7c3aed);
+  outline-offset: 2px;
+  background-color: rgba(124, 58, 237, 0.08);
+  border-radius: 6px;
+}
+
 .ContextMenuContent,
 .ContextMenuSubContent {
   min-width: 135px;

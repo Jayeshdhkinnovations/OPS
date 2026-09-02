@@ -471,7 +471,24 @@ function DriveBody(props) {
         </tr>
       )
     ) : listType === "list" && data.Type === "Folder" ? (
-      <div className="relative w-[100px] h-[100px] mx-2 my-3">
+      <div
+        className={`relative w-[100px] h-[100px] mx-2 my-3${dragOverId === data.objectId ? " op-drag-over-target" : ""}`}
+        draggable
+        onDragStart={(e) => {
+          e.stopPropagation();
+          handleDragStart(data);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (dragOverId !== data.objectId) setDragOverId(data.objectId);
+        }}
+        onDragLeave={() => setDragOverId(null)}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleDropOnFolder(data);
+        }}
+      >
         <ContextMenu.Root>
           <ContextMenu.Trigger className="flex flex-col justify-center items-center select-none-cls">
             {/* folder */}
@@ -527,6 +544,13 @@ function DriveBody(props) {
                 <span>{t(`context-menu.Rename`)}</span>
               </ContextMenu.Item>
               <ContextMenu.Item
+                onClick={() => handleMenuItemClick("Move", data)}
+                className="ContextMenuItem"
+              >
+                <i className="fa-light fa-file-export mr-[8px]"></i>
+                <span>{t(`context-menu.Move`)}</span>
+              </ContextMenu.Item>
+              <ContextMenu.Item
                 onClick={() => handleMenuItemClick("Delete", data, data.Type)}
                 className="ContextMenuItem"
               >
@@ -546,7 +570,14 @@ function DriveBody(props) {
         <HoverCard.Trigger asChild>
           <div>
             <ContextMenu.Root>
-              <div className="relative w-[100px] h-[100px] mx-2 my-3">
+              <div
+                className="relative w-[100px] h-[100px] mx-2 my-3"
+                draggable
+                onDragStart={(e) => {
+                  e.stopPropagation();
+                  handleDragStart(data);
+                }}
+              >
                 <ContextMenu.Trigger
                   asChild
                   className="flex flex-col justify-center items-center select-none-cls"
