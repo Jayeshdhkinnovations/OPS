@@ -318,6 +318,35 @@ export const getDrive = async (documentId, skip = 0, limit = 50) => {
   return driveDeatils;
 };
 
+//function for getting trashed drive items via gettrash cloud function
+export const getTrash = async (skip = 0, limit = 100) => {
+  const data = { limit, skip };
+  const trashDetails = await axios
+    .post(`${localStorage.getItem("baseUrl")}functions/gettrash`, data, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Parse-Application-Id": localStorage.getItem("parseAppId"),
+        sessiontoken: localStorage.getItem("accesstoken")
+      }
+    })
+    .then((res) => {
+      const json = res.data;
+      if (json && json.result.error) {
+        return json;
+      } else if (json && json.result) {
+        return json.result;
+      } else {
+        return [];
+      }
+    })
+    .catch((err) => {
+      console.log("Err in gettrash cloud function", err);
+      return "Error: Something went wrong!";
+    });
+
+  return trashDetails;
+};
+
 // `pdfNewWidthFun` function is used to calculate pdf width to render in middle container
 export const pdfNewWidthFun = (divRef) => {
   const pdfWidth = divRef.current.offsetWidth;
@@ -4229,7 +4258,10 @@ function _removeWidgetAnnotations(pdfDoc) {
 const escMail = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ]
   );
 
 export const mailTemplate = (param) => {

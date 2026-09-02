@@ -20,6 +20,7 @@ const TITLE_MAP = {
   "/report/zNqBHXHsYH": "Expired",
   "/report/contacts": "Contactbook",
   "/drive": "Drive",
+  "/trash": "Trash",
   "/managesign": "My Signature",
   "/preferences": "Preferences",
   "/users": "Users",

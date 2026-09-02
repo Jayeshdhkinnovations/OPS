@@ -31,6 +31,7 @@ function DriveBody(props) {
   const [isOpenMoveModal, setIsOpenMoveModal] = useState(false);
   const [selectDoc, setSelectDoc] = useState();
   const [isDeleteDoc, setIsDeleteDoc] = useState({});
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const contextMenu = [
     { type: "Download", icon: "fa-light fa-arrow-down" },
     { type: "Rename", icon: "fa-light fa-font" },
@@ -156,6 +157,7 @@ function DriveBody(props) {
       case "Delete": {
         setIsDeleteDoc({ status: true, deleteType });
         setSelectDoc(data);
+        setDeleteConfirmText("");
         break;
       }
       case "Move": {
@@ -373,6 +375,16 @@ function DriveBody(props) {
           <td>{t("folder")}</td>
           <td>_</td>
           <td>_</td>
+          <td>
+            <i
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMenuItemClick("Delete", data, data.Type);
+              }}
+              className="fa-light fa-trash op-text-primary cursor-pointer"
+              aria-hidden="true"
+            ></i>
+          </td>
         </tr>
       ) : (
         <tr onClick={() => checkPdfStatus(data)}>
@@ -397,6 +409,16 @@ function DriveBody(props) {
                 handleMenuItemClick("Download", data);
               }}
               className="fa-light fa-download mr-[8px] op-text-primary cursor-pointer"
+              aria-hidden="true"
+            ></i>
+          </td>
+          <td>
+            <i
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMenuItemClick("Delete", data);
+              }}
+              className="fa-light fa-trash op-text-primary cursor-pointer"
               aria-hidden="true"
             ></i>
           </td>
@@ -621,6 +643,7 @@ function DriveBody(props) {
                 <th>{t("report-heading.Type")}</th>
                 <th>{t("report-heading.Status")}</th>
                 <th>{t("action")}</th>
+                <th>{t("btnLabel.Delete")}</th>
               </tr>
             </thead>
             <tbody>
@@ -654,18 +677,27 @@ function DriveBody(props) {
       <ModalUi
         isOpen={isDeleteDoc.status}
         title={t("delete-document")}
-        handleClose={() => setIsDeleteDoc({})}
+        handleClose={() => {
+          setIsDeleteDoc({});
+          setDeleteConfirmText("");
+        }}
       >
         <div className="h-full p-[20px] text-base-content">
-          {isDeleteDoc.deleteType ? (
-            <p>{t("delete-folder-alert")}</p>
-          ) : (
-            <p>{t("delete-document-alert")}</p>
-          )}
+          <p>{t("delete-drive-item-confirm", { name: selectDoc?.Name })}</p>
+          <input
+            type="text"
+            autoFocus
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder={selectDoc?.Name}
+            className="op-input op-input-bordered op-input-sm w-full mt-2"
+          />
 
           <div className="h-[1px] w-full bg-[#9f9f9f] my-[15px]"></div>
           <button
+            disabled={deleteConfirmText !== selectDoc?.Name}
             onClick={() => {
+              setDeleteConfirmText("");
               if (isDeleteDoc.deleteType) {
                 handleDeleteFolder(selectDoc);
               } else {
@@ -673,12 +705,15 @@ function DriveBody(props) {
               }
             }}
             type="button"
-            className="op-btn op-btn-primary mr-2"
+            className="op-btn op-btn-primary mr-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t("yes")}
           </button>
           <button
-            onClick={() => setIsDeleteDoc({})}
+            onClick={() => {
+              setIsDeleteDoc({});
+              setDeleteConfirmText("");
+            }}
             type="button"
             className="op-btn op-btn-neutral"
           >

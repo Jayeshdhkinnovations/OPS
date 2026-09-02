@@ -32,6 +32,17 @@ async function DocumentBeforesave(request) {
     const document = request.object;
     const oldDocument = request.original;
 
+    // Stamp/clear the trash timestamp whenever IsArchive is toggled, so the
+    // Trash view can compute "days remaining" without every caller having to
+    // set it themselves.
+    const wasArchived = oldDocument?.get('IsArchive') === true;
+    const isArchived = document?.get('IsArchive') === true;
+    if (!wasArchived && isArchived) {
+      document.set('ArchivedAt', new Date());
+    } else if (wasArchived && !isArchived) {
+      document.unset('ArchivedAt');
+    }
+
     // Check if SignedUrl field has been added (transition from undefined to defined)
     if (oldDocument && !oldDocument?.get('SignedUrl') && document?.get('SignedUrl')) {
       if (oldDocument?.get('ExtUserPtr')?.id) {

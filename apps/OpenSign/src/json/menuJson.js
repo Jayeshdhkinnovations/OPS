@@ -80,6 +80,14 @@ const sidebarList = [
     objectId: "drive"
   },
   {
+    icon: "fa-light fa-trash",
+    title: "Trash",
+    target: "_self",
+    pageType: "",
+    description: "",
+    objectId: "trash"
+  },
+  {
     icon: "fa-light fa-address-card",
     title: "Documents",
     target: "_self",

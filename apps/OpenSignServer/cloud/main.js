@@ -81,8 +81,13 @@ import createDocumentFromApp from './parsefunction/createDocumentFromApp.js';
 import verifyCertificateEvidence from './parsefunction/verifyCertificateEvidence.js';
 import resolveIpGeo from './parsefunction/resolveIpGeo.js';
 import resolveResetToken from './parsefunction/resolveResetToken.js';
+import getTrash from './parsefunction/getTrash.js';
+import restoreDocument from './parsefunction/restoreDocument.js';
+import permanentlyDeleteDocument from './parsefunction/permanentlyDeleteDocument.js';
+import { startTrashCleanupJob } from './trashCleanup.js';
 
 export default function registerCloudCode() {
+  startTrashCleanupJob();
   // This afterSave function triggers after an object is added or updated in the specified class, allowing for post-processing logic.
   Parse.Cloud.afterSave('contracts_Document', DocumentAftersave);
   Parse.Cloud.afterSave('contracts_Contactbook', ContactbookAftersave);
@@ -173,4 +178,7 @@ export default function registerCloudCode() {
   Parse.Cloud.define('verifycertificateevidence', verifyCertificateEvidence);
   Parse.Cloud.define('resolveipgeo', resolveIpGeo);
   Parse.Cloud.define('resolveresettoken', resolveResetToken);
+  Parse.Cloud.define('gettrash', getTrash);
+  Parse.Cloud.define('restoredocument', restoreDocument);
+  Parse.Cloud.define('permanentlydeletedocument', permanentlyDeleteDocument);
 }

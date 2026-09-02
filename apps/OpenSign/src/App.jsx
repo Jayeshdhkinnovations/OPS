@@ -27,6 +27,7 @@ const GuestLogin = lazyWithRetry(() => import("./pages/GuestLogin"));
 const ChangePassword = lazyWithRetry(() => import("./pages/ChangePassword"));
 const UserProfile = lazyWithRetry(() => import("./pages/UserProfile"));
 const Opensigndrive = lazyWithRetry(() => import("./pages/Opensigndrive"));
+const OpensignTrash = lazyWithRetry(() => import("./pages/OpensignTrash"));
 const ManageSign = lazyWithRetry(() => import("./pages/Managesign"));
 const AddAdmin = lazyWithRetry(() => import("./pages/AddAdmin"));
 const UpdateExistUserAdmin = lazyWithRetry(
@@ -117,6 +118,7 @@ function App() {
               <Route path="/dashboard/:id" element={<Lazy Page={Dashboard} />} />
               <Route path="/profile" element={<Lazy Page={UserProfile} />} />
               <Route path="/drive" element={<Lazy Page={Opensigndrive} />} />
+              <Route path="/trash" element={<Lazy Page={OpensignTrash} />} />
               <Route path="/managesign" element={<Lazy Page={ManageSign} />} />
               <Route
                 path="/template/:templateId"
