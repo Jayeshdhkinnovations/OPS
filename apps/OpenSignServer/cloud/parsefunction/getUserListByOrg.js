@@ -56,20 +56,39 @@ export default async function getUserListByOrg(req) {
       try {
         const userIds = _userRes.map(u => u.UserId?.objectId).filter(Boolean);
 
-        // Storage: partners_DataFiles carries a FileSize and the uploader.
+        // Storage: partners_DataFiles.UserId is not a reliable owner (signed
+        // PDFs, certificates and signer uploads often don't carry the right
+        // one, which under-counts badly). Same fix as getDriveStorageBreakdown:
+        // join each document's real files (URL/SignedUrl/CertificateUrl) to
+        // partners_DataFiles by FileUrl, and attribute the size to whoever
+        // created the document instead.
         const storageByUser = {};
         if (userIds.length) {
+          const sizeByUrl = new Map();
           const fileQuery = new Parse.Query('partners_DataFiles');
-          fileQuery.containedIn(
-            'UserId',
-            userIds.map(id => ({ __type: 'Pointer', className: '_User', objectId: id }))
-          );
-          fileQuery.select('FileSize', 'UserId');
+          fileQuery.select('FileUrl', 'FileSize');
           fileQuery.limit(10000);
           for (const f of await fileQuery.find({ useMasterKey: true })) {
-            const owner = f.get('UserId')?.id;
-            if (owner)
-              storageByUser[owner] = (storageByUser[owner] || 0) + (f.get('FileSize') || 0);
+            const url = f.get('FileUrl');
+            if (url) sizeByUrl.set(url, f.get('FileSize') || 0);
+          }
+
+          const docQuery = new Parse.Query('contracts_Document');
+          docQuery.containedIn(
+            'CreatedBy',
+            userIds.map(id => ({ __type: 'Pointer', className: '_User', objectId: id }))
+          );
+          docQuery.notEqualTo('IsArchive', true);
+          docQuery.select('URL', 'SignedUrl', 'CertificateUrl', 'CreatedBy');
+          docQuery.limit(10000);
+          for (const doc of await docQuery.find({ useMasterKey: true })) {
+            const owner = doc.get('CreatedBy')?.id;
+            if (!owner) continue;
+            const urls = [doc.get('URL'), doc.get('SignedUrl'), doc.get('CertificateUrl')].filter(
+              Boolean
+            );
+            const sizeBytes = urls.reduce((sum, url) => sum + (sizeByUrl.get(url) || 0), 0);
+            storageByUser[owner] = (storageByUser[owner] || 0) + sizeBytes;
           }
         }
 
