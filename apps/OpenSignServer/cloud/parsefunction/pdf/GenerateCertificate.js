@@ -96,16 +96,6 @@ async function annotateParticipantGeo(participants, fallbackTimezone) {
   }
 }
 
-function initialsOf(name) {
-  const parts = String(name || '?')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 // ---- text fitting helpers ----------------------------------------------
 // Breaks text into chunks at whitespace *and* after hyphens (keeping the
 // hyphen with the preceding chunk), so a long hyphenated ID wraps at a
@@ -261,21 +251,6 @@ function drawOutlinedCheckCircle(
   });
 }
 
-function drawAvatarCircle(page, { x, y, diameter, name, font, bgColor, textColor }) {
-  const r = diameter / 2;
-  page.drawEllipse({ x: x + r, y: y + r, xScale: r, yScale: r, color: bgColor });
-  const initials = initialsOf(name);
-  const size = diameter * 0.38;
-  const textWidth = font.widthOfTextAtSize(initials, size);
-  page.drawText(initials, {
-    x: x + r - textWidth / 2,
-    y: y + r - size / 2.8,
-    size,
-    font,
-    color: textColor,
-  });
-}
-
 // Small checkmark built from two lines, not a path - reliable at any size.
 function drawCheckIcon(page, { x, y, size, color, thickness = 1.6 }) {
   page.drawLine({
@@ -336,12 +311,6 @@ export default async function GenerateCertificate(docDetails) {
   const rowStripe = rgb(0.975, 0.978, 0.985);
   const black = rgb(0.1, 0.1, 0.12);
   const white = rgb(1, 1, 1);
-  const avatarPalette = [
-    { bg: rgb(0.85, 0.88, 0.98), fg: rgb(0.22, 0.32, 0.62) },
-    { bg: rgb(0.93, 0.86, 0.98), fg: rgb(0.48, 0.24, 0.62) },
-    { bg: rgb(0.85, 0.96, 0.9), fg: rgb(0.15, 0.5, 0.32) },
-    { bg: rgb(0.99, 0.9, 0.83), fg: rgb(0.68, 0.38, 0.12) },
-  ];
 
   // ---- spacing system - a small fixed scale instead of scattered
   // one-off numbers, so paddings/margins/gaps are predictable throughout ----
@@ -814,9 +783,12 @@ export default async function GenerateCertificate(docDetails) {
   const CELL_PAD = 8;
   const colSpecs = [
     { key: 'idx', label: '#', width: 20 },
-    { key: 'name', label: 'Name & Email', width: 184 },
+    // Name & Email gave up the width its now-removed avatar circle used to
+    // occupy, handed straight to Status so the signature image drawn there
+    // can render bigger.
+    { key: 'name', label: 'Name & Email', width: 150 },
     { key: 'role', label: 'Role', width: 44 },
-    { key: 'status', label: 'Status', width: 68 },
+    { key: 'status', label: 'Status', width: 102 },
     { key: 'signedAt', label: 'Signed At', width: 78 },
     { key: 'location', label: 'Location', width: 64 },
   ];
@@ -922,7 +894,6 @@ export default async function GenerateCertificate(docDetails) {
     }
     const rowTop = y;
     const rowMidBaseline = rowTop - rowH / 2 - 3;
-    const palette = avatarPalette[idx % avatarPalette.length];
 
     const idxCol = colByKey.idx;
     const idxText = String(idx + 1);
@@ -936,19 +907,7 @@ export default async function GenerateCertificate(docDetails) {
     });
 
     const nameCol = colByKey.name;
-    const avatarD = 22;
-    const avatarX = nameCol.x + CELL_PAD;
-    const avatarY = rowTop - rowH / 2 - avatarD / 2;
-    drawAvatarCircle(page, {
-      x: avatarX,
-      y: avatarY,
-      diameter: avatarD,
-      name: p?.Name,
-      font: fontBold,
-      bgColor: palette.bg,
-      textColor: palette.fg,
-    });
-    const textX = avatarX + avatarD + SPACE.sm;
+    const textX = nameCol.x + CELL_PAD;
     const textMaxW = nameCol.x + nameCol.width - textX - SPACE.xs;
     const [nameLine] = fitLines(p?.Name || '', fontBold, 8.5, textMaxW, 1);
     const [emailLine] = fitLines(p?.Email || '', font, 7, textMaxW, 1);
@@ -975,7 +934,7 @@ export default async function GenerateCertificate(docDetails) {
       // size, never distorted - aspect ratio is preserved) and centered
       // both ways in the available space.
       const maxW = statusCol.width - statusPad * 2;
-      const maxH = rowH - 10;
+      const maxH = rowH - 6;
       const scale = Math.min(maxW / p._sigImage.width, maxH / p._sigImage.height, 1);
       const drawW = p._sigImage.width * scale;
       const drawH = p._sigImage.height * scale;
