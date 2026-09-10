@@ -810,23 +810,6 @@ export default async function GenerateCertificate(docDetails) {
   });
   const colByKey = Object.fromEntries(cols.map(c => [c.key, c]));
 
-  // Vertical divider at every column boundary (including the outer left/
-  // right edges), so each cell's area is visibly bounded rather than just
-  // implied by text alignment - drawn per header/row block so it always
-  // spans exactly that block's height, correct even when a block starts a
-  // fresh page.
-  function drawColumnDividers(topY, bottomY, color) {
-    const boundaries = [marginX, ...cols.map(c => c.x + c.width)];
-    for (const x of boundaries) {
-      page.drawLine({
-        start: { x, y: topY },
-        end: { x, y: bottomY },
-        thickness: 0.5,
-        color,
-      });
-    }
-  }
-
   function drawTableHeader() {
     const headerH = 20;
     page.drawRectangle({
@@ -836,7 +819,6 @@ export default async function GenerateCertificate(docDetails) {
       height: headerH,
       color: navy,
     });
-    drawColumnDividers(y, y - headerH, white);
     for (const c of cols) {
       if (c.key === 'idx') {
         const tw = fontBold.widthOfTextAtSize(c.label, 8);
@@ -1038,7 +1020,6 @@ export default async function GenerateCertificate(docDetails) {
       color: gray,
     });
 
-    drawColumnDividers(rowTop, rowTop - rowH, lightGray);
     page.drawLine({
       start: { x: marginX, y: rowTop - rowH },
       end: { x: contentRight, y: rowTop - rowH },
