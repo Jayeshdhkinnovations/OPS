@@ -7,6 +7,9 @@ import { resolve } from "path";
 export default defineConfig(({ mode }) => {
   // Load ALL env vars (no prefix filter)
   const env = loadEnv(mode, process.cwd(), "");
+  const devApiTarget = (
+    env.REACT_APP_SERVERURL || "http://127.0.0.1:8081/app"
+  ).replace(/\/app\/?$/, "");
 
   return {
     plugins: [
@@ -45,13 +48,25 @@ export default defineConfig(({ mode }) => {
           // so react and its ecosystem are deliberately kept together.
           manualChunks(id) {
             if (!id.includes("node_modules")) return;
-            if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|use-sync-external-store)[\\/]/.test(id)) {
+            if (
+              /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|use-sync-external-store)[\\/]/.test(
+                id
+              )
+            ) {
               return "vendor-react";
             }
-            if (/[\\/]node_modules[\\/](pdfjs-dist|react-pdf|pdf-lib|@pdf-lib)[\\/]/.test(id)) {
+            if (
+              /[\\/]node_modules[\\/](pdfjs-dist|react-pdf|pdf-lib|@pdf-lib)[\\/]/.test(
+                id
+              )
+            ) {
               return "vendor-pdf";
             }
-            if (/[\\/]node_modules[\\/](onnxruntime-web|onnxruntime-common)[\\/]/.test(id)) {
+            if (
+              /[\\/]node_modules[\\/](onnxruntime-web|onnxruntime-common)[\\/]/.test(
+                id
+              )
+            ) {
               return "vendor-onnx";
             }
             if (/[\\/]node_modules[\\/](i18next|react-i18next)/.test(id)) {
@@ -66,7 +81,16 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: env.PORT || 3000, // Same port as CRA
-      open: true
+      open: true,
+      // Production serves the frontend and Parse API from the same origin,
+      // so several auth flows correctly use /app. Mirror that arrangement
+      // in Vite instead of returning index.html for API requests.
+      proxy: {
+        "/app": {
+          target: devApiTarget,
+          changeOrigin: true
+        }
+      }
     },
     test: {
       environment: "jsdom",
