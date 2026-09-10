@@ -83,9 +83,7 @@ async function resolveIpGeo(ip) {
 // unlabeled.
 async function annotateParticipantGeo(participants, fallbackTimezone) {
   const uniqueIps = [...new Set(participants.map(p => p.ipAddress).filter(Boolean))];
-  const geoEntries = await Promise.all(
-    uniqueIps.map(async ip => [ip, await resolveIpGeo(ip)])
-  );
+  const geoEntries = await Promise.all(uniqueIps.map(async ip => [ip, await resolveIpGeo(ip)]));
   const geoByIp = new Map(geoEntries);
   for (const p of participants) {
     const geo = geoByIp.get(p.ipAddress) || {};
@@ -422,6 +420,24 @@ export default async function GenerateCertificate(docDetails) {
   // London signer are ~5.5 hours apart, and rendering both against the
   // sender's zone would print the wrong local time for the London signer.
   await annotateParticipantGeo(participants, timezone);
+
+  // Pre-embed each signer's actual signature image (captured at sign time,
+  // normalized to PNG by the client's changeImageWH) so the Status column
+  // can stamp the real signature instead of a generic "Signed" badge. This
+  // must happen before the row-drawing loop further down: pdf-lib's
+  // embedPng is async and that loop is a synchronous forEach, which can't
+  // await per row.
+  for (const p of participants) {
+    if (!p?.Signature) continue;
+    try {
+      const sigBuffer = Buffer.from(p.Signature, 'base64');
+      p._sigImage = await pdfDoc.embedPng(sigBuffer);
+    } catch (err) {
+      // A malformed/undecodable signature must never break certificate
+      // generation - that row just falls back to the text badge.
+      console.log('certificate: failed to embed signature for', p?.Name, err.message);
+    }
+  }
 
   // Flat chronological event list for the "Event History" table - built
   // from the same AuditTrail data the old layout already used, just
@@ -935,7 +951,23 @@ export default async function GenerateCertificate(docDetails) {
     const badgeW = 58;
     const badgeH = 16;
     const badgeYr = rowTop - rowH / 2 - badgeH / 2;
-    if (p?.SignedOn) {
+    if (p?.SignedOn && p._sigImage) {
+      // Stamp the signer's real signature instead of a "Signed" label -
+      // scaled to fit the Status cell (never upscaled past its natural
+      // size, never distorted - aspect ratio is preserved) and centered
+      // both ways in the available space.
+      const maxW = statusCol.width - statusPad * 2;
+      const maxH = rowH - 10;
+      const scale = Math.min(maxW / p._sigImage.width, maxH / p._sigImage.height, 1);
+      const drawW = p._sigImage.width * scale;
+      const drawH = p._sigImage.height * scale;
+      page.drawImage(p._sigImage, {
+        x: statusCol.x + (statusCol.width - drawW) / 2,
+        y: rowTop - rowH / 2 - drawH / 2,
+        width: drawW,
+        height: drawH,
+      });
+    } else if (p?.SignedOn) {
       const signedBadgeW = 54;
       const signedBadgeX = statusCol.x + (statusCol.width - signedBadgeW) / 2;
       drawOutlinedPill(page, {
