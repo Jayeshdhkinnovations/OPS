@@ -793,11 +793,14 @@ export default async function GenerateCertificate(docDetails) {
     { key: 'location', label: 'Location', width: 64 },
   ];
   const fixedColsWidth = colSpecs.reduce((sum, c) => sum + c.width, 0);
-  const authHeaderMinW = fontBold.widthOfTextAtSize('Authentication', 8) + CELL_PAD * 2;
+  // Always exactly the remaining space, never wider - forcing extra width
+  // to fit the "Authentication" label at its full size pushed this column
+  // (and the table's right border with it) past the page's own margin.
+  // The header label now shrinks to fit instead, same as every other cell.
   colSpecs.push({
     key: 'auth',
     label: 'Authentication',
-    width: Math.max(authHeaderMinW, contentWidth - fixedColsWidth),
+    width: contentWidth - fixedColsWidth,
   });
   let cx = marginX;
   const cols = colSpecs.map(c => {
@@ -845,10 +848,14 @@ export default async function GenerateCertificate(docDetails) {
           color: white,
         });
       } else {
-        page.drawText(c.label, {
+        // Shrink-to-fit like every body cell - a header label (notably
+        // "Authentication") must never force its column wider than the
+        // space actually available.
+        const labelFit = fitSingleLine(c.label, fontBold, 8, c.width - CELL_PAD * 2, 6);
+        page.drawText(labelFit.text, {
           x: c.x + CELL_PAD,
           y: y - headerH + 7,
-          size: 8,
+          size: labelFit.size,
           font: fontBold,
           color: white,
         });
