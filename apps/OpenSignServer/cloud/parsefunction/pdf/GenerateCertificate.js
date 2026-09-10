@@ -788,7 +788,7 @@ export default async function GenerateCertificate(docDetails) {
     // can render bigger.
     { key: 'name', label: 'Name & Email', width: 150 },
     { key: 'role', label: 'Role', width: 44 },
-    { key: 'status', label: 'Status', width: 102 },
+    { key: 'status', label: 'Signature', width: 102 },
     { key: 'signedAt', label: 'Signed At', width: 78 },
     { key: 'location', label: 'Location', width: 64 },
   ];
