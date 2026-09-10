@@ -96,6 +96,16 @@ async function annotateParticipantGeo(participants, fallbackTimezone) {
   }
 }
 
+function initialsOf(name) {
+  const parts = String(name || '?')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 // ---- text fitting helpers ----------------------------------------------
 // Breaks text into chunks at whitespace *and* after hyphens (keeping the
 // hyphen with the preceding chunk), so a long hyphenated ID wraps at a
@@ -251,6 +261,21 @@ function drawOutlinedCheckCircle(
   });
 }
 
+function drawAvatarCircle(page, { x, y, diameter, name, font, bgColor, textColor }) {
+  const r = diameter / 2;
+  page.drawEllipse({ x: x + r, y: y + r, xScale: r, yScale: r, color: bgColor });
+  const initials = initialsOf(name);
+  const size = diameter * 0.38;
+  const textWidth = font.widthOfTextAtSize(initials, size);
+  page.drawText(initials, {
+    x: x + r - textWidth / 2,
+    y: y + r - size / 2.8,
+    size,
+    font,
+    color: textColor,
+  });
+}
+
 // Small checkmark built from two lines, not a path - reliable at any size.
 function drawCheckIcon(page, { x, y, size, color, thickness = 1.6 }) {
   page.drawLine({
@@ -311,6 +336,12 @@ export default async function GenerateCertificate(docDetails) {
   const rowStripe = rgb(0.975, 0.978, 0.985);
   const black = rgb(0.1, 0.1, 0.12);
   const white = rgb(1, 1, 1);
+  const avatarPalette = [
+    { bg: rgb(0.85, 0.88, 0.98), fg: rgb(0.22, 0.32, 0.62) },
+    { bg: rgb(0.93, 0.86, 0.98), fg: rgb(0.48, 0.24, 0.62) },
+    { bg: rgb(0.85, 0.96, 0.9), fg: rgb(0.15, 0.5, 0.32) },
+    { bg: rgb(0.99, 0.9, 0.83), fg: rgb(0.68, 0.38, 0.12) },
+  ];
 
   // ---- spacing system - a small fixed scale instead of scattered
   // one-off numbers, so paddings/margins/gaps are predictable throughout ----
@@ -389,24 +420,6 @@ export default async function GenerateCertificate(docDetails) {
   // London signer are ~5.5 hours apart, and rendering both against the
   // sender's zone would print the wrong local time for the London signer.
   await annotateParticipantGeo(participants, timezone);
-
-  // Pre-embed each signer's actual signature image (captured at sign time,
-  // normalized to PNG by the client's changeImageWH) so the Status column
-  // can stamp the real signature instead of a generic "Signed" badge. This
-  // must happen before the row-drawing loop further down: pdf-lib's
-  // embedPng is async and that loop is a synchronous forEach, which can't
-  // await per row.
-  for (const p of participants) {
-    if (!p?.Signature) continue;
-    try {
-      const sigBuffer = Buffer.from(p.Signature, 'base64');
-      p._sigImage = await pdfDoc.embedPng(sigBuffer);
-    } catch (err) {
-      // A malformed/undecodable signature must never break certificate
-      // generation - that row just falls back to the text badge.
-      console.log('certificate: failed to embed signature for', p?.Name, err.message);
-    }
-  }
 
   // Flat chronological event list for the "Event History" table - built
   // from the same AuditTrail data the old layout already used, just
@@ -783,24 +796,18 @@ export default async function GenerateCertificate(docDetails) {
   const CELL_PAD = 8;
   const colSpecs = [
     { key: 'idx', label: '#', width: 20 },
-    // Name & Email gave up the width its now-removed avatar circle used to
-    // occupy, handed straight to Status so the signature image drawn there
-    // can render bigger.
-    { key: 'name', label: 'Name & Email', width: 150 },
+    { key: 'name', label: 'Name & Email', width: 184 },
     { key: 'role', label: 'Role', width: 44 },
-    { key: 'status', label: 'Signature', width: 102 },
+    { key: 'status', label: 'Status', width: 68 },
     { key: 'signedAt', label: 'Signed At', width: 78 },
     { key: 'location', label: 'Location', width: 64 },
   ];
   const fixedColsWidth = colSpecs.reduce((sum, c) => sum + c.width, 0);
-  // Always exactly the remaining space, never wider - forcing extra width
-  // to fit the "Authentication" label at its full size pushed this column
-  // (and the table's right border with it) past the page's own margin.
-  // The header label now shrinks to fit instead, same as every other cell.
+  const authHeaderMinW = fontBold.widthOfTextAtSize('Authentication', 8) + CELL_PAD * 2;
   colSpecs.push({
     key: 'auth',
     label: 'Authentication',
-    width: contentWidth - fixedColsWidth,
+    width: Math.max(authHeaderMinW, contentWidth - fixedColsWidth),
   });
   let cx = marginX;
   const cols = colSpecs.map(c => {
@@ -809,23 +816,6 @@ export default async function GenerateCertificate(docDetails) {
     return col;
   });
   const colByKey = Object.fromEntries(cols.map(c => [c.key, c]));
-
-  // Vertical divider at every column boundary (including the outer left/
-  // right edges), so each cell's area is visibly bounded rather than just
-  // implied by text alignment - drawn per header/row block so it always
-  // spans exactly that block's height, correct even when a block starts a
-  // fresh page.
-  function drawColumnDividers(topY, bottomY, color) {
-    const boundaries = [marginX, ...cols.map(c => c.x + c.width)];
-    for (const x of boundaries) {
-      page.drawLine({
-        start: { x, y: topY },
-        end: { x, y: bottomY },
-        thickness: 0.5,
-        color,
-      });
-    }
-  }
 
   function drawTableHeader() {
     const headerH = 20;
@@ -836,7 +826,6 @@ export default async function GenerateCertificate(docDetails) {
       height: headerH,
       color: navy,
     });
-    drawColumnDividers(y, y - headerH, white);
     for (const c of cols) {
       if (c.key === 'idx') {
         const tw = fontBold.widthOfTextAtSize(c.label, 8);
@@ -848,14 +837,10 @@ export default async function GenerateCertificate(docDetails) {
           color: white,
         });
       } else {
-        // Shrink-to-fit like every body cell - a header label (notably
-        // "Authentication") must never force its column wider than the
-        // space actually available.
-        const labelFit = fitSingleLine(c.label, fontBold, 8, c.width - CELL_PAD * 2, 6);
-        page.drawText(labelFit.text, {
+        page.drawText(c.label, {
           x: c.x + CELL_PAD,
           y: y - headerH + 7,
-          size: labelFit.size,
+          size: 8,
           font: fontBold,
           color: white,
         });
@@ -901,6 +886,7 @@ export default async function GenerateCertificate(docDetails) {
     }
     const rowTop = y;
     const rowMidBaseline = rowTop - rowH / 2 - 3;
+    const palette = avatarPalette[idx % avatarPalette.length];
 
     const idxCol = colByKey.idx;
     const idxText = String(idx + 1);
@@ -914,7 +900,19 @@ export default async function GenerateCertificate(docDetails) {
     });
 
     const nameCol = colByKey.name;
-    const textX = nameCol.x + CELL_PAD;
+    const avatarD = 22;
+    const avatarX = nameCol.x + CELL_PAD;
+    const avatarY = rowTop - rowH / 2 - avatarD / 2;
+    drawAvatarCircle(page, {
+      x: avatarX,
+      y: avatarY,
+      diameter: avatarD,
+      name: p?.Name,
+      font: fontBold,
+      bgColor: palette.bg,
+      textColor: palette.fg,
+    });
+    const textX = avatarX + avatarD + SPACE.sm;
     const textMaxW = nameCol.x + nameCol.width - textX - SPACE.xs;
     const [nameLine] = fitLines(p?.Name || '', fontBold, 8.5, textMaxW, 1);
     const [emailLine] = fitLines(p?.Email || '', font, 7, textMaxW, 1);
@@ -935,23 +933,7 @@ export default async function GenerateCertificate(docDetails) {
     const badgeW = 58;
     const badgeH = 16;
     const badgeYr = rowTop - rowH / 2 - badgeH / 2;
-    if (p?.SignedOn && p._sigImage) {
-      // Stamp the signer's real signature instead of a "Signed" label -
-      // scaled to fit the Status cell (never upscaled past its natural
-      // size, never distorted - aspect ratio is preserved) and centered
-      // both ways in the available space.
-      const maxW = statusCol.width - statusPad * 2;
-      const maxH = rowH - 6;
-      const scale = Math.min(maxW / p._sigImage.width, maxH / p._sigImage.height, 1);
-      const drawW = p._sigImage.width * scale;
-      const drawH = p._sigImage.height * scale;
-      page.drawImage(p._sigImage, {
-        x: statusCol.x + (statusCol.width - drawW) / 2,
-        y: rowTop - rowH / 2 - drawH / 2,
-        width: drawW,
-        height: drawH,
-      });
-    } else if (p?.SignedOn) {
+    if (p?.SignedOn) {
       const signedBadgeW = 54;
       const signedBadgeX = statusCol.x + (statusCol.width - signedBadgeW) / 2;
       drawOutlinedPill(page, {
@@ -1038,7 +1020,6 @@ export default async function GenerateCertificate(docDetails) {
       color: gray,
     });
 
-    drawColumnDividers(rowTop, rowTop - rowH, lightGray);
     page.drawLine({
       start: { x: marginX, y: rowTop - rowH },
       end: { x: contentRight, y: rowTop - rowH },
