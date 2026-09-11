@@ -1,9 +1,8 @@
 import React from "react";
-import loaderIcon from "../assets/images/toowix-logo-white.svg";
+import loaderIcon from "../assets/images/Toowix_Logo.svg";
 
-// Placeholder animation: the old animated GIF (previous brand's "T" mark) is
-// gone, and there's no animated asset for the new mark yet - a CSS pulse on
-// the new icon stands in until one is provided.
+// Placeholder animation: no animated asset for the new mark yet - a CSS
+// pulse on the new icon stands in until one is provided.
 const Loader = () => {
   return (
     <img
