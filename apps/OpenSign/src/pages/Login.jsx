@@ -698,11 +698,9 @@ function Login() {
     // Same Loader asset used everywhere else in the app - shown in place of
     // the login form for as long as a stored token is still being
     // validated, so a valid session never flashes the login page before the
-    // dashboard redirect lands. No backdrop change here, just the mark
-    // itself darkened (grayscale + reduced brightness) so it reads clearly
-    // against the plain page background instead of looking washed out.
+    // dashboard redirect lands.
     <div className="flex justify-center items-center h-[100vh]">
-      <div className="scale-150 grayscale brightness-50">
+      <div className="scale-150">
         <Loader />
       </div>
     </div>
