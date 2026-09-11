@@ -304,7 +304,9 @@ export default async function GenerateCertificate(docDetails) {
   const pngImage = await pdfDoc.embedPng(pngUrl);
 
   // ---- palette (matches the approved reference design - unchanged) ----
-  const navy = rgb(0.043, 0.176, 0.353);
+  // Plain black accent everywhere the old navy/purple was used - headings,
+  // table header bars, section-divider lines.
+  const navy = rgb(0, 0, 0);
   const green = rgb(0.086, 0.639, 0.29);
   const gray = rgb(0.42, 0.45, 0.49);
   const lightGray = rgb(0.9, 0.91, 0.93);
@@ -497,7 +499,7 @@ export default async function GenerateCertificate(docDetails) {
   // Logo (left) and the COMPLETED badge (right) share one visual center
   // line instead of being placed with independent, slightly-mismatched
   // offsets.
-  const HEADER_LOGO_H = 24;
+  const HEADER_LOGO_H = 28.8; // 24 * 1.2 - logo enlarged 20%
   const HEADER_BADGE_H = 32;
   const headerCenterY = y - 12;
 
