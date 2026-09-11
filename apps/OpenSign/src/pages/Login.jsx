@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import toowixLogo from "../assets/images/toowix-logo-white.svg";
 import Parse from "parse";
 import { useDispatch } from "react-redux";
 import axios from "axios";
@@ -25,6 +24,11 @@ import SelectLanguage from "../components/pdf/SelectLanguage";
 import { useAuthNavigate } from "../hook/useAuthNavigate";
 import { signInWithGoogle } from "../constant/firebase";
 import GoogleSignupModal from "../components/GoogleSignupModal";
+
+// Served from public/, not imported - vite-plugin-svgr's SVGO pass was
+// stripping this file's gradient <defs>, rendering it flat black instead
+// of the brand colors. A plain static path avoids that pipeline.
+const toowixLogo = "/static/js/assets/images/toowix-logo-white.svg";
 
 function Login() {
   const appName =

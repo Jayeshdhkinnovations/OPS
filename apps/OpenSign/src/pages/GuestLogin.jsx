@@ -9,7 +9,6 @@ import {
   saveLanguageInLocal
 } from "../constant/Utils";
 import logo from "../assets/images/logo.png";
-import toowixLogo from "../assets/images/toowix-logo-white.svg";
 import { appInfo } from "../constant/appinfo";
 import Parse from "parse";
 import { useTranslation } from "react-i18next";
@@ -19,6 +18,11 @@ import Loader from "../primitives/Loader";
 import Alert from "../primitives/Alert";
 import AuthIllustration from "../components/AuthIllustration";
 import { useWindowSize } from "../hook/useWindowSize";
+
+// Served from public/, not imported - vite-plugin-svgr's SVGO pass was
+// stripping this file's gradient <defs>, rendering it flat black instead
+// of the brand colors. A plain static path avoids that pipeline.
+const toowixLogo = "/static/js/assets/images/toowix-logo-white.svg";
 
 function GuestLogin() {
   const { t, i18n } = useTranslation();

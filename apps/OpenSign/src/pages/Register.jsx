@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import toowixLogo from "../assets/images/toowix-logo-white.svg";
 import Parse from "parse";
 import { NavLink, useNavigate } from "react-router";
 import { useAuthNavigate } from "../hook/useAuthNavigate";
@@ -10,6 +9,11 @@ import AuthIllustration from "../components/AuthIllustration";
 import { useWindowSize } from "../hook/useWindowSize";
 import SelectLanguage from "../components/pdf/SelectLanguage";
 import { useTranslation } from "react-i18next";
+
+// Served from public/, not imported - vite-plugin-svgr's SVGO pass was
+// stripping this file's gradient <defs>, rendering it flat black instead
+// of the brand colors. A plain static path avoids that pipeline.
+const toowixLogo = "/static/js/assets/images/toowix-logo-white.svg";
 
 // Deliberately NOT reusing AddAdmin.jsx's flow - that one creates a real
 // _User immediately. This form submits to submitapproval instead, which

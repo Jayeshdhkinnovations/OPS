@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import toowixLogo from "../assets/images/toowix-logo-white.svg";
 import AuthIllustration from "../components/AuthIllustration";
 import Parse from "parse";
 import Alert from "../primitives/Alert";
@@ -13,6 +12,11 @@ import { useTranslation } from "react-i18next";
 import Loader from "../primitives/Loader";
 import SelectLanguage from "../components/pdf/SelectLanguage";
 import { useAuthNavigate } from "../hook/useAuthNavigate";
+
+// Served from public/, not imported - vite-plugin-svgr's SVGO pass was
+// stripping this file's gradient <defs>, rendering it flat black instead
+// of the brand colors. A plain static path avoids that pipeline.
+const toowixLogo = "/static/js/assets/images/toowix-logo-white.svg";
 
 function ForgotPassword() {
   const { t } = useTranslation();
