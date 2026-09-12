@@ -35,9 +35,15 @@ const GetDashboard = (props) => {
           <div
             className={`${
               col?.widget?.bgColor ? col.widget.bgColor : "bg-[#2ed8b6]"
-            } op-card w-full h-[140px] px-3 pt-4 mb-3 shadow-md`}
+            } op-card relative overflow-hidden w-full h-[140px] px-3 pt-4 mb-3 shadow-md`}
             data-tut={col.widget.data.tourSection}
           >
+            {/* Decorative flowing highlight, same direction as the card's
+                gradient - purely cosmetic, sits behind the content. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -z-10 -bottom-10 -right-10 h-40 w-64 rotate-[-18deg] rounded-full bg-white/20 blur-2xl"
+            />
             <Suspense
               fallback={
                 <div className="h-[150px] w-full flex justify-center items-center">
@@ -51,6 +57,8 @@ const GetDashboard = (props) => {
                 Format={col.widget.format && col.widget.format}
                 Data={col.widget.data}
                 FilterData={col.widget.filter}
+                TextColor={col.widget.textColor}
+                TooltipIconColor={col.widget.tooltipIconColor}
               />
             </Suspense>
           </div>
@@ -79,8 +87,12 @@ const GetDashboard = (props) => {
           <div
             className={`${
               col?.widget?.bgColor ? col.widget.bgColor : "bg-[#2ed8b6]"
-            } op-card w-full h-[140px] px-3 pt-4 mb-3 shadow-md"`}
+            } op-card relative overflow-hidden w-full h-[140px] px-3 pt-4 mb-3 shadow-md`}
           >
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -z-10 -bottom-10 -right-10 h-40 w-64 rotate-[-18deg] rounded-full bg-white/20 blur-2xl"
+            />
             <Suspense fallback={<div>please wait</div>}>
               <DashboardCard
                 Icon={col.widget.icon}
@@ -88,6 +100,8 @@ const GetDashboard = (props) => {
                 Format={col.widget.format && col.widget.format}
                 Data={col.widget.data}
                 FilterData={col.widget.filter}
+                TextColor={col.widget.textColor}
+                TooltipIconColor={col.widget.tooltipIconColor}
               />
             </Suspense>
           </div>
