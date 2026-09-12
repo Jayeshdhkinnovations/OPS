@@ -124,8 +124,8 @@ module.exports = {
         opensigncss: {
           primary: "#4C3AE7",
           "primary-content": "#FFFFFF",
-          secondary: "#29354a",
-          "secondary-content": "#c8d1e0",
+          secondary: "#8642FC",
+          "secondary-content": "#FFFFFF",
           accent: "#E10032",
           "accent-content": "#ffd8d5",
           neutral: "#c1ccdb",
