@@ -4,7 +4,7 @@ import axios from "axios";
 import reportJson, { extraCols } from "../json/ReportJson";
 import { useParams } from "react-router";
 import PageNotFound from "./PageNotFound";
-import Loader from "../primitives/Loader";
+import { SkeletonTable } from "../primitives/Skeleton";
 import Contactbook from "../reports/contact/Contactbook";
 import ColumnSelector from "../components/ColumnSelector";
 import TemplatesReport from "../reports/template/TemplatesReport";
@@ -314,8 +314,8 @@ const Report = () => {
   return (
     <>
       {isLoader ? (
-        <div className="h-[100vh] flex justify-center items-center">
-          <Loader />
+        <div className="p-4">
+          <SkeletonTable rows={8} columns={5} />
         </div>
       ) : (
         <>

@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import { useDispatch } from "react-redux";
 import { saveTourSteps } from "../redux/reducers/TourStepsReducer";
 import dashboardJson from "../json/dashboardJson";
-import Loader from "../primitives/Loader";
+import { SkeletonCard } from "../primitives/Skeleton";
 import { useTranslation } from "react-i18next";
 
 const Dashboard = () => {
@@ -60,8 +60,13 @@ const Dashboard = () => {
   return (
     <React.Fragment>
       {loading ? (
-        <div className="h-[300px] w-full bg-white flex justify-center items-center rounded-md">
-          <Loader />
+        <div className="grid grid-cols-12 w-full gap-x-4">
+          <div className="col-span-12 md:col-span-6">
+            <SkeletonCard />
+          </div>
+          <div className="col-span-12 md:col-span-6">
+            <SkeletonCard />
+          </div>
         </div>
       ) : (
         <GetDashboard dashboard={dashboard} />

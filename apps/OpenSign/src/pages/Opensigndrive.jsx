@@ -14,6 +14,7 @@ import TourContentWithBtn from "../primitives/TourContentWithBtn";
 import Tour from "../primitives/Tour";
 import axios from "axios";
 import Loader from "../primitives/Loader";
+import { SkeletonTable } from "../primitives/Skeleton";
 import { useTranslation } from "react-i18next";
 
 const DriveBody = lazyWithRetry(
@@ -663,11 +664,8 @@ function Opensigndrive() {
         </div>
       </ModalUi>
       {isLoading.isLoad ? (
-        <div className="flex flex-col justify-center items-center h-[100vh] w-full">
-          <Loader />
-          <span className="text-[13px] text-base-content">
-            {isLoading.message}
-          </span>
+        <div className="w-full p-4">
+          <SkeletonTable rows={8} columns={5} />
         </div>
       ) : handleError ? (
         <div className="flex justify-center items-center h-[100vh] w-full">

@@ -336,7 +336,11 @@ const DashboardCard = (props) => {
             {t(`dashboard-card.${props.Label}`)}
           </div>
           <div className="text-2xl font-light">
-            {loading ? <div className="loader-01"></div> : setFormat(response)}
+            {loading ? (
+              <div className="h-6 w-12 rounded animate-pulse bg-current/30" />
+            ) : (
+              setFormat(response)
+            )}
           </div>
         </div>
       </div>

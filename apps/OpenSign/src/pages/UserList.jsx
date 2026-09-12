@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Parse from "parse";
 import Alert from "../primitives/Alert";
 import Loader from "../primitives/Loader";
+import { SkeletonTable } from "../primitives/Skeleton";
 import { useLocation } from "react-router";
 import ModalUi from "../primitives/ModalUi";
 import pad from "../assets/images/pad.svg";
@@ -322,8 +323,8 @@ const UserList = () => {
   return (
     <div className="relative">
       {isLoader && (
-        <div className="absolute w-full h-[300px] md:h-[400px] flex justify-center items-center z-30 rounded-box">
-          <Loader />
+        <div className="w-full rounded-box">
+          <SkeletonTable rows={6} columns={4} />
         </div>
       )}
       {Object.keys(isActLoader)?.length > 0 && (

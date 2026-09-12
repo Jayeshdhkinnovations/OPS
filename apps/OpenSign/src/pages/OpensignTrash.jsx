@@ -4,7 +4,7 @@ import Parse from "parse";
 import { useTranslation } from "react-i18next";
 import { getTrash } from "../constant/Utils";
 import ModalUi from "../primitives/ModalUi";
-import Loader from "../primitives/Loader";
+import { SkeletonTable } from "../primitives/Skeleton";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -73,8 +73,8 @@ function OpensignTrash() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col justify-center items-center h-[100vh] w-full">
-        <Loader />
+      <div className="w-full p-4">
+        <SkeletonTable rows={6} columns={6} withAvatar={false} />
       </div>
     );
   }

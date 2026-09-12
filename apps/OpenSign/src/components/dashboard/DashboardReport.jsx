@@ -3,7 +3,7 @@ import Parse from "parse";
 import DocumentsReport from "../../reports/document/DocumentsReport";
 import reportJson from "../../json/ReportJson";
 import axios from "axios";
-import Loader from "../../primitives/Loader";
+import { SkeletonTable } from "../../primitives/Skeleton";
 import { useTranslation } from "react-i18next";
 import { withSessionValidation } from "../../utils";
 function DashboardReport(props) {
@@ -191,8 +191,8 @@ function DashboardReport(props) {
   return (
     <>
       {isLoader ? (
-        <div className="h-[250px] flex justify-center items-center">
-          <Loader />
+        <div className="h-[250px] overflow-hidden px-2">
+          <SkeletonTable rows={5} columns={3} />
         </div>
       ) : (
         <>
