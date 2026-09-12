@@ -172,7 +172,7 @@ const Header = ({ isConsole, setIsLoggingOut }) => {
               className="cursor-pointer w-[35px] h-[35px] rounded-full ring-[1px] ring-offset-2 ring-gray-400 overflow-hidden"
             >
               <img
-                className="w-[35px] h-[35px] object-contain"
+                className="w-[35px] h-[35px] object-cover"
                 src={image}
                 alt="img"
               />

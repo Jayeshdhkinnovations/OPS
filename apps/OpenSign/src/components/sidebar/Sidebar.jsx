@@ -118,7 +118,7 @@ const Sidebar = () => {
           className="w-[75px] h-[75px] rounded-full ring-[2px] ring-offset-2 ring-gray-400 overflow-hidden cursor-pointer"
         >
           <img
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
             src={image}
             alt="Profile"
           />

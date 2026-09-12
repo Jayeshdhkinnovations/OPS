@@ -413,7 +413,7 @@ function UserProfile() {
               <div className="relative w-[200px] h-[200px]">
                 <div className="w-[200px] h-[200px] overflow-hidden rounded-full">
                   <img
-                    className="object-contain w-full h-full"
+                    className="object-cover w-full h-full"
                     src={Image === "" || !Image ? dp : Image}
                     alt="dp"
                   />
