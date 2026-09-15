@@ -317,7 +317,7 @@ function GuestLogin() {
           <div className="op-auth-card relative m-auto flex w-full max-w-5xl overflow-hidden rounded-[26px] bg-white shadow-[0_40px_80px_-30px_rgba(70,60,160,0.28)]">
             {/* Left hero panel - identical structure/tokens to Login/Register/ResetPassword */}
             {width >= 768 && (
-              <div className="relative hidden w-[44%] shrink-0 flex-col overflow-hidden rounded-l-[26px] bg-gradient-to-br from-[#0B3D73] to-[#002864] px-8 py-[34px] md:flex">
+              <div className="relative hidden w-[44%] shrink-0 flex-col overflow-hidden rounded-l-[26px] bg-gradient-to-br from-[#4C3AE7] to-[#8642FC] px-8 py-[34px] md:flex">
                 <div className="relative z-20">
                   <div className="flex items-center gap-3">
                     <img src={toowixLogo} alt="SignToowix" className="h-9 w-9 object-contain shrink-0" />
@@ -371,7 +371,7 @@ function GuestLogin() {
                       </div>
                     ) : (
                       <>
-                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0B3D73]">
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#4C3AE7]">
                           <img src={toowixLogo} alt="SignToowix" className="h-6 w-6 object-contain" />
                         </div>
                         <span className="text-lg font-bold tracking-tight text-gray-800">
@@ -412,7 +412,7 @@ function GuestLogin() {
                           pattern="[0-9]{6}"
                           maxLength={6}
                           autoFocus
-                          className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors py-3 pl-5 pr-5 text-[15px] tracking-[4px] placeholder:tracking-normal"
+                          className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors py-3 pl-5 pr-5 text-[15px] tracking-[4px] placeholder:tracking-normal"
                           placeholder={t("otp-placeholder")}
                           value={OTP}
                           onChange={(e) => {
@@ -429,7 +429,7 @@ function GuestLogin() {
                             type="button"
                             onClick={(e) => handleSendOTPBtn(e)}
                             disabled={loading}
-                            className="font-semibold text-[#0B3D73] hover:underline disabled:text-gray-300 disabled:no-underline disabled:cursor-not-allowed"
+                            className="font-semibold text-[#4C3AE7] hover:underline disabled:text-gray-300 disabled:no-underline disabled:cursor-not-allowed"
                           >
                             {t("resend")}
                           </button>
@@ -438,7 +438,7 @@ function GuestLogin() {
 
                       <button
                         type="submit"
-                        className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2 disabled:opacity-60"
+                        className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#4C3AE7] to-[#4C3AE7] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4C3AE7] focus:ring-offset-2 disabled:opacity-60"
                         style={{ animationDelay: "140ms" }}
                         disabled={loading}
                       >
@@ -480,7 +480,7 @@ function GuestLogin() {
                       />
                     </div>
                     <button
-                      className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2 disabled:opacity-60"
+                      className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#4C3AE7] to-[#4C3AE7] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4C3AE7] focus:ring-offset-2 disabled:opacity-60"
                       style={{ animationDelay: "140ms" }}
                       onClick={(e) => {
                         e.preventDefault();
@@ -513,7 +513,7 @@ function GuestLogin() {
                           name="name"
                           value={contact.name}
                           onChange={handleInputChange}
-                          className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
+                          className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
                           disabled={loading}
                           onInvalid={(e) =>
                             e.target.setCustomValidity(t("input-required"))
@@ -557,7 +557,7 @@ function GuestLogin() {
                               name="phone"
                               value={contact.phone}
                               onChange={handleInputChange}
-                              className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
+                              className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
                               disabled={loading}
                               placeholder={t("phone-optional")}
                             />
@@ -575,7 +575,7 @@ function GuestLogin() {
                               name="company"
                               value={contact.company}
                               onChange={handleInputChange}
-                              className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
+                              className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
                               disabled={loading}
                               placeholder={t("phone-optional")}
                             />
@@ -593,7 +593,7 @@ function GuestLogin() {
                               name="jobTitle"
                               value={contact.jobTitle}
                               onChange={handleInputChange}
-                              className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
+                              className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
                               disabled={loading}
                               placeholder={t("phone-optional")}
                             />
@@ -614,7 +614,7 @@ function GuestLogin() {
                       </button>
                       <button
                         type="submit"
-                        className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2 disabled:opacity-60"
+                        className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#4C3AE7] to-[#4C3AE7] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4C3AE7] focus:ring-offset-2 disabled:opacity-60"
                         style={{ animationDelay: "240ms" }}
                         disabled={loading}
                       >

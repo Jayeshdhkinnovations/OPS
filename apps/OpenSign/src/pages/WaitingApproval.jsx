@@ -8,12 +8,12 @@ const POLL_MS = 5000;
 
 const STATUS_ICON = {
   pending: (
-    <div className="grid h-16 w-16 place-items-center rounded-full bg-[#EAF1FF]">
-      <i className="fa-light fa-hourglass-half animate-pulse text-2xl text-[#0B3D73]" />
+    <div className="grid h-16 w-16 place-items-center rounded-full bg-[#EDE9FE]">
+      <i className="fa-light fa-hourglass-half animate-pulse text-2xl text-[#4C3AE7]" />
     </div>
   ),
   approved: (
-    <div className="grid h-16 w-16 place-items-center rounded-full bg-[#0B3D73]">
+    <div className="grid h-16 w-16 place-items-center rounded-full bg-[#4C3AE7]">
       <i className="fa-light fa-check text-2xl text-white" />
     </div>
   ),
@@ -100,7 +100,7 @@ function WaitingApproval() {
         <button
           type="button"
           onClick={() => authNavigate("/login")}
-          className="op-stagger-item w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+          className="op-stagger-item w-full rounded-full bg-gradient-to-r from-[#4C3AE7] to-[#4C3AE7] py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4C3AE7] focus:ring-offset-2"
           style={{ animationDelay: "120ms" }}
         >
           Go to Login

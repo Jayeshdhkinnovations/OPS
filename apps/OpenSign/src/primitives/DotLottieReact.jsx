@@ -8,8 +8,11 @@ const LottieWithLoader = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [animationSrc, setAnimationSrc] = useState(null);
-  const src =
-    "https://lottie.host/00a72a09-f2d4-493a-9b2d-2843bf067638/Ic7jJ44wLJ.json";
+  // Served locally (not the original lottie.host URL) - this is also where
+  // its colors were recolored to the brand primary/secondary palette, so a
+  // local copy is the source of truth now, not a byte-for-byte mirror of
+  // the hosted original.
+  const src = "/static/js/assets/animations/sign-checkmark.json";
   useEffect(() => {
     fetch(src)
       .then((response) => {

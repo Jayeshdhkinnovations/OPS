@@ -725,7 +725,7 @@ function Login() {
             {/* Left hero panel */}
             {width >= 768 && (
               <div
-                className="relative hidden w-[44%] shrink-0 flex-col overflow-hidden rounded-l-[26px] bg-gradient-to-br from-[#0B3D73] to-[#002864] px-8 py-[34px] md:flex"
+                className="relative hidden w-[44%] shrink-0 flex-col overflow-hidden rounded-l-[26px] bg-gradient-to-br from-[#4C3AE7] to-[#8642FC] px-8 py-[34px] md:flex"
               >
                 <div className="relative z-20">
                   <div className="flex items-center gap-3">
@@ -772,7 +772,7 @@ function Login() {
               <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-1 sm:py-4">
                 {width < 768 && (
                   <div className="mb-4 flex items-center gap-2.5 sm:mb-8">
-                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0B3D73]">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#4C3AE7]">
                       <img src={toowixLogo} alt="SignToowix" className="h-6 w-6 object-contain" />
                     </div>
                     <div>
@@ -798,7 +798,7 @@ function Login() {
                       inputMode="numeric"
                       pattern="[0-9]{6}"
                       placeholder="6-digit code"
-                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors py-3 pl-5 pr-12 text-[15px] tracking-[4px] placeholder:tracking-normal"
+                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors py-3 pl-5 pr-12 text-[15px] tracking-[4px] placeholder:tracking-normal"
                       value={otpValue}
                       onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, ""))}
                       required
@@ -817,7 +817,7 @@ function Login() {
                         type="button"
                         onClick={handleResendOtp}
                         disabled={otpResending || otpSecondsLeft > 0}
-                        className="font-semibold text-[#0B3D73] hover:underline disabled:text-gray-300 disabled:no-underline disabled:cursor-not-allowed"
+                        className="font-semibold text-[#4C3AE7] hover:underline disabled:text-gray-300 disabled:no-underline disabled:cursor-not-allowed"
                       >
                         {otpResending ? "Resending..." : "Resend code"}
                       </button>
@@ -826,7 +826,7 @@ function Login() {
 
                   <button
                     type="submit"
-                    className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2 disabled:opacity-60"
+                    className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#4C3AE7] to-[#4C3AE7] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4C3AE7] focus:ring-offset-2 disabled:opacity-60"
                     style={{ animationDelay: "140ms" }}
                     disabled={state.loading || otpSecondsLeft <= 0}
                   >
@@ -855,7 +855,7 @@ function Login() {
                         id="email"
                         type="email"
                         placeholder="Email Address"
-                        className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
+                        className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
                         name="email"
                         autoComplete="username"
                         value={state.email}
@@ -877,7 +877,7 @@ function Login() {
                           id="password"
                           type={state.passwordVisible ? "text" : "password"}
                           placeholder="Password"
-                          className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors py-3 pl-5 pr-12 text-[15px]"
+                          className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors py-3 pl-5 pr-12 text-[15px]"
                           name="password"
                           value={state.password}
                           autoComplete="current-password"
@@ -905,7 +905,7 @@ function Login() {
                       <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-500 font-semibold select-none">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 text-[#0B3D73] border-gray-300 rounded focus:ring-[#0B3D73] accent-[#0B3D73]"
+                          className="w-4 h-4 text-[#4C3AE7] border-gray-300 rounded focus:ring-[#4C3AE7] accent-[#4C3AE7]"
                           checked={state.rememberMe}
                           onChange={(e) => setState({ ...state, rememberMe: e.target.checked })}
                         />
@@ -917,7 +917,7 @@ function Login() {
                           e.preventDefault();
                           authNavigate("/forgetpassword");
                         }}
-                        className="text-xs text-[#0B3D73] hover:underline font-semibold focus:outline-none"
+                        className="text-xs text-[#4C3AE7] hover:underline font-semibold focus:outline-none"
                       >
                         {t("forgot-password")}?
                       </NavLink>
@@ -926,7 +926,7 @@ function Login() {
 
                   <button
                     type="submit"
-                    className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                    className="op-stagger-item mt-3 sm:mt-6 w-full rounded-full bg-gradient-to-r from-[#4C3AE7] to-[#4C3AE7] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4C3AE7] focus:ring-offset-2"
                     style={{ animationDelay: "240ms" }}
                     disabled={state.loading}
                   >
@@ -944,7 +944,7 @@ function Login() {
                       e.preventDefault();
                       authNavigate("/register");
                     }}
-                    className="text-[#0B3D73] font-bold hover:underline"
+                    className="text-[#4C3AE7] font-bold hover:underline"
                   >
                     Create Account
                   </NavLink>

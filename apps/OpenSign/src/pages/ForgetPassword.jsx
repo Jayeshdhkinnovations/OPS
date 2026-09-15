@@ -118,7 +118,7 @@ function ForgotPassword() {
         {/* Left hero panel */}
         {!state.hideNav && (
           <div
-            className="relative hidden w-[44%] shrink-0 flex-col overflow-hidden rounded-l-[26px] bg-gradient-to-br from-[#0B3D73] to-[#002864] px-8 py-[34px] md:flex"
+            className="relative hidden w-[44%] shrink-0 flex-col overflow-hidden rounded-l-[26px] bg-gradient-to-br from-[#4C3AE7] to-[#8642FC] px-8 py-[34px] md:flex"
           >
             <div className="relative z-20">
               <div className="flex items-center gap-3">
@@ -163,7 +163,7 @@ function ForgotPassword() {
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-1 sm:py-4">
             {state.hideNav && (
               <div className="mb-4 flex items-center gap-2.5 sm:mb-8">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0B3D73]">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#4C3AE7]">
                   <img src={toowixLogo} alt="SignToowix" className="h-6 w-6 object-contain" />
                 </div>
                 <div>
@@ -176,8 +176,8 @@ function ForgotPassword() {
 
             {sent ? (
               <div className="text-center">
-                <div className="op-stagger-item mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#EAF1FF]" style={{ animationDelay: "0ms" }}>
-                  <i className="fa-light fa-envelope-circle-check text-2xl text-[#0B3D73]" />
+                <div className="op-stagger-item mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#EDE9FE]" style={{ animationDelay: "0ms" }}>
+                  <i className="fa-light fa-envelope-circle-check text-2xl text-[#4C3AE7]" />
                 </div>
                 <h1 className="op-stagger-item mt-5 text-2xl font-bold tracking-tight text-gray-800" style={{ animationDelay: "60ms" }}>
                   Email sent
@@ -193,7 +193,7 @@ function ForgotPassword() {
                 <button
                   type="button"
                   onClick={() => authNavigate("/", { replace: true })}
-                  className="op-stagger-item mt-4 sm:mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                  className="op-stagger-item mt-4 sm:mt-8 w-full rounded-full bg-gradient-to-r from-[#4C3AE7] to-[#4C3AE7] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4C3AE7] focus:ring-offset-2"
                   style={{ animationDelay: "170ms" }}
                 >
                   {t("login")}
@@ -201,7 +201,7 @@ function ForgotPassword() {
                 <button
                   type="button"
                   onClick={() => setSent(false)}
-                  className="op-stagger-item mt-3 w-full text-sm font-semibold text-[#0B3D73] transition-colors duration-200 hover:underline"
+                  className="op-stagger-item mt-3 w-full text-sm font-semibold text-[#4C3AE7] transition-colors duration-200 hover:underline"
                   style={{ animationDelay: "200ms" }}
                 >
                   Use a different email
@@ -222,7 +222,7 @@ function ForgotPassword() {
                   type="email"
                   name="email"
                   placeholder={t("email")}
-                  className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
+                  className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-3 text-[15px]"
                   value={state.email}
                   onChange={handleChange}
                   onInvalid={(e) =>
@@ -235,7 +235,7 @@ function ForgotPassword() {
 
               <button
                 type="submit"
-                className="op-stagger-item mt-4 sm:mt-8 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                className="op-stagger-item mt-4 sm:mt-8 w-full rounded-full bg-gradient-to-r from-[#4C3AE7] to-[#4C3AE7] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4C3AE7] focus:ring-offset-2"
                 style={{ animationDelay: "140ms" }}
               >
                 {t("submit")}
@@ -244,7 +244,7 @@ function ForgotPassword() {
               <button
                 type="button"
                 onClick={() => authNavigate("/", { replace: true })}
-                className="op-stagger-item w-full text-[#0B3D73] hover:underline text-sm font-semibold transition-colors duration-200 mt-4"
+                className="op-stagger-item w-full text-[#4C3AE7] hover:underline text-sm font-semibold transition-colors duration-200 mt-4"
                 style={{ animationDelay: "180ms" }}
               >
                 {t("login")}

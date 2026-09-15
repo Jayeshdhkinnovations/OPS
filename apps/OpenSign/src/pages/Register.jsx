@@ -98,7 +98,7 @@ function Register() {
         {/* Left hero panel */}
         {width >= 768 && (
           <div
-            className="relative hidden w-[44%] shrink-0 flex-col overflow-hidden rounded-l-[26px] bg-gradient-to-br from-[#0B3D73] to-[#002864] px-8 py-[34px] md:flex"
+            className="relative hidden w-[44%] shrink-0 flex-col overflow-hidden rounded-l-[26px] bg-gradient-to-br from-[#4C3AE7] to-[#8642FC] px-8 py-[34px] md:flex"
           >
             <div className="relative z-20">
               <div className="flex items-center gap-3">
@@ -143,7 +143,7 @@ function Register() {
           <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-1 sm:py-4">
             {width < 768 && (
               <div className="mb-4 flex items-center gap-2.5 sm:mb-8">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0B3D73]">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#4C3AE7]">
                   <img src={toowixLogo} alt="SignToowix" className="h-6 w-6 object-contain" />
                 </div>
                 <div>
@@ -176,7 +176,7 @@ function Register() {
                     required
                     value={form.name}
                     onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                   />
                 </div>
                 <div>
@@ -189,7 +189,7 @@ function Register() {
                     required
                     value={form.email}
                     onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                   />
                 </div>
               </div>
@@ -202,7 +202,7 @@ function Register() {
                     placeholder={t("phone")}
                     value={form.phone}
                     onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                   />
                 </div>
                 <div>
@@ -213,7 +213,7 @@ function Register() {
                     placeholder={t("job-title")}
                     value={form.jobTitle}
                     onChange={handleChange}
-                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
+                    className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                   />
                 </div>
               </div>
@@ -226,7 +226,7 @@ function Register() {
                   required
                   value={form.companyName}
                   onChange={handleChange}
-                  className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
+                  className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                 />
               </div>
 
@@ -236,7 +236,7 @@ function Register() {
                     type="checkbox"
                     checked={signupType === "myself"}
                     onChange={() => setSignupType("myself")}
-                    className="h-4 w-4 rounded border-gray-300 text-[#0B3D73] focus:ring-[#0B3D73]/30"
+                    className="h-4 w-4 rounded border-gray-300 text-[#4C3AE7] focus:ring-[#4C3AE7]/30"
                   />
                   Myself
                 </label>
@@ -245,7 +245,7 @@ function Register() {
                     type="checkbox"
                     checked={signupType === "team"}
                     onChange={() => setSignupType("team")}
-                    className="h-4 w-4 rounded border-gray-300 text-[#0B3D73] focus:ring-[#0B3D73]/30"
+                    className="h-4 w-4 rounded border-gray-300 text-[#4C3AE7] focus:ring-[#4C3AE7]/30"
                   />
                   Team
                 </label>
@@ -264,7 +264,7 @@ function Register() {
                     required
                     value={form.maxUsers}
                     onChange={handleChange}
-                    className="w-full appearance-none rounded-full border border-gray-300 bg-white text-gray-800 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22%239CA3AF%22%3E%3Cpath%20d%3D%22M4.5%206.5%208%2010l3.5-3.5z%22/%3E%3C/svg%3E')] bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat pr-10"
+                    className="w-full appearance-none rounded-full border border-gray-300 bg-white text-gray-800 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5 bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22%239CA3AF%22%3E%3Cpath%20d%3D%22M4.5%206.5%208%2010l3.5-3.5z%22/%3E%3C/svg%3E')] bg-[length:16px_16px] bg-[right_1rem_center] bg-no-repeat pr-10"
                   >
                     {SEAT_TIERS.map((tier) => (
                       <option key={tier.value} value={tier.value}>
@@ -286,7 +286,7 @@ function Register() {
                       required
                       value={form.password}
                       onChange={handleChange}
-                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#0B3D73] focus:ring-2 focus:ring-[#0B3D73]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
+                      className="w-full rounded-full border border-gray-300 bg-white text-gray-800 placeholder:text-gray-400 focus:border-[#4C3AE7] focus:ring-2 focus:ring-[#4C3AE7]/15 focus:outline-none transition-colors px-5 py-2 text-sm sm:py-2.5"
                     />
                     <span
                       className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
@@ -316,7 +316,7 @@ function Register() {
                       className={`w-full rounded-full border bg-white text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 transition-colors px-5 py-2 text-sm sm:py-2.5 ${
                         confirmHasError
                           ? "border-red-400 focus:border-red-500 focus:ring-red-500/15"
-                          : "border-gray-300 focus:border-[#0B3D73] focus:ring-[#0B3D73]/15"
+                          : "border-gray-300 focus:border-[#4C3AE7] focus:ring-[#4C3AE7]/15"
                       }`}
                     />
                     <span
@@ -346,7 +346,7 @@ function Register() {
                 <input
                   type="checkbox"
                   id="agreeTerms"
-                  className="w-4 h-4 text-[#0B3D73] border-gray-300 rounded focus:ring-[#0B3D73] accent-[#0B3D73] cursor-pointer"
+                  className="w-4 h-4 text-[#4C3AE7] border-gray-300 rounded focus:ring-[#4C3AE7] accent-[#4C3AE7] cursor-pointer"
                   checked={agreeTerms}
                   onChange={(e) => setAgreeTerms(e.target.checked)}
                   required
@@ -357,7 +357,7 @@ function Register() {
                     href="https://www.opensignlabs.com/terms-and-conditions"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[#0B3D73] hover:underline"
+                    className="text-[#4C3AE7] hover:underline"
                   >
                     Terms
                   </a>{" "}
@@ -366,7 +366,7 @@ function Register() {
                     href="https://www.opensignlabs.com/privacy-policy"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[#0B3D73] hover:underline"
+                    className="text-[#4C3AE7] hover:underline"
                   >
                     Privacy Policy
                   </a>
@@ -376,7 +376,7 @@ function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="op-stagger-item mt-3 sm:mt-4 w-full rounded-full bg-gradient-to-r from-[#1B4F91] to-[#0B3D73] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#0B3D73] focus:ring-offset-2"
+                className="op-stagger-item mt-3 sm:mt-4 w-full rounded-full bg-gradient-to-r from-[#4C3AE7] to-[#4C3AE7] py-3 sm:py-[15px] px-6 text-[15px] font-bold text-white transition-opacity duration-150 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#4C3AE7] focus:ring-offset-2"
                 style={{ animationDelay: "330ms" }}
               >
                 {t("create-account")}
@@ -391,7 +391,7 @@ function Register() {
                   e.preventDefault();
                   authNavigate("/login");
                 }}
-                className="text-[#0B3D73] font-bold hover:underline"
+                className="text-[#4C3AE7] font-bold hover:underline"
               >
                 {t("login")}
               </NavLink>

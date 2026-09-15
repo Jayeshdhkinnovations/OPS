@@ -87,7 +87,7 @@ const UpdateExistUserAdmin = () => {
           ) : (
             <div className="w-[95%] md:w-[500px]">
               <div className="mb-4 flex items-center justify-center gap-2.5">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0B3D73]">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#4C3AE7]">
                   <img src={toowixLogo} alt="SignToowix" className="h-6 w-6 object-contain" />
                 </div>
                 <span className="text-lg font-bold tracking-tight text-gray-800">
