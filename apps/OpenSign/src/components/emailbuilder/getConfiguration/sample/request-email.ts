@@ -6,26 +6,26 @@ const getRequestEmail = (
     "SignToowix";
 
   const logoBlock =
-        {
-          "block-1709571212684": {
-            type: "Image",
-            data: {
-              style: {
-                padding: { top: 24, bottom: 24, right: 24, left: 24 }
-              },
-              props: {
-                width: null,
-                height: 50,
-                url: `${window.location.origin}/static/js/assets/images/email-logo.png`,
-                alt: "logo",
-                linkHref: null,
-                contentAlignment: "middle"
-              }
-            }
-          }
-        };
+  {
+    "block-1709571212684": {
+      type: "Image",
+      data: {
+        style: {
+          padding: { top: 24, bottom: 24, right: 24, left: 24 }
+        },
+        props: {
+          width: null,
+          height: 50,
+          url: `${window.location.origin}/static/js/assets/images/email-logo.png`,
+          alt: "logo",
+          linkHref: null,
+          contentAlignment: "middle"
+        }
+      }
+    }
+  };
   const logoBlockId =
-        ["block-1709571212684"];
+    ["block-1709571212684"];
 
   return {
     root: {
