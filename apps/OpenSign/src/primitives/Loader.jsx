@@ -1,25 +1,37 @@
 import React from "react";
 
-// Served from public/ (not imported as a module) - vite-plugin-svgr runs
-// every imported .svg through SVGO on the way through, which was stripping
-// this file's gradient <defs> and rendering it as a flat black shape
-// instead of the actual brand colors. A plain static path bypasses that
-// pipeline entirely, so the file reaches the browser byte-for-byte.
-const loaderIcon = "/static/js/assets/images/Toowix_Logo.svg";
-
-// Placeholder animation: no animated asset for the new mark yet - a CSS
-// pulse on the new icon stands in until one is provided.
+// Circular spinner: light gray track + a rotating/growing brand-colored arc,
+// matching the reference GIF's motion (Material-style indeterminate
+// progress). Built as inline SVG/CSS rather than the GIF itself so it's
+// resolution-independent and recolorable via the stroke below.
 const Loader = () => {
   return (
-    <img
-      src={loaderIcon}
-      alt="Loading"
+    <svg
+      className="op-spinner inline-block"
       role="status"
       aria-label="Loading"
       width="96"
       height="96"
-      className="inline-block animate-pulse"
-    />
+      viewBox="0 0 50 50"
+    >
+      <circle
+        cx="25"
+        cy="25"
+        r="20"
+        fill="none"
+        stroke="#E5E7EB"
+        strokeWidth="5"
+      />
+      <circle
+        className="op-spinner-arc"
+        cx="25"
+        cy="25"
+        r="20"
+        fill="none"
+        stroke="#8642FC"
+        strokeWidth="5"
+      />
+    </svg>
   );
 };
 

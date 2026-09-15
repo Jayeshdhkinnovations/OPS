@@ -24,8 +24,10 @@ const FAINT = '#9CA3AF';
 const HAIRLINE = '#E5E7EB';
 
 // Public URL only - email clients cannot load local files or data URIs.
+// email-logo.png is the "white card" mark - it carries its own opaque
+// white background, so it reads correctly on both light and dark inboxes
+// without needing a prefers-color-scheme swap.
 const LOGO_URL = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/email-logo.png`;
-const LOGO_URL_DARK = `${process.env.PUBLIC_ORIGIN || ''}/static/js/assets/images/logo-dark.png`;
 
 export function esc(value) {
   return String(value ?? '').replace(
@@ -34,15 +36,14 @@ export function esc(value) {
   );
 }
 
-// Two stacked images, swapped by the same `.logo-light`/`.logo-dark` +
-// prefers-color-scheme pattern already used in password_reset_email.html -
-// the light mark for a light/unknown-theme inbox, the dark-mode mark once a
-// client actually signals dark mode. Falls back to the light mark wherever
-// prefers-color-scheme support is stripped, which just means the light logo
-// on a dark background - never nothing.
+// One constant mark in every email, at its real aspect ratio (source is
+// 1560x425 - width must be ~3.67x height, not the old hardcoded 87x32
+// which squished it). No light/dark swap: the white-card background
+// baked into the asset already reads correctly on any inbox theme, and
+// Gmail's unreliable <style>-based swapping was part of what made this
+// look broken in the first place.
 const logoBlock = `<span style="display:inline-block;">
-    <img src="${LOGO_URL}" width="87" height="32" alt="${BRAND_NAME}" class="logo-light" style="display:block;border:0;background:transparent;" />
-    <img src="${LOGO_URL_DARK}" width="87" height="32" alt="${BRAND_NAME}" class="logo-dark" style="display:none;border:0;background:transparent;" />
+    <img src="${LOGO_URL}" width="117" height="32" alt="${BRAND_NAME}" style="display:block;border:0;background:transparent;" />
   </span>`;
 
 // Rows of label/value detail (device, time, location...). A plain table,
@@ -105,8 +106,6 @@ export function baseTemplate({
     .email-ink { color:#F3F4F6 !important; }
     .email-muted { color:#9CA3AF !important; }
     .email-hairline { border-color:#232838 !important; }
-    .logo-light { display:none !important; }
-    .logo-dark { display:block !important; }
   }
   /* Gmail (web and app) doesn't reliably honour prefers-color-scheme on
      injected mail HTML - it instead stamps [data-ogsc] onto the message
@@ -117,8 +116,6 @@ export function baseTemplate({
   [data-ogsc] .email-ink { color:#F3F4F6 !important; }
   [data-ogsc] .email-muted { color:#9CA3AF !important; }
   [data-ogsc] .email-hairline { border-color:#232838 !important; }
-  [data-ogsc] .logo-light { display:none !important; }
-  [data-ogsc] .logo-dark { display:block !important; }
 </style>
 <body class="email-bg" style="margin:0;padding:0;background:#FFFFFF;">
 <div class="email-bg" style="background:#FFFFFF;padding:40px 20px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">

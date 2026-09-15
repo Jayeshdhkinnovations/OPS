@@ -228,6 +228,35 @@ body {
   }
 }
 
+/* Loader.jsx spinner: track ring + growing/rotating arc, mirroring the
+   provided reference GIF (light track, animated arc) in brand color. */
+@keyframes op-spinner-rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@keyframes op-spinner-dash {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 200;
+    stroke-dashoffset: -35px;
+  }
+  100% {
+    stroke-dasharray: 90, 200;
+    stroke-dashoffset: -124px;
+  }
+}
+.op-spinner {
+  animation: op-spinner-rotate 1.6s linear infinite;
+}
+.op-spinner-arc {
+  animation: op-spinner-dash 1.6s ease-in-out infinite;
+  stroke-linecap: round;
+}
+
 /* Login/Register hero-panel floating animation */
 @keyframes op-float-slow {
   0%, 100% { transform: translateY(0) rotate(0deg); }

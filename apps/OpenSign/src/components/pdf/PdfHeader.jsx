@@ -656,7 +656,7 @@ function Header(props) {
               </button>
               <button
                 type="button"
-                className="op-btn op-btn-info op-btn-sm gap-0 font-medium text-[12px] mr-[3px] shadow"
+                className="op-btn op-btn-sm gap-0 font-medium text-[12px] mr-[3px] shadow border-none text-white bg-[#FE43A5] hover:bg-[#e63996]"
                 onClick={() => props?.setIsEmail(true)}
               >
                 <i className="fa-light fa-envelope" aria-hidden="true"></i>

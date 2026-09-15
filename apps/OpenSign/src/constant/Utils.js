@@ -1586,9 +1586,15 @@ export function convertTextToImg(fontStyle, text, color, widgetDims) {
 
   // const renderscale = 3;
   // 2. Scale font size so text height fills canvas
+  // Safety margin: the measured bounding box is placed exactly flush with
+  // the canvas edges below, so any anti-aliasing/hinting bleed on a
+  // cursive font's swash (e.g. a capital letter's loop) pushes past the
+  // edge and gets clipped. Scaling to a bit less than the exact fit keeps
+  // a visible margin on all sides so that never happens.
+  const SAFETY_MARGIN = 0.85;
   const scaleX = maxWidth / actualWidth;
   const scaleY = maxHeight / actualHeight;
-  const scale = Math.min(scaleX, scaleY, 1);
+  const scale = Math.min(scaleX, scaleY, 1) * SAFETY_MARGIN;
   // final font-size
   // const finalFontSizePx = baselineFontSizePx * scale * renderscale;
   const finalFontSizePx = baselineFontSizePx * scale;
@@ -4293,16 +4299,12 @@ export const mailTemplate = (param) => {
     .email-ink { color:#F3F4F6 !important; }
     .email-muted { color:#9CA3AF !important; }
     .email-hairline { border-color:#232838 !important; }
-    .logo-light { display:none !important; }
-    .logo-dark { display:block !important; }
   }
   [data-ogsc] .email-bg { background:#0B0F19 !important; }
   [data-ogsc] .email-card { background:#0B0F19 !important; }
   [data-ogsc] .email-ink { color:#F3F4F6 !important; }
   [data-ogsc] .email-muted { color:#9CA3AF !important; }
   [data-ogsc] .email-hairline { border-color:#232838 !important; }
-  [data-ogsc] .logo-light { display:none !important; }
-  [data-ogsc] .logo-dark { display:block !important; }
 </style>
 <body class="email-bg" style="margin:0;padding:0;background:#FFFFFF;">
 <div class="email-bg" style="background:#FFFFFF;padding:40px 20px;font-family:-apple-system,'Segoe UI',Arial,sans-serif;">
@@ -4312,8 +4314,7 @@ export const mailTemplate = (param) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="vertical-align:middle;"><span style="display:inline-block;">
-    <img src="${origin}/static/js/assets/images/email-logo-light.png" width="117" height="32" alt="${appName}" class="logo-light" style="display:block;border:0;background:transparent;" />
-    <img src="${origin}/static/js/assets/images/email-logo-dark.png" width="117" height="32" alt="${appName}" class="logo-dark" style="display:none;border:0;background:transparent;" />
+    <img src="${origin}/static/js/assets/images/email-logo-light.png" width="117" height="32" alt="${appName}" style="display:block;border:0;background:transparent;" />
   </span></td>
           </tr>
         </table>
