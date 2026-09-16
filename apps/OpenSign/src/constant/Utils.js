@@ -4314,7 +4314,7 @@ export const mailTemplate = (param) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="vertical-align:middle;"><span style="display:inline-block;">
-    <img src="${origin}/static/js/assets/images/email-logo-light.png" width="117" height="32" alt="${appName}" style="display:block;border:0;background:transparent;" />
+    <img src="${origin}/static/js/assets/images/email-logo-light.png" width="119" height="32" alt="${appName}" style="display:block;border:0;background:transparent;" />
   </span></td>
           </tr>
         </table>
