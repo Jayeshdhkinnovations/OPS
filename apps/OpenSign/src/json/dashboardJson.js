@@ -32,9 +32,9 @@ const dashboardJson = [
           type: "Card",
           icon: "fa-light fa-sign-out-alt",
           bgColor:
-            "bg-[linear-gradient(90deg,#E5E0FF_0%,#DDD5FF_25%,#E8D7FA_50%,#F3D5F3_75%,#F8B9E5_100%)]",
-          textColor: "text-[#3B1F7A]",
-          tooltipIconColor: "#3B1F7A",
+            "bg-[linear-gradient(90deg,#24105F_0%,#35147D_25%,#5A27A8_50%,#8B35C9_75%,#D936B8_100%)]",
+          textColor: "text-white",
+          tooltipIconColor: "#FFFFFF",
           label: "Out for signatures",
           description: null,
           data: {
