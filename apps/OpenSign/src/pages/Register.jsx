@@ -35,7 +35,6 @@ function Register() {
     maxUsers: DEFAULT_SEAT_TIER,
   });
   const [signupType, setSignupType] = useState("myself"); // "myself" | "team"
-  const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -340,37 +339,6 @@ function Register() {
                     </p>
                   )}
                 </div>
-              </div>
-
-              <div className="op-stagger-item mt-1 flex items-center gap-2 sm:mt-2" style={{ animationDelay: "290ms" }}>
-                <input
-                  type="checkbox"
-                  id="agreeTerms"
-                  className="w-4 h-4 text-[#4C3AE7] border-gray-300 rounded focus:ring-[#4C3AE7] accent-[#4C3AE7] cursor-pointer"
-                  checked={agreeTerms}
-                  onChange={(e) => setAgreeTerms(e.target.checked)}
-                  required
-                />
-                <label htmlFor="agreeTerms" className="cursor-pointer text-xs text-gray-500 font-semibold selection:bg-transparent select-none">
-                  I agree to the{" "}
-                  <a
-                    href="https://www.opensignlabs.com/terms-and-conditions"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[#4C3AE7] hover:underline"
-                  >
-                    Terms
-                  </a>{" "}
-                  and{" "}
-                  <a
-                    href="https://www.opensignlabs.com/privacy-policy"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[#4C3AE7] hover:underline"
-                  >
-                    Privacy Policy
-                  </a>
-                </label>
               </div>
 
               <button
