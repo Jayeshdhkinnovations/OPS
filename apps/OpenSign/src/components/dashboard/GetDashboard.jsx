@@ -1,6 +1,5 @@
 import { useState, useEffect, Suspense } from "react";
 import { lazyWithRetry } from "../../utils";
-import { useTranslation } from "react-i18next";
 const DashboardButton = lazyWithRetry(() => import("./DashboardButton"));
 const DashboardCard = lazyWithRetry(() => import("./DashboardCard"));
 const DashboardReport = lazyWithRetry(() => import("./DashboardReport"));
@@ -18,9 +17,20 @@ const buttonList = [
     icon: "fa-light fa-paper-plane"
   }
 ];
-const GetDashboard = (props) => {
-  const { t } = useTranslation();
+// Matches DashboardCard's own icon+label+count layout so the Suspense
+// fallback (shown only while that chunk itself is being fetched, e.g. on a
+// hard refresh) doesn't flash mismatched "please wait" text inside the box.
+const CardFallback = () => (
+  <div className="flex items-center justify-start gap-5 animate-pulse">
+    <span className="rounded-full bg-white/25 w-[60px] h-[60px] shrink-0" />
+    <div className="space-y-2">
+      <div className="h-4 w-24 rounded bg-white/25" />
+      <div className="h-6 w-10 rounded bg-white/25" />
+    </div>
+  </div>
+);
 
+const GetDashboard = (props) => {
   const Button = ({ label, redirectId, redirectType, icon }) => (
     <DashboardButton
       Icon={icon}
@@ -44,13 +54,7 @@ const GetDashboard = (props) => {
               aria-hidden="true"
               className="pointer-events-none absolute -z-10 -bottom-10 -right-10 h-40 w-64 rotate-[-18deg] rounded-full bg-white/20 blur-2xl"
             />
-            <Suspense
-              fallback={
-                <div className="h-[150px] w-full flex justify-center items-center">
-                  {t("loading")}
-                </div>
-              }
-            >
+            <Suspense fallback={<CardFallback />}>
               <DashboardCard
                 Icon={col.widget.icon}
                 Label={col.widget.label}
@@ -66,7 +70,7 @@ const GetDashboard = (props) => {
       case "report": {
         return (
           <div data-tut={col.widget.data.tourSection}>
-            <Suspense fallback={<div>please wait</div>}>
+            <Suspense fallback={null}>
               <div className="mb-3 md:mb-0">
                 <DashboardReport
                   Record={col.widget}
@@ -93,7 +97,7 @@ const GetDashboard = (props) => {
               aria-hidden="true"
               className="pointer-events-none absolute -z-10 -bottom-10 -right-10 h-40 w-64 rotate-[-18deg] rounded-full bg-white/20 blur-2xl"
             />
-            <Suspense fallback={<div>please wait</div>}>
+            <Suspense fallback={<CardFallback />}>
               <DashboardCard
                 Icon={col.widget.icon}
                 Label={col.widget.label}
@@ -108,7 +112,7 @@ const GetDashboard = (props) => {
         );
       case "report": {
         return (
-          <Suspense fallback={<div>please wait</div>}>
+          <Suspense fallback={null}>
             <div className="mb-3 md:mb-0">
               <DashboardReport
                 Record={col.widget}
