@@ -13,6 +13,7 @@ import {
   Outlet
 } from "react-router";
 import Loader from "../primitives/Loader";
+import { Skeleton, SkeletonCard } from "../primitives/Skeleton";
 import { useTranslation } from "react-i18next";
 import { sessionStatus } from "../redux/reducers/userReducer";
 import SessionExpiredModal from "../primitives/SessionExpiredModal";
@@ -197,11 +198,32 @@ const HomeLayout = () => {
     <div className="flex flex-col h-screen overflow-hidden">
       {/* HEADER */}
       <header className="z-[501]">
-        {!isLoader && <Header setIsLoggingOut={setIsLoggingOut} />}
+        {isLoader ? (
+          <div className="flex h-[60px] items-center justify-between px-4">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-9 w-9 rounded-full" />
+          </div>
+        ) : (
+          <Header setIsLoggingOut={setIsLoggingOut} />
+        )}
       </header>
       {isLoader ? (
-        <div className="flex h-[100vh] justify-center items-center">
-          <Loader />
+        <div className="flex flex-1 overflow-hidden">
+          <div className="hidden md:block w-64 shrink-0 border-r border-base-300 p-4 space-y-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-4 w-full" />
+            ))}
+          </div>
+          <main className="flex-1 overflow-auto p-3">
+            <div className="grid grid-cols-12 w-full gap-x-4">
+              <div className="col-span-12 md:col-span-6">
+                <SkeletonCard />
+              </div>
+              <div className="col-span-12 md:col-span-6">
+                <SkeletonCard />
+              </div>
+            </div>
+          </main>
         </div>
       ) : (
         <>
